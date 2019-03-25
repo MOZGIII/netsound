@@ -1,0 +1,10 @@
+[package]
+name = "netsound"
+version = "0.1.0"
+authors = ["MOZGIII <mike-n@narod.ru>"]
+
+[dependencies]
+cpal = { git = "https://github.com/MOZGIII/cpal.git", rev = "ae611a01e8f29f317686c317c481bb8419431b7b" }
+byteorder = "1.3"
+mio = "0.6"
+parking_lot = "0.7"
