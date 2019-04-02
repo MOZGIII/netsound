@@ -8,3 +8,13 @@ cpal = { git = "https://github.com/MOZGIII/cpal.git", rev = "ae611a01e8f29f31768
 byteorder = "1.3"
 mio = "0.6"
 parking_lot = "0.7"
+
+[dependencies.libpulse-binding]
+git = "https://github.com/MOZGIII/pulse-binding-rust.git"
+rev = "251032e29fa5ce287a814774d29378932afc0ab0"
+default-features = false
+
+[dependencies.libpulse-simple-binding]
+git = "https://github.com/MOZGIII/pulse-binding-rust.git"
+rev = "251032e29fa5ce287a814774d29378932afc0ab0"
+default-features = false
