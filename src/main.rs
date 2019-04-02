@@ -71,22 +71,29 @@ fn run_audio_backend(builder: audio::BackendBuilder) -> Result<(), BoxedErr> {
     use audio::Backend;
     use audio::BackendBuilderFor;
 
-    use audio::pulse_simple_backend::Backend as PulseSimpleBackend;
-    use audio::Cpal as CpalBackend;
-
     let backend_to_use = AudioBackendToUse::from_env()?;
     println!("Using audio backend: {:?}", backend_to_use);
 
     match backend_to_use {
         AudioBackendToUse::Cpal => {
+            use audio::Cpal as CpalBackend;
             let audio_backend: CpalBackend = builder.build()?;
             std::thread::spawn(move || audio_backend.run());
             return Ok(());
         }
-        AudioBackendToUse::PulseSimple => {
-            let audio_backend: PulseSimpleBackend = builder.build()?;
-            std::thread::spawn(move || audio_backend.run());
-            return Ok(());
-        }
+        AudioBackendToUse::PulseSimple => run_pulse_simple_backend(builder),
     }
+}
+
+#[cfg(feature = "pulse_simple_backend")]
+fn run_pulse_simple_backend(builder: audio::BackendBuilder) -> Result<(), BoxedErr> {
+    use audio::pulse_simple_backend::Backend as PulseSimpleBackend;
+    let audio_backend: PulseSimpleBackend = builder.build()?;
+    std::thread::spawn(move || audio_backend.run());
+    Ok(())
+}
+
+#[cfg(not(feature = "pulse_simple_backend"))]
+fn run_pulse_simple_backend(_builder: audio::BackendBuilder) -> Result<(), BoxedErr> {
+    unimplemented!();
 }

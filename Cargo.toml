@@ -13,8 +13,13 @@ parking_lot = "0.7"
 git = "https://github.com/MOZGIII/pulse-binding-rust.git"
 rev = "251032e29fa5ce287a814774d29378932afc0ab0"
 default-features = false
+optional = true
 
 [dependencies.libpulse-simple-binding]
 git = "https://github.com/MOZGIII/pulse-binding-rust.git"
 rev = "251032e29fa5ce287a814774d29378932afc0ab0"
 default-features = false
+optional = true
+
+[features]
+pulse_simple_backend = ["libpulse-binding", "libpulse-simple-binding"]
