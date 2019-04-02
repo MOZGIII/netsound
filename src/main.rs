@@ -13,6 +13,9 @@ use mio::net::UdpSocket;
 mod audio;
 mod net;
 
+use audio::Backend;
+use audio::BackendBuilderFor;
+
 type BoxedErr = Box<std::error::Error>;
 
 fn main() -> Result<(), BoxedErr> {
@@ -68,21 +71,20 @@ impl AudioBackendToUse {
 }
 
 fn run_audio_backend(builder: audio::BackendBuilder) -> Result<(), BoxedErr> {
-    use audio::Backend;
-    use audio::BackendBuilderFor;
-
     let backend_to_use = AudioBackendToUse::from_env()?;
     println!("Using audio backend: {:?}", backend_to_use);
 
     match backend_to_use {
-        AudioBackendToUse::Cpal => {
-            use audio::Cpal as CpalBackend;
-            let audio_backend: CpalBackend = builder.build()?;
-            std::thread::spawn(move || audio_backend.run());
-            return Ok(());
-        }
+        AudioBackendToUse::Cpal => run_cpal_backend(builder),
         AudioBackendToUse::PulseSimple => run_pulse_simple_backend(builder),
     }
+}
+
+fn run_cpal_backend(builder: audio::BackendBuilder) -> Result<(), BoxedErr> {
+    use audio::cpal_backend::Backend as CpalBackend;
+    let audio_backend: CpalBackend = builder.build()?;
+    std::thread::spawn(move || audio_backend.run());
+    return Ok(());
 }
 
 #[cfg(feature = "pulse_simple_backend")]
