@@ -13,6 +13,8 @@ use mio::net::UdpSocket;
 mod audio;
 mod net;
 
+use audio::BackendBuilderFor;
+
 type BoxedErr = Box<std::error::Error>;
 
 fn main() -> Result<(), BoxedErr> {
@@ -29,16 +31,15 @@ fn main() -> Result<(), BoxedErr> {
     socket.connect(connect_addr.clone())?;
     println!("Connected to: {}", &connect_addr);
 
-    let event_loop = audio::prepare_cpal_loop()?;
-
     let capture_buf = Arc::new(Mutex::new(VecDeque::with_capacity(30_000_000)));
     let playback_buf = Arc::new(Mutex::new(VecDeque::with_capacity(30_000_000)));
 
-    let audio_service = audio::AudioService {
-        input_buf: capture_buf.clone(),
-        output_buf: playback_buf.clone(),
+    let audio_backend_builder = audio::BackendBuilder {
+        capture_buf: capture_buf.clone(),
+        playback_buf: playback_buf.clone(),
     };
-    std::thread::spawn(move || audio_service.run_cpal_loop(event_loop));
+    let audio_backend = audio_backend_builder.build()?;
+    std::thread::spawn(move || audio::Backend::run(audio_backend));
 
     let net_service = net::NetService {
         capture_buf: capture_buf.clone(),

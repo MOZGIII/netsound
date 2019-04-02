@@ -1,44 +1,45 @@
+extern crate cpal;
+
 use parking_lot::Mutex;
 use std::collections::VecDeque;
+use std::error::Error;
 use std::sync::Arc;
 
-pub mod errors;
-pub mod input;
-pub mod output;
+mod cpal_backend;
 
-pub fn prepare_cpal_loop() -> Result<cpal::EventLoop, errors::Error> {
-    let event_loop = cpal::EventLoop::new();
-
-    let input_stream_id = input::build_default_stream(&event_loop)?;
-    event_loop.play_stream(input_stream_id);
-
-    let output_stream_id = output::build_default_stream(&event_loop)?;
-    event_loop.play_stream(output_stream_id);
-
-    Ok(event_loop)
+pub trait Backend {
+    fn run(self);
 }
 
-pub struct AudioService {
-    pub input_buf: Arc<Mutex<VecDeque<f32>>>,
-    pub output_buf: Arc<Mutex<VecDeque<f32>>>,
+pub struct BackendBuilder {
+    pub capture_buf: Arc<Mutex<VecDeque<f32>>>,
+    pub playback_buf: Arc<Mutex<VecDeque<f32>>>,
 }
 
-impl AudioService {
-    pub fn run_cpal_loop(&self, event_loop: cpal::EventLoop) {
-        event_loop.run(move |_, data| {
-            match data {
-                cpal::StreamData::Input { buffer: input_buf } => {
-                    let mut self_input_buf = self.input_buf.lock();
-                    self_input_buf.reserve(input_buf.len());
-                    input::extend(input_buf, &mut self_input_buf);
-                }
-                cpal::StreamData::Output {
-                    buffer: mut output_buf,
-                } => {
-                    let mut self_output_buf = self.output_buf.lock();
-                    output::extend(&mut self_output_buf, &mut output_buf);
-                }
-            };
-        });
+pub trait BackendBuilderFor<T: Backend> {
+    fn build(self) -> Result<T, Box<Error>>;
+}
+
+pub struct Cpal {
+    service: cpal_backend::AudioService,
+    cpal_eventloop: cpal::EventLoop,
+}
+
+impl BackendBuilderFor<Cpal> for BackendBuilder {
+    fn build(self) -> Result<Cpal, Box<Error>> {
+        let evl = cpal_backend::prepare_cpal_loop()?;
+        Ok(Cpal {
+            cpal_eventloop: evl,
+            service: cpal_backend::AudioService {
+                input_buf: self.capture_buf,
+                output_buf: self.playback_buf,
+            },
+        })
+    }
+}
+
+impl Backend for Cpal {
+    fn run(self) {
+        self.service.run_cpal_loop(self.cpal_eventloop);
     }
 }
