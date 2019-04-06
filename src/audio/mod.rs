@@ -1,9 +1,10 @@
 extern crate cpal;
 
 use parking_lot::Mutex;
-use std::collections::VecDeque;
 use std::error::Error;
 use std::sync::Arc;
+
+use crate::samples::Samples;
 
 pub mod cpal_backend;
 
@@ -15,8 +16,8 @@ pub trait Backend {
 }
 
 pub struct BackendBuilder {
-    pub capture_buf: Arc<Mutex<VecDeque<f32>>>,
-    pub playback_buf: Arc<Mutex<VecDeque<f32>>>,
+    pub capture_buf: Arc<Mutex<Samples>>,
+    pub playback_buf: Arc<Mutex<Samples>>,
 }
 
 pub trait BackendBuilderFor<T: Backend> {

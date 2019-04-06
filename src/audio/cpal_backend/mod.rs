@@ -1,6 +1,7 @@
 use parking_lot::Mutex;
-use std::collections::VecDeque;
 use std::sync::Arc;
+
+use crate::samples::Samples;
 
 pub mod errors;
 pub mod input;
@@ -19,8 +20,8 @@ fn prepare_cpal_loop() -> Result<cpal::EventLoop, errors::Error> {
 }
 
 pub struct Backend {
-    input_buf: Arc<Mutex<VecDeque<f32>>>,
-    output_buf: Arc<Mutex<VecDeque<f32>>>,
+    input_buf: Arc<Mutex<Samples>>,
+    output_buf: Arc<Mutex<Samples>>,
     cpal_eventloop: cpal::EventLoop,
 }
 

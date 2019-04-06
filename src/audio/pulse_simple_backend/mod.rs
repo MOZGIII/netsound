@@ -7,16 +7,17 @@ use self::pulse::error::PAErr;
 use self::pulse::stream::Direction;
 
 use parking_lot::Mutex;
-use std::collections::VecDeque;
 use std::error::Error;
 use std::sync::Arc;
+
+use crate::samples::Samples;
 
 mod util;
 
 pub struct Backend {
-    playback_buf: Arc<Mutex<VecDeque<f32>>>,
+    playback_buf: Arc<Mutex<Samples>>,
     #[allow(dead_code)]
-    record_buf: Arc<Mutex<VecDeque<f32>>>,
+    record_buf: Arc<Mutex<Samples>>,
     pa_playback: Simple,
     #[allow(dead_code)]
     pa_record: Simple,
