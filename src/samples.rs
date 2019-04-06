@@ -1,4 +1,8 @@
+extern crate parking_lot;
+
+use self::parking_lot::Mutex;
 use std::collections::VecDeque;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Samples {
@@ -10,6 +14,10 @@ impl Samples {
         Samples {
             vecdec: VecDeque::with_capacity(capacity),
         }
+    }
+
+    pub fn shared_with_capacity(capacity: usize) -> SharedSamples {
+        Arc::new(Mutex::new(Self::with_capacity(capacity)))
     }
 }
 
@@ -26,3 +34,5 @@ impl std::ops::DerefMut for Samples {
         &mut self.vecdec
     }
 }
+
+pub type SharedSamples = Arc<Mutex<Samples>>;

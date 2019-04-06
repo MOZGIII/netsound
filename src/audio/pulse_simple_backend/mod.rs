@@ -6,18 +6,15 @@ use self::psimple::Simple;
 use self::pulse::error::PAErr;
 use self::pulse::stream::Direction;
 
-use parking_lot::Mutex;
 use std::error::Error;
-use std::sync::Arc;
-
-use crate::samples::Samples;
+use crate::samples::SharedSamples;
 
 mod util;
 
 pub struct Backend {
-    playback_buf: Arc<Mutex<Samples>>,
+    playback_buf: SharedSamples,
     #[allow(dead_code)]
-    record_buf: Arc<Mutex<Samples>>,
+    record_buf: SharedSamples,
     pa_playback: Simple,
     #[allow(dead_code)]
     pa_record: Simple,

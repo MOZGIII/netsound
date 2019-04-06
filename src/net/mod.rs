@@ -1,16 +1,14 @@
 use mio::net::UdpSocket;
 use mio::{Events, Poll, PollOpt, Ready, Token};
-use parking_lot::Mutex;
-use std::sync::Arc;
 use std::time::Duration;
 
-use crate::samples::Samples;
+use crate::samples::SharedSamples;
 
 mod udp_codec;
 
 pub struct NetService {
-    pub capture_buf: Arc<Mutex<Samples>>,
-    pub playback_buf: Arc<Mutex<Samples>>,
+    pub capture_buf: SharedSamples,
+    pub playback_buf: SharedSamples,
 }
 
 impl NetService {

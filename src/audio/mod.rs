@@ -1,10 +1,7 @@
 extern crate cpal;
 
-use parking_lot::Mutex;
+use crate::samples::SharedSamples;
 use std::error::Error;
-use std::sync::Arc;
-
-use crate::samples::Samples;
 
 pub mod cpal_backend;
 
@@ -16,8 +13,8 @@ pub trait Backend {
 }
 
 pub struct BackendBuilder {
-    pub capture_buf: Arc<Mutex<Samples>>,
-    pub playback_buf: Arc<Mutex<Samples>>,
+    pub capture_buf: SharedSamples,
+    pub playback_buf: SharedSamples,
 }
 
 pub trait BackendBuilderFor<T: Backend> {

@@ -1,7 +1,4 @@
-use parking_lot::Mutex;
-use std::sync::Arc;
-
-use crate::samples::Samples;
+use crate::samples::SharedSamples;
 
 pub mod errors;
 pub mod input;
@@ -20,8 +17,8 @@ fn prepare_cpal_loop() -> Result<cpal::EventLoop, errors::Error> {
 }
 
 pub struct Backend {
-    input_buf: Arc<Mutex<Samples>>,
-    output_buf: Arc<Mutex<Samples>>,
+    input_buf: SharedSamples,
+    output_buf: SharedSamples,
     cpal_eventloop: cpal::EventLoop,
 }
 

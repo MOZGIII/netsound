@@ -1,11 +1,8 @@
 extern crate byteorder;
 extern crate mio;
-extern crate parking_lot;
 
-use parking_lot::Mutex;
 use std::env;
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 use mio::net::UdpSocket;
 
@@ -13,10 +10,9 @@ mod audio;
 mod net;
 mod samples;
 
-use samples::Samples;
-
 use audio::Backend;
 use audio::BackendBuilderFor;
+use samples::Samples;
 
 type BoxedErr = Box<std::error::Error>;
 
@@ -34,8 +30,8 @@ fn main() -> Result<(), BoxedErr> {
     socket.connect(connect_addr.clone())?;
     println!("Connected to: {}", &connect_addr);
 
-    let capture_buf = Arc::new(Mutex::new(Samples::with_capacity(30_000_000)));
-    let playback_buf = Arc::new(Mutex::new(Samples::with_capacity(30_000_000)));
+    let capture_buf = Samples::shared_with_capacity(30_000_000);
+    let playback_buf = Samples::shared_with_capacity(30_000_000);
 
     let audio_backend_builder = audio::BackendBuilder {
         capture_buf: capture_buf.clone(),
