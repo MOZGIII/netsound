@@ -1,0 +1,55 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [{
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'netsound'",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=netsound",
+          "--package=netsound",
+          "--all-features"
+        ],
+        "filter": {
+          "name": "netsound",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "sourceMap": {
+        "/build/glibc-OTsEL5/glibc-2.27": "/home/mozgiii/package-sources/glibc-2.27",
+        "/build/glibc-OTsEL5/alsa-lib-1.1.3": "/home/mozgiii/package-sources/alsa-lib-1.1.3",
+        "/rustc/2aa4c46cfdd726e97360c2734835aa3515e8c858": "/home/mozgiii/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust",
+        "src/pulsecore": "/home/mozgiii/package-sources/pulseaudio-11.1/src/pulsecore",
+        "src/pulse": "/home/mozgiii/package-sources/pulseaudio-11.1/src/pulse"
+      },
+      "env": {
+        "AUDIO_BACKEND": "pulse_simple"
+      }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'netsound'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=netsound",
+          "--package=netsound"
+        ],
+        "filter": {
+          "name": "netsound",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

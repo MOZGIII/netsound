@@ -9,6 +9,8 @@ pub struct Samples {
     vecdec: VecDeque<f32>,
 }
 
+pub type SharedSamples = Arc<Mutex<Samples>>;
+
 impl Samples {
     pub fn with_capacity(capacity: usize) -> Samples {
         Samples {
@@ -18,6 +20,31 @@ impl Samples {
 
     pub fn shared_with_capacity(capacity: usize) -> SharedSamples {
         Arc::new(Mutex::new(Self::with_capacity(capacity)))
+    }
+
+    pub fn read_f32(&mut self, buf: &mut [f32]) -> usize {
+        let vecdec = &mut self.vecdec;
+        let mut filled: usize = 0;
+        for mut chunk in buf.iter_mut() {
+            match vecdec.pop_front() {
+                None => break,
+                Some(sample) => {
+                    *chunk = sample;
+                    filled += 1;
+                }
+            }
+        }
+        filled
+    }
+
+    pub fn write_f32(&mut self, buf: &[f32]) -> usize {
+        let vecdec = &mut self.vecdec;
+        let mut filled: usize = 0;
+        for chunk in buf.iter() {
+            vecdec.push_back(*chunk);
+            filled += 1;
+        }
+        filled
     }
 }
 
@@ -34,5 +61,3 @@ impl std::ops::DerefMut for Samples {
         &mut self.vecdec
     }
 }
-
-pub type SharedSamples = Arc<Mutex<Samples>>;

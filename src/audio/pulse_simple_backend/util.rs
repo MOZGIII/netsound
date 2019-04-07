@@ -6,7 +6,7 @@ pub fn build_psimple(direction: Direction) -> Simple {
     let spec = sample::Spec {
         format: sample::SAMPLE_FLOAT32,
         channels: 2,
-        rate: 44100,
+        rate: 48000,
     };
     assert!(spec.is_valid());
 

@@ -1,5 +1,9 @@
+extern crate audiopus;
 extern crate byteorder;
 extern crate mio;
+
+#[cfg(test)]
+extern crate strerr;
 
 use std::env;
 use std::net::SocketAddr;
@@ -7,6 +11,8 @@ use std::net::SocketAddr;
 use mio::net::UdpSocket;
 
 mod audio;
+mod codec;
+mod formats;
 mod net;
 mod samples;
 
@@ -36,17 +42,45 @@ fn main() -> Result<(), BoxedErr> {
     let audio_backend_builder = audio::BackendBuilder {
         capture_buf: capture_buf.clone(),
         playback_buf: playback_buf.clone(),
+
+        request_capture_formats: formats::input(),
+        request_playback_formats: formats::output(),
     };
 
     let backend_to_use = AudioBackendToUse::from_env()?;
     println!("Using audio backend: {:?}", backend_to_use);
 
+    let codec_to_use = CodecToUse::from_env()?;
+    println!("Using codec: {:?}", codec_to_use);
+
     let audio_backend = build_audio_backend(backend_to_use, audio_backend_builder)?;
+
+    let capture_format = audio_backend.capture_format();
+    let mut encoder_buf: Vec<f32> = buffer((capture_format.sample_rate / 50) as usize);
+    let mut decoder_buf: Vec<f32> = buffer(960 * 10);
+
+    let (mut encoder, mut decoder): (Box<codec::Encoder>, Box<codec::Decoder>) = match codec_to_use
+    {
+        CodecToUse::Opus => {
+            let mut encoder = codec::opus::make_encoder(&capture_format, encoder_buf.as_mut())?;
+            let mut decoder =
+                codec::opus::make_decoder(&audio_backend.playback_format(), decoder_buf.as_mut())?;
+
+            (Box::new(encoder), Box::new(decoder))
+        }
+        CodecToUse::Raw => (
+            Box::new(codec::raw::Encoder {}),
+            Box::new(codec::raw::Decoder {}),
+        ),
+    };
+
     run_audio_backend(audio_backend)?;
 
-    let net_service = net::NetService {
+    let mut net_service = net::NetService {
         capture_buf: capture_buf.clone(),
         playback_buf: playback_buf.clone(),
+        encoder: &mut *encoder,
+        decoder: &mut *decoder,
     };
     net_service.r#loop(socket)?;
 
@@ -67,6 +101,26 @@ impl AudioBackendToUse {
             // Defaults.
             Ok(_) => AudioBackendToUse::Cpal,
             Err(std::env::VarError::NotPresent) => AudioBackendToUse::Cpal,
+            // Invalid value.
+            Err(e) => return Err(e),
+        })
+    }
+}
+
+#[derive(Debug)]
+enum CodecToUse {
+    Opus,
+    Raw,
+}
+
+impl CodecToUse {
+    fn from_env() -> Result<Self, std::env::VarError> {
+        Ok(match std::env::var("CODEC") {
+            Ok(ref val) if val == "opus" => CodecToUse::Opus,
+            Ok(ref val) if val == "raw" => CodecToUse::Raw,
+            // Defaults.
+            Ok(_) => CodecToUse::Opus,
+            Err(std::env::VarError::NotPresent) => CodecToUse::Opus,
             // Invalid value.
             Err(e) => return Err(e),
         })
@@ -103,4 +157,11 @@ fn run_audio_backend(audio_backend: Box<Backend + 'static>) -> Result<(), BoxedE
         local.run()
     });
     return Ok(());
+}
+
+fn buffer<T: Default + Clone>(size: usize) -> Vec<T> {
+    let mut vec = Vec::with_capacity(size);
+    let cap = vec.capacity();
+    vec.resize(cap, T::default());
+    return vec;
 }
