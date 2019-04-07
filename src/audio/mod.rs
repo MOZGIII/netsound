@@ -21,13 +21,19 @@ pub trait BackendBuilderFor<T: Backend>: Sized {
     fn build(self) -> Result<T, Box<Error>>;
 }
 
-pub trait BoxedBackendBuilderFor<'a, T: Backend + 'a>: BackendBuilderFor<T> {
+pub trait BoxedBackendBuilderFor<'a, T: Backend + 'a> {
+    type BackendType;
+    fn build_boxed(self) -> Result<Box<Backend + 'a>, Box<Error>>;
+}
+
+impl<'a, TBackend, TBuilder> BoxedBackendBuilderFor<'a, TBackend> for TBuilder
+where
+    TBackend: Backend + 'a,
+    TBuilder: BackendBuilderFor<TBackend>,
+{
+    type BackendType = TBackend;
+
     fn build_boxed(self) -> Result<Box<Backend + 'a>, Box<Error>> {
         Ok(Box::new(self.build()?))
     }
-}
-
-impl<'a, TBackend: Backend + 'a, TBuilder: BackendBuilderFor<TBackend>>
-    BoxedBackendBuilderFor<'a, TBackend> for TBuilder
-{
 }
