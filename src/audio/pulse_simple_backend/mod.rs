@@ -1,6 +1,6 @@
-extern crate libpulse_binding as pulse;
-extern crate libpulse_simple_binding as psimple;
 use byteorder::{ByteOrder, NativeEndian};
+use libpulse_binding as pulse;
+use libpulse_simple_binding as psimple;
 
 use self::psimple::Simple;
 use self::pulse::error::PAErr;
@@ -21,7 +21,7 @@ pub struct Backend {
 }
 
 impl super::BackendBuilderFor<Backend> for super::BackendBuilder {
-    fn build(self) -> Result<Backend, Box<Error>> {
+    fn build(self) -> Result<Backend, Box<dyn Error>> {
         let pa_playback = util::build_psimple(Direction::Playback);
         let pa_record = util::build_psimple(Direction::Record);
         Ok(Backend {

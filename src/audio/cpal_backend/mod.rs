@@ -23,7 +23,7 @@ pub struct Backend {
 }
 
 impl super::BackendBuilderFor<Backend> for super::BackendBuilder {
-    fn build(self) -> Result<Backend, Box<std::error::Error>> {
+    fn build(self) -> Result<Backend, Box<dyn std::error::Error>> {
         let evl = prepare_cpal_loop()?;
         Ok(Backend {
             input_buf: self.capture_buf,

@@ -1,5 +1,4 @@
-extern crate byteorder;
-extern crate mio;
+#![warn(rust_2018_idioms)]
 
 use std::env;
 use std::net::SocketAddr;
@@ -14,7 +13,7 @@ use audio::Backend;
 use audio::BoxedBackendBuilderFor;
 use samples::Samples;
 
-type BoxedErr = Box<std::error::Error>;
+type BoxedErr = Box<dyn std::error::Error>;
 
 fn main() -> Result<(), BoxedErr> {
     let bind_addr = env::args().nth(1).unwrap_or("127.0.0.1:8080".to_string());
@@ -76,28 +75,32 @@ impl AudioBackendToUse {
 fn build_audio_backend(
     backend_to_use: AudioBackendToUse,
     builder: audio::BackendBuilder,
-) -> Result<Box<Backend>, BoxedErr> {
+) -> Result<Box<dyn Backend>, BoxedErr> {
     match backend_to_use {
         AudioBackendToUse::Cpal => build_cpal_backend(builder),
         AudioBackendToUse::PulseSimple => build_pulse_simple_backend(builder),
     }
 }
 
-fn build_cpal_backend(builder: audio::BackendBuilder) -> Result<Box<Backend>, BoxedErr> {
+fn build_cpal_backend(builder: audio::BackendBuilder) -> Result<Box<dyn Backend>, BoxedErr> {
     BoxedBackendBuilderFor::<audio::cpal_backend::Backend>::build_boxed(builder)
 }
 
 #[cfg(feature = "pulse_simple_backend")]
-fn build_pulse_simple_backend(builder: audio::BackendBuilder) -> Result<Box<Backend>, BoxedErr> {
+fn build_pulse_simple_backend(
+    builder: audio::BackendBuilder,
+) -> Result<Box<dyn Backend>, BoxedErr> {
     BoxedBackendBuilderFor::<audio::pulse_simple_backend::Backend>::build_boxed(builder)
 }
 
 #[cfg(not(feature = "pulse_simple_backend"))]
-fn build_pulse_simple_backend(_builder: audio::BackendBuilder) -> Result<Box<Backend>, BoxedErr> {
+fn build_pulse_simple_backend(
+    _builder: audio::BackendBuilder,
+) -> Result<Box<dyn Backend>, BoxedErr> {
     unimplemented!();
 }
 
-fn run_audio_backend(audio_backend: Box<Backend + 'static>) -> Result<(), BoxedErr> {
+fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) -> Result<(), BoxedErr> {
     std::thread::spawn(move || {
         let mut local = audio_backend;
         local.run()

@@ -1,4 +1,4 @@
-extern crate parking_lot;
+use parking_lot;
 
 use self::parking_lot::Mutex;
 use std::collections::VecDeque;

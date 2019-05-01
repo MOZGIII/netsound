@@ -14,7 +14,7 @@ pub fn build_default_stream(
     Ok(stream_id)
 }
 
-pub fn extend(from: cpal::UnknownTypeInputBuffer, to: &mut std::collections::VecDeque<f32>) {
+pub fn extend(from: cpal::UnknownTypeInputBuffer<'_>, to: &mut std::collections::VecDeque<f32>) {
     match from {
         cpal::UnknownTypeInputBuffer::U16(buffer) => {
             for sample in buffer.iter() {
