@@ -10,7 +10,7 @@ parking_lot = "0.7"
 
 [dependencies.cpal]
 git = "https://github.com/MOZGIII/cpal.git"
-rev = "3402c2fcd65a5521b671b092277a492e301c36a2"
+rev = "0354548426f7b4c48392cae9876a3e77ea5c1c40"
 
 [dependencies.libpulse-binding]
 git = "https://github.com/MOZGIII/pulse-binding-rust.git"
