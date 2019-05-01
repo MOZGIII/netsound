@@ -9,7 +9,7 @@ pub mod cpal_backend;
 pub mod pulse_simple_backend;
 
 pub trait Backend: Send + Sync {
-    fn run(self);
+    fn run(&mut self);
 }
 
 pub struct BackendBuilder {

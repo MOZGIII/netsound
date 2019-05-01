@@ -34,9 +34,9 @@ impl super::BackendBuilderFor<Backend> for super::BackendBuilder {
 }
 
 impl super::Backend for Backend {
-    fn run(self) {
-        let shared_input_buf = self.input_buf;
-        let shared_output_buf = self.output_buf;
+    fn run(&mut self) {
+        let shared_input_buf = &self.input_buf;
+        let shared_output_buf = &self.output_buf;
         self.cpal_eventloop.run(move |_, data| {
             match data {
                 cpal::StreamData::Input { buffer: input_buf } => {

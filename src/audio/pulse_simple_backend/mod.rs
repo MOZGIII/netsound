@@ -6,8 +6,8 @@ use self::psimple::Simple;
 use self::pulse::error::PAErr;
 use self::pulse::stream::Direction;
 
-use std::error::Error;
 use crate::samples::SharedSamples;
+use std::error::Error;
 
 mod util;
 
@@ -34,7 +34,7 @@ impl super::BackendBuilderFor<Backend> for super::BackendBuilder {
 }
 
 impl super::Backend for Backend {
-    fn run(self) {
+    fn run(&mut self) {
         let mut buff = [0u8; 102400 * 4];
 
         loop {
