@@ -1,0 +1,11 @@
+kind: pipeline
+name: default
+
+steps:
+  - name: test
+    image: rust
+    commands:
+      - apt-get update && apt-get install -y libasound-dev libopus-dev
+      - rustc --version --verbose
+      - cargo --version
+      - cargo test --verbose
