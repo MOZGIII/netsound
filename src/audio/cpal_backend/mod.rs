@@ -1,36 +1,68 @@
 use crate::samples::SharedSamples;
 
+pub mod default;
 pub mod errors;
+pub mod format;
 pub mod input;
 pub mod output;
-
-fn prepare_cpal_loop() -> Result<cpal::EventLoop, errors::Error> {
-    let event_loop = cpal::EventLoop::new();
-
-    let input_stream_id = input::build_default_stream(&event_loop)?;
-    event_loop.play_stream(input_stream_id);
-
-    let output_stream_id = output::build_default_stream(&event_loop)?;
-    event_loop.play_stream(output_stream_id);
-
-    Ok(event_loop)
-}
 
 pub struct Backend {
     input_buf: SharedSamples,
     output_buf: SharedSamples,
+
+    input_format: cpal::Format,
+    output_format: cpal::Format,
+
+    #[allow(dead_code)]
+    input_stream_id: cpal::StreamId,
+    #[allow(dead_code)]
+    output_stream_id: cpal::StreamId,
+
     cpal_eventloop: cpal::EventLoop,
 }
 
-impl super::BackendBuilderFor<Backend> for super::BackendBuilder {
+impl<'a> super::BackendBuilderFor<Backend> for super::BackendBuilder<'a> {
     fn build(self) -> Result<Backend, Box<dyn std::error::Error>> {
-        let evl = prepare_cpal_loop()?;
-        Ok(Backend {
-            input_buf: self.capture_buf,
-            output_buf: self.playback_buf,
-            cpal_eventloop: evl,
-        })
+        Ok(build(self)?)
     }
+}
+
+fn build(builder: super::BackendBuilder<'_>) -> Result<Backend, errors::Error> {
+    let event_loop = cpal::EventLoop::new();
+
+    let output_device = default::output_device()?;
+    let input_device = default::input_device()?;
+
+    let output_format = format::choose(
+        &mut output_device.supported_output_formats()?,
+        builder.request_playback_formats,
+    )?;
+    let input_format = format::choose(
+        &mut input_device.supported_input_formats()?,
+        builder.request_capture_formats,
+    )?;
+
+    print_config("Input", &input_device, &input_format);
+    print_config("Output", &output_device, &output_format);
+
+    let output_stream_id = event_loop.build_output_stream(&output_device, &output_format)?;
+    let input_stream_id = event_loop.build_input_stream(&input_device, &input_format)?;
+
+    event_loop.play_stream(output_stream_id.clone());
+    event_loop.play_stream(input_stream_id.clone());
+
+    Ok(Backend {
+        input_buf: builder.capture_buf,
+        output_buf: builder.playback_buf,
+
+        input_format: input_format,
+        output_format: output_format,
+
+        input_stream_id: input_stream_id,
+        output_stream_id: output_stream_id,
+
+        cpal_eventloop: event_loop,
+    })
 }
 
 impl super::Backend for Backend {
@@ -53,4 +85,36 @@ impl super::Backend for Backend {
             };
         });
     }
+
+    fn capture_format(&self) -> super::Format {
+        super::Format::from(&self.input_format)
+    }
+
+    fn playback_format(&self) -> super::Format {
+        super::Format::from(&self.output_format)
+    }
+}
+
+impl From<&cpal::Format> for super::Format {
+    fn from(f: &cpal::Format) -> Self {
+        super::Format {
+            channels: f.channels,
+            sample_rate: f.sample_rate.0,
+        }
+    }
+}
+
+impl Into<cpal::Format> for &super::Format {
+    fn into(self) -> cpal::Format {
+        cpal::Format {
+            channels: self.channels.into(),
+            sample_rate: cpal::SampleRate(self.sample_rate),
+            data_type: cpal::SampleFormat::F32,
+        }
+    }
+}
+
+fn print_config(name: &'static str, device: &cpal::Device, format: &cpal::Format) {
+    println!("{} device: {}", name, device.name());
+    println!("{} format: {:?}", name, format);
 }

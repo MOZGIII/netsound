@@ -8,6 +8,7 @@ edition = "2018"
 byteorder = "1.3"
 mio = "0.6"
 parking_lot = "0.7"
+audiopus = "0.1"
 
 [dependencies.cpal]
 git = "https://github.com/MOZGIII/cpal.git"
@@ -25,5 +26,9 @@ rev = "251032e29fa5ce287a814774d29378932afc0ab0"
 default-features = false
 optional = true
 
+[dependencies.crossbeam-utils]
+version = "0.6"
+optional = true
+
 [features]
-pulse_simple_backend = ["libpulse-binding", "libpulse-simple-binding"]
+pulse_simple_backend = ["libpulse-binding", "libpulse-simple-binding", "crossbeam-utils"]

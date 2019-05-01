@@ -6,13 +6,25 @@ pub mod cpal_backend;
 #[cfg(feature = "pulse_simple_backend")]
 pub mod pulse_simple_backend;
 
-pub trait Backend: Send + Sync {
-    fn run(&mut self);
+#[derive(Debug, Clone, Copy)]
+pub struct Format {
+    pub channels: u16,
+    pub sample_rate: u32,
 }
 
-pub struct BackendBuilder {
+pub trait Backend: Send + Sync {
+    fn run(&mut self);
+
+    fn capture_format(&self) -> Format;
+    fn playback_format(&self) -> Format;
+}
+
+pub struct BackendBuilder<'a> {
     pub capture_buf: SharedSamples,
     pub playback_buf: SharedSamples,
+
+    pub request_capture_formats: &'a [Format],
+    pub request_playback_formats: &'a [Format],
 }
 
 pub trait BackendBuilderFor<T: Backend>: Sized {
