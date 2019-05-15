@@ -1,0 +1,3 @@
+#!/bin/bash
+set -euo pipefail
+exec aplay -v -f FLOAT_LE -r 48000 -c 2 "$@"

@@ -1,0 +1,10 @@
+#!/bin/bash
+set -euo pipefail
+
+HOST="$1"
+shift
+
+PORT="$1"
+shift
+
+exec socat - "udp4-sendto:$HOST:$PORT" "$@"

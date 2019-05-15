@@ -1,0 +1,3 @@
+#!/bin/bash
+set -euo pipefail
+exec arecord -v -f FLOAT_LE -t raw -r 48000 -c 2 "$@"
