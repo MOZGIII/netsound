@@ -126,4 +126,5 @@ fn print_config(name: &'static str, device: &cpal::Device, format: &cpal::Format
             "big"
         }
     );
+    println!("{} operation mode: {}", name, "interleaved");
 }
