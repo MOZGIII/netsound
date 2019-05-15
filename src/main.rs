@@ -78,6 +78,7 @@ fn main() -> Result<(), BoxedErr> {
         playback_buf: playback_buf.clone(),
         encoder: &mut *encoder,
         decoder: &mut *decoder,
+        stats: net::Stats::default(),
     };
     net_service.r#loop(socket)?;
 

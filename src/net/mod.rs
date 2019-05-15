@@ -5,11 +5,30 @@ use std::time::Duration;
 use crate::codec::{Decoder, DecodingError, Encoder};
 use crate::samples::SharedSamples;
 
+#[derive(Debug, Default)]
+pub struct Stats {
+    pub send_ready_but_empty_capture_buf: usize,
+    pub frames_encoded: usize,
+    pub bytes_encoded: usize,
+    pub packets_sent: usize,
+    pub bytes_sent: usize,
+    pub bytes_sent_mismatches: usize,
+
+    pub packets_read: usize,
+    pub bytes_read: usize,
+    pub samples_decoded: usize,
+    pub frames_decoded: usize,
+    pub empty_packets_read: usize,
+    pub empty_packets_decoding_errors: usize,
+}
+
 pub struct NetService<'a> {
     pub capture_buf: SharedSamples,
     pub playback_buf: SharedSamples,
     pub encoder: &'a mut dyn Encoder,
     pub decoder: &'a mut dyn Decoder,
+
+    pub stats: Stats,
 }
 
 impl<'a> NetService<'a> {
@@ -46,19 +65,28 @@ impl<'a> NetService<'a> {
                 }
             }
 
+            let mut print_stats = false;
+
             if !ready_to_write_consumed {
                 let mut capture_buf = self.capture_buf.lock();
                 if !capture_buf.is_empty() {
                     match self.encoder.encode(&mut capture_buf, &mut send_buf) {
                         Ok(bytes_to_send) => {
+                            self.stats.frames_encoded += 1;
+                            self.stats.bytes_encoded += bytes_to_send;
+
                             ready_to_write_consumed = true;
+                            print_stats = true;
                             let bytes_sent = socket.send(&send_buf[..bytes_to_send])?;
+                            self.stats.packets_sent += 1;
+                            self.stats.bytes_sent += bytes_sent;
 
                             if bytes_sent != bytes_to_send {
                                 println!(
                                     "sent {} bytes while expecting to send {} bytes ({} buffer size)",
                                     bytes_sent, bytes_to_send, send_buf.len(),
                                 );
+                                self.stats.bytes_sent_mismatches += 1;
                             }
 
                             // println!(
@@ -72,17 +100,21 @@ impl<'a> NetService<'a> {
                         }
                     };
                 } else {
-                    println!(
-                        "Attempted to send an empty packet, capture buffer len: {}",
-                        capture_buf.len()
-                    );
+                    // println!(
+                    //     "Attempted to send an empty packet, capture buffer len: {}",
+                    //     capture_buf.len()
+                    // );
+                    self.stats.send_ready_but_empty_capture_buf += 1;
                 }
             }
 
             if !ready_to_read_consumed {
                 ready_to_read_consumed = true;
+                print_stats = true;
                 let num_recv = socket.recv(&mut recv_buf)?;
                 // println!("Read a packet of {} bytes", num_recv);
+                self.stats.packets_read += 1;
+                self.stats.bytes_read += num_recv;
 
                 if num_recv > 0 {
                     let mut playback_buf = self.playback_buf.lock();
@@ -91,13 +123,16 @@ impl<'a> NetService<'a> {
                         .decoder
                         .decode(&recv_buf[..num_recv], &mut playback_buf)
                     {
-                        Ok(_num_samples) => {
+                        Ok(num_samples) => {
                             // println!(
                             //     "Successfully decoded the packet into {} samples",
                             //     num_samples
                             // )
+                            self.stats.samples_decoded += num_samples;
+                            self.stats.frames_decoded += 1;
                         }
                         Err(DecodingError::EmptyPacket) => {
+                            self.stats.empty_packets_decoding_errors += 1;
                             // noop
                         }
                         Err(err) => {
@@ -107,7 +142,12 @@ impl<'a> NetService<'a> {
                     };
                 } else {
                     // println!("Skipped processing of an empty incoming packet");
+                    self.stats.empty_packets_read += 1;
                 }
+            }
+
+            if print_stats {
+                println!("network: {:?}", self.stats);
             }
         }
     }
