@@ -117,4 +117,13 @@ impl Into<cpal::Format> for &super::Format {
 fn print_config(name: &'static str, device: &cpal::Device, format: &cpal::Format) {
     println!("{} device: {}", name, device.name());
     println!("{} format: {:?}", name, format);
+    println!(
+        "{} endianness: {}",
+        name,
+        if cfg!(target_endian = "little") {
+            "little"
+        } else {
+            "big"
+        }
+    );
 }
