@@ -1,13 +1,13 @@
-use byteorder::{BigEndian, ByteOrder};
+use byteorder::ByteOrder;
 use std::collections::VecDeque;
 
-pub fn encode(input: &mut VecDeque<f32>, output: &mut [u8]) -> usize {
+pub fn encode<E: ByteOrder>(input: &mut VecDeque<f32>, output: &mut [u8]) -> usize {
     let mut filled = 0;
     for mut chunk in output.chunks_exact_mut(4) {
         match input.pop_front() {
             None => break,
             Some(sample) => {
-                BigEndian::write_f32(&mut chunk, sample);
+                E::write_f32(&mut chunk, sample);
                 filled += 4;
             }
         }
@@ -21,7 +21,8 @@ fn test_encode() {
     let mut input: VecDeque<f32> = (0..1024).map(|sample| sample as f32).collect();
     let f32_size_in_bytes = 32 / 8;
 
-    let filled = encode(&mut input, &mut output);
+    use byteorder::BigEndian;
+    let filled = encode::<BigEndian>(&mut input, &mut output);
 
     // The whole buffer should be filled in.
     assert_eq!(filled, 32);
@@ -38,7 +39,8 @@ fn test_encode_values() {
     let f32_size_in_bytes = std::mem::size_of::<f32>();
     let input_len_before_op = input.len();
 
-    let filled = encode(&mut input, &mut output);
+    use byteorder::BigEndian;
+    let filled = encode::<BigEndian>(&mut input, &mut output);
     assert_eq!(filled, input_len_before_op * f32_size_in_bytes);
     assert_eq!(input.len(), 0);
 
@@ -65,10 +67,10 @@ fn test_encode_values() {
     );
 }
 
-pub fn decode(input: &[u8], output: &mut VecDeque<f32>) -> usize {
+pub fn decode<E: ByteOrder>(input: &[u8], output: &mut VecDeque<f32>) -> usize {
     let mut filled = 0;
     for chunk in input.chunks(4) {
-        let sample = BigEndian::read_f32(&chunk);
+        let sample = E::read_f32(&chunk);
         output.push_back(sample);
         filled += 1;
     }
@@ -81,7 +83,8 @@ fn test_decode() {
     let input = [0u8; 32];
     let f32_size_in_bytes = 32 / 8;
 
-    decode(&input, &mut output);
+    use byteorder::BigEndian;
+    decode::<BigEndian>(&input, &mut output);
     assert_eq!(output.len(), 1024 + (input.len() / f32_size_in_bytes));
 }
 
@@ -99,13 +102,14 @@ fn test_e2e() {
     for _ in 0..full_rotation {
         // dbg!(&vecdeque);
 
-        let filled = encode(&mut vecdeque, &mut send_recv_buf);
+        use byteorder::BigEndian;
+        let filled = encode::<BigEndian>(&mut vecdeque, &mut send_recv_buf);
         assert_eq!(filled, send_recv_buf.len());
         assert_eq!(vecdeque.len(), sample.len() - samples_per_op);
 
         // dbg!(&vecdeque);
 
-        decode(&send_recv_buf, &mut vecdeque);
+        decode::<BigEndian>(&send_recv_buf, &mut vecdeque);
         assert_eq!(vecdeque.len(), sample.len());
 
         // dbg!(&vecdeque);
