@@ -29,7 +29,7 @@ impl<'a> super::super::Decoder for Decoder<'a> {
         input: &[u8],
         output: &mut Samples,
     ) -> Result<usize, super::super::DecodingError> {
-        self.decode_float(input, output, true)
+        self.decode_float(input, output, false)
             .map_err(|err| err.into())
     }
 }
