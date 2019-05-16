@@ -5,6 +5,7 @@ use audiopus::coder::Decoder as OpusDecoder;
 pub struct Decoder<'a> {
     pub opus: OpusDecoder,
     pub buf: &'a mut [f32],
+    pub fec: bool,
 }
 
 impl<'a> Decoder<'a> {
@@ -29,7 +30,7 @@ impl<'a> super::super::Decoder for Decoder<'a> {
         input: &[u8],
         output: &mut Samples,
     ) -> Result<usize, super::super::DecodingError> {
-        self.decode_float(input, output, false)
+        self.decode_float(input, output, self.fec)
             .map_err(|err| err.into())
     }
 }
