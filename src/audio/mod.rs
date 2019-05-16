@@ -19,6 +19,7 @@ pub trait Backend: Send + Sync {
     fn playback_format(&self) -> Format;
 }
 
+#[derive(Debug)]
 pub struct BackendBuilder<'a> {
     pub capture_buf: SharedSamples,
     pub playback_buf: SharedSamples,
