@@ -2,7 +2,7 @@ use crate::samples::Samples;
 
 mod codec;
 
-pub type Endian = byteorder::BigEndian;
+pub type Endian = byteorder::LittleEndian;
 
 pub struct Encoder {}
 
