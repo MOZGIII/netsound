@@ -4,6 +4,7 @@ mod codec;
 
 pub type Endian = byteorder::LittleEndian;
 
+#[derive(Debug)]
 pub struct Encoder {}
 
 impl super::Encoder for Encoder {
@@ -16,6 +17,7 @@ impl super::Encoder for Encoder {
     }
 }
 
+#[derive(Debug)]
 pub struct Decoder {}
 
 impl super::Decoder for Decoder {

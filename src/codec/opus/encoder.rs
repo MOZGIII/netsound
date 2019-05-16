@@ -2,6 +2,7 @@ use super::Error;
 use crate::samples::Samples;
 use audiopus::coder::Encoder as OpusEncoder;
 
+#[derive(Debug)]
 pub struct Encoder<'a> {
     pub opus: OpusEncoder,
     pub buf: &'a mut [f32],
