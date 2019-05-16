@@ -2,12 +2,24 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum Error {
+    NotEnoughData {
+        bytes_available: usize,
+        bytes_required: usize,
+    },
     OpusError(audiopus::Error),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Error::NotEnoughData {
+                bytes_available,
+                bytes_required,
+            } => write!(
+                f,
+                "Not enough data: {} bytes available, {} bytes required",
+                bytes_available, bytes_required
+            ),
             Error::OpusError(err) => write!(f, "Opus Error: {}", err),
         }
     }
@@ -24,6 +36,7 @@ impl From<audiopus::Error> for Error {
 impl Into<super::super::EncodingError> for Error {
     fn into(self) -> super::super::EncodingError {
         match self {
+            Error::NotEnoughData { .. } => super::super::EncodingError::NotEnoughData,
             err => super::super::EncodingError::Other(err.into()),
         }
     }

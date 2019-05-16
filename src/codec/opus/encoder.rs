@@ -9,8 +9,13 @@ pub struct Encoder<'a> {
 
 impl<'a> Encoder<'a> {
     pub fn encode_float(&mut self, input: &mut Samples, output: &mut [u8]) -> Result<usize, Error> {
-        if input.len() < self.buf.len() {
-            return Ok(0);
+        let bytes_available = input.len();
+        let bytes_required = self.buf.len();
+        if bytes_available < bytes_required {
+            return Err(Error::NotEnoughData {
+                bytes_available,
+                bytes_required,
+            });
         }
 
         let size = input.read_f32(self.buf);

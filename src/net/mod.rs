@@ -2,7 +2,7 @@ use mio::net::UdpSocket;
 use mio::{Events, Poll, PollOpt, Ready, Token};
 use std::time::Duration;
 
-use crate::codec::{Decoder, DecodingError, Encoder};
+use crate::codec::{Decoder, DecodingError, Encoder, EncodingError};
 use crate::samples::SharedSamples;
 
 #[derive(Debug, Default)]
@@ -10,6 +10,7 @@ pub struct Stats {
     pub send_ready_but_empty_capture_buf: usize,
     pub frames_encoded: usize,
     pub bytes_encoded: usize,
+    pub not_enough_data_at_encoding_errors: usize,
     pub packets_sent: usize,
     pub bytes_sent: usize,
     pub bytes_sent_mismatches: usize,
@@ -93,6 +94,9 @@ impl<'a> NetService<'a> {
                             //     "Sent a non-empty packet, capture buffer len: {}",
                             //     capture_buf.len()
                             // );
+                        }
+                        Err(EncodingError::NotEnoughData) => {
+                            self.stats.not_enough_data_at_encoding_errors += 1;
                         }
                         Err(err) => {
                             println!("Encoding failed: {}", &err);

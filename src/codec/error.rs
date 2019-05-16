@@ -2,6 +2,7 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum EncodingError {
+    NotEnoughData,
     Other(Box<dyn std::error::Error>),
 }
 
@@ -14,6 +15,7 @@ pub enum DecodingError {
 impl fmt::Display for EncodingError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            EncodingError::NotEnoughData => write!(f, "Not enough data to construct a packet"),
             EncodingError::Other(err) => err.fmt(f),
         }
     }
