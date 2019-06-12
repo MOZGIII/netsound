@@ -1,4 +1,5 @@
 {
   "editor.formatOnSave": true,
-  "rust.all_features": true
+  "rust.all_features": true,
+  "lldb.adapterType": "native"
 }

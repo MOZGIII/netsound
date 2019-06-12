@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'netsound'",
+      "cargo": {
+        "args": ["build", "--bin=netsound", "--package=netsound"],
+        "filter": {
+          "name": "netsound",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preRunCommands": [
+        "command script import ${workspaceRoot}/support/lldb/prelaunch.py"
+      ]
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'netsound'",
+      "cargo": {
+        "args": ["test", "--no-run", "--bin=netsound", "--package=netsound"],
+        "filter": {
+          "name": "netsound",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
