@@ -28,6 +28,8 @@ fn main() -> Result<(), BoxedErr> {
 
     // TODO: use `socket.peer_addr()` when it lands to stable.
     // https://github.com/rust-lang/rust/issues/59127
+    // MIO support is also required.
+    // https://github.com/tokio-rs/mio/issues/977
     socket.connect(connect_addr.clone())?;
     println!("Connected to: {}", &connect_addr);
 
