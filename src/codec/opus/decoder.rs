@@ -7,6 +7,7 @@ pub struct Decoder<'a> {
     pub opus: OpusDecoder,
     pub buf: &'a mut [f32],
     pub fec: bool,
+    pub channels: usize,
 }
 
 impl<'a> Decoder<'a> {
@@ -16,11 +17,12 @@ impl<'a> Decoder<'a> {
         output: &mut Samples,
         fec: bool,
     ) -> Result<usize, Error> {
-        let size = {
+        let audiosize = {
             let buf = &mut self.buf[..];
             self.opus.decode_float(input, buf, fec)?
         };
-        let size = output.write_f32(&self.buf[..size]);
+        let bufsize = audiosize * self.channels;
+        let size = output.write_f32(&self.buf[..bufsize]);
         Ok(size)
     }
 }

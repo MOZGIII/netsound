@@ -29,5 +29,6 @@ pub fn make_decoder<'a>(format: &Format, buf: &'a mut [f32]) -> Result<Decoder<'
         opus: dec,
         buf: buf.as_mut(),
         fec: false,
+        channels: (channels as usize),
     })
 }
