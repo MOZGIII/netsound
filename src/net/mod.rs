@@ -36,6 +36,7 @@ where
     pub stats: Stats,
 }
 
+#[allow(dead_code)]
 pub type DynNetService<'a> = NetService<'a, dyn Encoder + 'a, dyn Decoder + 'a>;
 
 impl<'a, E, D> NetService<'a, E, D>
