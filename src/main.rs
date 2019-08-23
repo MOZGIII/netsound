@@ -75,7 +75,7 @@ fn main() -> Result<(), BoxedErr> {
 
     run_audio_backend(audio_backend)?;
 
-    let mut net_service = net::NetService {
+    let mut net_service = net::DynNetService {
         capture_buf: capture_buf.clone(),
         playback_buf: playback_buf.clone(),
         encoder: &mut *encoder,

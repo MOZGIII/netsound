@@ -23,16 +23,26 @@ pub struct Stats {
     pub empty_packets_decoding_errors: usize,
 }
 
-pub struct NetService<'a> {
+pub struct NetService<'a, E, D>
+where
+    E: Encoder + ?Sized,
+    D: Decoder + ?Sized,
+{
     pub capture_buf: SharedSamples,
     pub playback_buf: SharedSamples,
-    pub encoder: &'a mut dyn Encoder,
-    pub decoder: &'a mut dyn Decoder,
+    pub encoder: &'a mut E,
+    pub decoder: &'a mut D,
 
     pub stats: Stats,
 }
 
-impl<'a> NetService<'a> {
+pub type DynNetService<'a> = NetService<'a, dyn Encoder + 'a, dyn Decoder + 'a>;
+
+impl<'a, E, D> NetService<'a, E, D>
+where
+    E: Encoder + ?Sized,
+    D: Decoder + ?Sized,
+{
     pub fn r#loop(&mut self, socket: UdpSocket) -> Result<(), Box<dyn std::error::Error>> {
         const SOCKET: Token = Token(0);
 
