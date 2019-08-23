@@ -4,8 +4,8 @@ use audiopus::coder::Encoder as OpusEncoder;
 
 #[derive(Debug)]
 pub struct Encoder<'a> {
-    pub opus: OpusEncoder,
-    pub buf: &'a mut [f32],
+    pub(super) opus: OpusEncoder,
+    pub(super) buf: &'a mut [f32],
 }
 
 impl<'a> Encoder<'a> {

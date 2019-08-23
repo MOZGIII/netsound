@@ -4,10 +4,10 @@ use audiopus::coder::Decoder as OpusDecoder;
 
 #[derive(Debug)]
 pub struct Decoder<'a> {
-    pub opus: OpusDecoder,
-    pub buf: &'a mut [f32],
-    pub fec: bool,
-    pub channels: usize,
+    pub(super) opus: OpusDecoder,
+    pub(super) buf: &'a mut [f32],
+    pub(super) fec: bool,
+    pub(super) channels: usize,
 }
 
 impl<'a> Decoder<'a> {
