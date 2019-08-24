@@ -32,3 +32,20 @@ pub fn make_decoder<'a>(format: &Format, buf: &'a mut [f32]) -> Result<Decoder<'
         channels: (channels as usize),
     })
 }
+
+#[allow(dead_code)]
+pub enum FrameDurationMS {
+    F2p5,
+    F5,
+    F10,
+    F20,
+    F40,
+    F60,
+}
+
+#[allow(unused_variables)]
+pub fn buf_size(format: &Format, frame_duration_ms: FrameDurationMS, fec: bool) -> usize {
+    // TODO: implement more optimized way of doing it.
+    // See https://tools.ietf.org/html/rfc6716#section-2
+    (format.sample_rate as usize) / 25 * 3
+}

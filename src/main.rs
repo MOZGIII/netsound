@@ -53,25 +53,42 @@ fn main() -> Result<(), BoxedErr> {
     let audio_backend = build_audio_backend(backend_to_use, audio_backend_builder)?;
 
     let capture_format = audio_backend.capture_format();
-    let mut encoder_buf: Vec<f32> = buffer((capture_format.sample_rate / 50) as usize);
-    let mut decoder_buf: Vec<f32> = buffer(960 * 10);
+    let playback_format = audio_backend.playback_format();
 
-    let (mut encoder, mut decoder): (Box<dyn codec::Encoder>, Box<dyn codec::Decoder>) =
-        match codec_to_use {
-            CodecToUse::Opus => {
-                let encoder = codec::opus::make_encoder(&capture_format, encoder_buf.as_mut())?;
-                let decoder = codec::opus::make_decoder(
-                    &audio_backend.playback_format(),
-                    decoder_buf.as_mut(),
-                )?;
+    // opus codec state
+    let mut opus_encoder_buf: Vec<f32>;
+    let mut opus_decoder_buf: Vec<f32>;
 
-                (Box::new(encoder), Box::new(decoder))
-            }
-            CodecToUse::Raw => (
-                Box::new(codec::raw::Encoder {}),
-                Box::new(codec::raw::Decoder {}),
-            ),
-        };
+    let mut encoder: Box<dyn codec::Encoder>;
+    let mut decoder: Box<dyn codec::Decoder>;
+
+    match codec_to_use {
+        CodecToUse::Opus => {
+            opus_encoder_buf = buffer(codec::opus::buf_size(
+                &capture_format,
+                codec::opus::FrameDurationMS::F20,
+                false,
+            ));
+            opus_decoder_buf = buffer(codec::opus::buf_size(
+                &playback_format,
+                codec::opus::FrameDurationMS::F20,
+                false,
+            ));
+
+            encoder = Box::new(codec::opus::make_encoder(
+                &capture_format,
+                opus_encoder_buf.as_mut(),
+            )?);
+            decoder = Box::new(codec::opus::make_decoder(
+                &audio_backend.playback_format(),
+                opus_decoder_buf.as_mut(),
+            )?);
+        }
+        CodecToUse::Raw => {
+            encoder = Box::new(codec::raw::Encoder {});
+            decoder = Box::new(codec::raw::Decoder {});
+        }
+    };
 
     run_audio_backend(audio_backend)?;
 
