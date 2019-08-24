@@ -55,21 +55,17 @@ fn main() -> Result<(), BoxedErr> {
     let capture_format = audio_backend.capture_format();
     let playback_format = audio_backend.playback_format();
 
-    // opus codec state
-    let mut opus_encoder_buf: Vec<f32>;
-    let mut opus_decoder_buf: Vec<f32>;
-
     let mut encoder: Box<dyn codec::Encoder>;
     let mut decoder: Box<dyn codec::Decoder>;
 
     match codec_to_use {
         CodecToUse::Opus => {
-            opus_encoder_buf = buffer(codec::opus::buf_size(
+            let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
                 &capture_format,
                 codec::opus::FrameDurationMS::F20,
                 false,
             ));
-            opus_decoder_buf = buffer(codec::opus::buf_size(
+            let opus_decoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
                 &playback_format,
                 codec::opus::FrameDurationMS::F20,
                 false,
@@ -77,11 +73,11 @@ fn main() -> Result<(), BoxedErr> {
 
             encoder = Box::new(codec::opus::make_encoder(
                 &capture_format,
-                opus_encoder_buf.as_mut(),
+                opus_encoder_buf,
             )?);
             decoder = Box::new(codec::opus::make_decoder(
                 &audio_backend.playback_format(),
-                opus_decoder_buf.as_mut(),
+                opus_decoder_buf,
             )?);
         }
         CodecToUse::Raw => {
@@ -178,9 +174,9 @@ fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) -> Result<(), Bo
     return Ok(());
 }
 
-fn buffer<T: Default + Clone>(size: usize) -> Vec<T> {
+fn buffer<T: Default + Clone>(size: usize) -> Box<[T]> {
     let mut vec = Vec::with_capacity(size);
     let cap = vec.capacity();
     vec.resize(cap, T::default());
-    return vec;
+    return vec.into();
 }

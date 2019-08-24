@@ -3,14 +3,14 @@ use crate::samples::Samples;
 use audiopus::coder::Decoder as OpusDecoder;
 
 #[derive(Debug)]
-pub struct Decoder<'a> {
+pub struct Decoder {
     pub(super) opus: OpusDecoder,
-    pub(super) buf: &'a mut [f32],
+    pub(super) buf: Box<[f32]>,
     pub(super) fec: bool,
     pub(super) channels: usize,
 }
 
-impl<'a> Decoder<'a> {
+impl Decoder {
     pub fn decode_float(
         &mut self,
         input: &[u8],
@@ -27,7 +27,7 @@ impl<'a> Decoder<'a> {
     }
 }
 
-impl<'a> super::super::Decoder for Decoder<'a> {
+impl super::super::Decoder for Decoder {
     fn decode(
         &mut self,
         input: &[u8],

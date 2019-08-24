@@ -9,25 +9,25 @@ pub use self::error::Error;
 use crate::audio::Format;
 use audiopus::TryFrom;
 
-pub fn make_encoder<'a>(format: &Format, buf: &'a mut [f32]) -> Result<Encoder<'a>, Error> {
+pub fn make_encoder(format: &Format, buf: Box<[f32]>) -> Result<Encoder, Error> {
     #[allow(unstable_name_collisions)]
     let sample_rate = audiopus::SampleRate::try_from(format.sample_rate as i32)?;
     let channels = audiopus::Channels::try_from(format.channels as i32)?;
     let enc = audiopus::coder::Encoder::new(sample_rate, channels, audiopus::Application::Audio)?;
     Ok(Encoder {
         opus: enc,
-        buf: buf.as_mut(),
+        buf,
     })
 }
 
-pub fn make_decoder<'a>(format: &Format, buf: &'a mut [f32]) -> Result<Decoder<'a>, Error> {
+pub fn make_decoder(format: &Format, buf: Box<[f32]>) -> Result<Decoder, Error> {
     #[allow(unstable_name_collisions)]
     let sample_rate = audiopus::SampleRate::try_from(format.sample_rate as i32)?;
     let channels = audiopus::Channels::try_from(format.channels as i32)?;
     let dec = audiopus::coder::Decoder::new(sample_rate, channels)?;
     Ok(Decoder {
         opus: dec,
-        buf: buf.as_mut(),
+        buf,
         fec: false,
         channels: (channels as usize),
     })
