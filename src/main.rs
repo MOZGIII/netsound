@@ -85,8 +85,8 @@ fn main() -> Result<(), BoxedErr> {
             )?);
         }
         CodecToUse::Raw => {
-            encoder = Box::new(codec::raw::Encoder {});
-            decoder = Box::new(codec::raw::Decoder {});
+            encoder = Box::new(codec::raw::Encoder);
+            decoder = Box::new(codec::raw::Decoder);
         }
     };
 
