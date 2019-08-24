@@ -131,7 +131,7 @@ impl CodecToUse {
             Ok(ref val) if val == "opus" => CodecToUse::Opus,
             Ok(ref val) if val == "raw" => CodecToUse::Raw,
             // Defaults.
-            Ok(_) | Err(std::env::VarError::NotPresent) => CodecToUse::Raw,
+            Ok(_) | Err(std::env::VarError::NotPresent) => CodecToUse::Opus,
             // Invalid value.
             Err(e) => return Err(e),
         })
