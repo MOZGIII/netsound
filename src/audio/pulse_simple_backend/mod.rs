@@ -29,8 +29,8 @@ impl<'a> super::BackendBuilderFor<Backend> for super::BackendBuilder<'a> {
         Ok(Backend {
             playback_buf: self.playback_buf,
             record_buf: self.capture_buf,
-            pa_playback: pa_playback,
-            pa_record: pa_record,
+            pa_playback,
+            pa_record,
         })
     }
 }
@@ -62,8 +62,8 @@ impl super::Backend for Backend {
 
                     let write_buff = &buff[..filled];
 
-                    if write_buff.len() > 0 {
-                        if let Err(PAErr(err)) = pa_playback.write(&buff[..filled]) {
+                    if !write_buff.is_empty() {
+                        if let Err(PAErr(err)) = pa_playback.write(write_buff) {
                             dbg!(err);
                             break;
                         }
@@ -82,8 +82,8 @@ impl super::Backend for Backend {
                     }
 
                     let mut record_buf = record_buf.lock();
-                    for mut chunk in read_buff.chunks_exact_mut(4) {
-                        let sample = NativeEndian::read_f32(&mut chunk);
+                    for chunk in read_buff.chunks_exact_mut(4) {
+                        let sample = NativeEndian::read_f32(&chunk);
                         record_buf.push_back(sample);
                     }
                 }

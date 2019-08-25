@@ -55,11 +55,11 @@ fn build(builder: super::BackendBuilder<'_>) -> Result<Backend, errors::Error> {
         input_buf: builder.capture_buf,
         output_buf: builder.playback_buf,
 
-        input_format: input_format,
-        output_format: output_format,
+        input_format,
+        output_format,
 
-        input_stream_id: input_stream_id,
-        output_stream_id: output_stream_id,
+        input_stream_id,
+        output_stream_id,
 
         cpal_eventloop: event_loop,
     })
@@ -107,7 +107,7 @@ impl From<&cpal::Format> for super::Format {
 impl Into<cpal::Format> for &super::Format {
     fn into(self) -> cpal::Format {
         cpal::Format {
-            channels: self.channels.into(),
+            channels: self.channels,
             sample_rate: cpal::SampleRate(self.sample_rate),
             data_type: cpal::SampleFormat::F32,
         }
@@ -126,5 +126,6 @@ fn print_config(name: &'static str, device: &cpal::Device, format: &cpal::Format
             "big"
         }
     );
-    println!("{} operation mode: {}", name, "interleaved");
+    // Always interleaved.
+    println!("{} operation mode: interleaved", name);
 }

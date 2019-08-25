@@ -18,8 +18,10 @@ use samples::Samples;
 type BoxedErr = Box<dyn std::error::Error>;
 
 fn main() -> Result<(), BoxedErr> {
-    let bind_addr = env::args().nth(1).unwrap_or("127.0.0.1:8080".to_string());
-    let connect_addr = env::args().nth(2).unwrap_or(bind_addr.clone());
+    let bind_addr = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+    let connect_addr = env::args().nth(2).unwrap_or_else(|| bind_addr.clone());
     let bind_addr: SocketAddr = bind_addr.parse()?;
     let connect_addr: SocketAddr = connect_addr.parse()?;
 
@@ -61,22 +63,19 @@ fn main() -> Result<(), BoxedErr> {
     match codec_to_use {
         CodecToUse::Opus => {
             let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                &capture_format,
+                capture_format,
                 codec::opus::FrameDurationMS::F20,
                 false,
             ));
             let opus_decoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                &playback_format,
+                playback_format,
                 codec::opus::FrameDurationMS::F20,
                 false,
             ));
 
-            encoder = Box::new(codec::opus::make_encoder(
-                &capture_format,
-                opus_encoder_buf,
-            )?);
+            encoder = Box::new(codec::opus::make_encoder(capture_format, opus_encoder_buf)?);
             decoder = Box::new(codec::opus::make_decoder(
-                &audio_backend.playback_format(),
+                playback_format,
                 opus_decoder_buf,
             )?);
         }
@@ -171,12 +170,12 @@ fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) -> Result<(), Bo
         let mut local = audio_backend;
         local.run()
     });
-    return Ok(());
+    Ok(())
 }
 
 fn buffer<T: Default + Clone>(size: usize) -> Box<[T]> {
     let mut vec = Vec::with_capacity(size);
     let cap = vec.capacity();
     vec.resize(cap, T::default());
-    return vec.into();
+    vec.into()
 }
