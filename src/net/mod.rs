@@ -1,5 +1,6 @@
 use mio::net::UdpSocket;
 use mio::{Events, Poll, PollOpt, Ready, Token};
+use std::net::SocketAddr;
 use std::time::Duration;
 
 use crate::codec::{Decoder, DecodingError, Encoder, EncodingError};
@@ -44,7 +45,7 @@ where
     E: Encoder + ?Sized,
     D: Decoder + ?Sized,
 {
-    pub fn r#loop(&mut self, socket: UdpSocket) -> Result<(), crate::Error> {
+    pub fn r#loop(&mut self, socket: UdpSocket, peer_addr: SocketAddr) -> Result<(), crate::Error> {
         const SOCKET: Token = Token(0);
 
         let poll = Poll::new()?;
@@ -89,7 +90,8 @@ where
 
                             ready_to_write_consumed = true;
                             print_stats = true;
-                            let bytes_sent = socket.send(&send_buf[..bytes_to_send])?;
+                            let bytes_sent =
+                                socket.send_to(&send_buf[..bytes_to_send], &peer_addr)?;
                             self.stats.packets_sent += 1;
                             self.stats.bytes_sent += bytes_sent;
 

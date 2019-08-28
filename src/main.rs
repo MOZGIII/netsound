@@ -21,19 +21,13 @@ fn main() -> Result<(), Error> {
     let bind_addr = env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:8080".to_string());
-    let connect_addr = env::args().nth(2).unwrap_or_else(|| bind_addr.clone());
+    let send_addr = env::args().nth(2).unwrap_or_else(|| bind_addr.clone());
     let bind_addr: SocketAddr = bind_addr.parse()?;
-    let connect_addr: SocketAddr = connect_addr.parse()?;
+    let send_addr: SocketAddr = send_addr.parse()?;
 
     let socket = UdpSocket::bind(&bind_addr)?;
     println!("Listening on: {}", socket.local_addr()?);
-
-    // TODO: use `socket.peer_addr()` when it lands to stable.
-    // https://github.com/rust-lang/rust/issues/59127
-    // MIO support is also required.
-    // https://github.com/tokio-rs/mio/issues/977
-    socket.connect(connect_addr.clone())?;
-    println!("Connected to: {}", &connect_addr);
+    println!("Sending to: {}", &send_addr);
 
     let capture_buf = Samples::shared_with_capacity(30_000_000);
     let playback_buf = Samples::shared_with_capacity(30_000_000);
@@ -94,7 +88,7 @@ fn main() -> Result<(), Error> {
         decoder: &mut *decoder,
         stats: net::Stats::default(),
     };
-    net_service.r#loop(socket)?;
+    net_service.r#loop(socket, send_addr)?;
 
     Ok(())
 }
