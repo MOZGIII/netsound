@@ -1,5 +1,5 @@
-pub fn choose<T: Iterator<Item = cpal::SupportedFormat>>(
-    iter: &mut T,
+pub fn choose<I: Iterator<Item = cpal::SupportedFormat>>(
+    iter: I,
     requested_formats: &[crate::audio::Format],
 ) -> Result<cpal::Format, super::errors::Error> {
     let supported_formats: Vec<_> = iter.collect();

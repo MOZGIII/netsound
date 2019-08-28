@@ -1,4 +1,5 @@
 use crate::samples::SharedSamples;
+use cpal::traits::*;
 
 pub mod default;
 pub mod errors;
@@ -28,28 +29,29 @@ impl<'a> super::BackendBuilderFor<Backend> for super::BackendBuilder<'a> {
 }
 
 fn build(builder: super::BackendBuilder<'_>) -> Result<Backend, errors::Error> {
-    let event_loop = cpal::EventLoop::new();
+    let host = cpal::default_host();
+    let event_loop = host.event_loop();
 
-    let output_device = default::output_device()?;
-    let input_device = default::input_device()?;
+    let output_device = default::output_device(&host)?;
+    let input_device = default::input_device(&host)?;
 
     let output_format = format::choose(
-        &mut output_device.supported_output_formats()?,
+        output_device.supported_output_formats()?,
         builder.request_playback_formats,
     )?;
     let input_format = format::choose(
-        &mut input_device.supported_input_formats()?,
+        input_device.supported_input_formats()?,
         builder.request_capture_formats,
     )?;
 
-    print_config("Input", &input_device, &input_format);
-    print_config("Output", &output_device, &output_format);
+    print_config("Input", &input_device.name()?, &input_format);
+    print_config("Output", &output_device.name()?, &output_format);
 
     let output_stream_id = event_loop.build_output_stream(&output_device, &output_format)?;
     let input_stream_id = event_loop.build_input_stream(&input_device, &input_format)?;
 
-    event_loop.play_stream(output_stream_id.clone());
-    event_loop.play_stream(input_stream_id.clone());
+    event_loop.play_stream(output_stream_id.clone())?;
+    event_loop.play_stream(input_stream_id.clone())?;
 
     Ok(Backend {
         input_buf: builder.capture_buf,
@@ -69,8 +71,15 @@ impl super::Backend for Backend {
     fn run(&mut self) {
         let shared_input_buf = &self.input_buf;
         let shared_output_buf = &self.output_buf;
-        self.cpal_eventloop.run(move |_, data| {
-            match data {
+        self.cpal_eventloop.run(move |stream_id, stream_result| {
+            let stream_data = match stream_result {
+                Ok(data) => data,
+                Err(err) => {
+                    eprintln!("an error occurred on stream {:?}: {}", stream_id, err);
+                    return;
+                }
+            };
+            match stream_data {
                 cpal::StreamData::Input { buffer: input_buf } => {
                     let mut self_input_buf = shared_input_buf.lock();
                     self_input_buf.reserve(input_buf.len());
@@ -114,8 +123,8 @@ impl Into<cpal::Format> for &super::Format {
     }
 }
 
-fn print_config(name: &'static str, device: &cpal::Device, format: &cpal::Format) {
-    println!("{} device: {}", name, device.name());
+fn print_config(name: &'static str, device_name: &str, format: &cpal::Format) {
+    println!("{} device: {}", name, device_name);
     println!("{} format: {:?}", name, format);
     println!(
         "{} endianness: {}",

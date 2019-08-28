@@ -10,10 +10,7 @@ mio = "0.6"
 parking_lot = "0.8"
 audiopus = "0.1"
 failure = "0.1"
-
-[dependencies.cpal]
-git = "https://github.com/MOZGIII/cpal.git"
-rev = "0354548426f7b4c48392cae9876a3e77ea5c1c40"
+cpal = "0.10"
 
 [dependencies.libpulse-binding]
 git = "https://github.com/MOZGIII/pulse-binding-rust.git"
