@@ -5,16 +5,16 @@ pub fn choose<T: Iterator<Item = cpal::SupportedFormat>>(
     let supported_formats: Vec<_> = iter.collect();
 
     // FIXME: Windows hack.
-    if supported_formats.len() == 1
-        && supported_formats[0]
-            == (cpal::SupportedFormat {
-                channels: 8,
-                min_sample_rate: cpal::SampleRate(48000),
-                max_sample_rate: cpal::SampleRate(48000),
-                data_type: cpal::SampleFormat::F32,
-            })
-    {
-        return Ok((&requested_formats[0]).into());
+    if supported_formats.len() == 1 {
+        if let cpal::SupportedFormat {
+            min_sample_rate: cpal::SampleRate(48000),
+            max_sample_rate: cpal::SampleRate(48000),
+            data_type: cpal::SampleFormat::F32,
+            channels: 2,
+        } = &supported_formats[0]
+        {
+            return Ok((&requested_formats[0]).into());
+        }
     }
 
     for requested_format in requested_formats {
