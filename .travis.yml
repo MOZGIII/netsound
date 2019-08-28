@@ -13,3 +13,6 @@ matrix:
             - libopus-dev
     - os: windows
     - os: osx
+  allow_failures:
+    - os: windows
+    - os: osx
