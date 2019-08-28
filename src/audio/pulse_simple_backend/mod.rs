@@ -9,7 +9,7 @@ use self::pulse::error::PAErr;
 use self::pulse::stream::Direction;
 
 use crate::samples::SharedSamples;
-use std::error::Error;
+use crate::Error;
 
 mod util;
 
@@ -23,7 +23,7 @@ pub struct Backend {
 }
 
 impl<'a> super::BackendBuilderFor<Backend> for super::BackendBuilder<'a> {
-    fn build(self) -> Result<Backend, Box<dyn Error>> {
+    fn build(self) -> Result<Backend, Error> {
         let pa_playback = util::build_psimple(Direction::Playback);
         let pa_record = util::build_psimple(Direction::Record);
         Ok(Backend {

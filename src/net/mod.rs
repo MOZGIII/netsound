@@ -44,7 +44,7 @@ where
     E: Encoder + ?Sized,
     D: Decoder + ?Sized,
 {
-    pub fn r#loop(&mut self, socket: UdpSocket) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn r#loop(&mut self, socket: UdpSocket) -> Result<(), crate::Error> {
         const SOCKET: Token = Token(0);
 
         let poll = Poll::new()?;
@@ -111,7 +111,7 @@ where
                         }
                         Err(err) => {
                             println!("Encoding failed: {}", &err);
-                            return Err(err.into());
+                            return Err(err)?;
                         }
                     };
                 } else {
@@ -152,7 +152,7 @@ where
                         }
                         Err(err) => {
                             println!("Decoding failed: {}", &err);
-                            return Err(err.into());
+                            return Err(err)?;
                         }
                     };
                 } else {

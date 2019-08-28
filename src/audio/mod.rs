@@ -1,5 +1,5 @@
 use crate::samples::SharedSamples;
-use std::error::Error;
+use crate::Error;
 
 pub mod cpal_backend;
 
@@ -29,12 +29,12 @@ pub struct BackendBuilder<'a> {
 }
 
 pub trait BackendBuilderFor<T: Backend>: Sized {
-    fn build(self) -> Result<T, Box<dyn Error>>;
+    fn build(self) -> Result<T, Error>;
 }
 
 pub trait BoxedBackendBuilderFor<'a, T: Backend + 'a> {
     type BackendType;
-    fn build_boxed(self) -> Result<Box<dyn Backend + 'a>, Box<dyn Error>>;
+    fn build_boxed(self) -> Result<Box<dyn Backend + 'a>, Error>;
 }
 
 impl<'a, TBackend, TBuilder> BoxedBackendBuilderFor<'a, TBackend> for TBuilder
@@ -44,7 +44,7 @@ where
 {
     type BackendType = TBackend;
 
-    fn build_boxed(self) -> Result<Box<dyn Backend + 'a>, Box<dyn Error>> {
+    fn build_boxed(self) -> Result<Box<dyn Backend + 'a>, Error> {
         Ok(Box::new(self.build()?))
     }
 }

@@ -22,7 +22,7 @@ pub struct Backend {
 }
 
 impl<'a> super::BackendBuilderFor<Backend> for super::BackendBuilder<'a> {
-    fn build(self) -> Result<Backend, Box<dyn std::error::Error>> {
+    fn build(self) -> Result<Backend, crate::Error> {
         Ok(build(self)?)
     }
 }

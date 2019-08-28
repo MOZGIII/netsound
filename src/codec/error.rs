@@ -3,13 +3,13 @@ use std::fmt;
 #[derive(Debug)]
 pub enum EncodingError {
     NotEnoughData,
-    Other(Box<dyn std::error::Error>),
+    Other(crate::Error),
 }
 
 #[derive(Debug)]
 pub enum DecodingError {
     EmptyPacket,
-    Other(Box<dyn std::error::Error>),
+    Other(crate::Error),
 }
 
 impl fmt::Display for EncodingError {
