@@ -31,7 +31,7 @@ pub fn make_decoder(format: Format, buf: Box<[f32]>) -> Result<Decoder, Error> {
 }
 
 #[allow(dead_code)]
-pub enum FrameDurationMS {
+pub enum SupportedFrameSizeMS {
     F2p5,
     F5,
     F10,
@@ -40,9 +40,42 @@ pub enum FrameDurationMS {
     F60,
 }
 
-#[allow(unused_variables)]
-pub fn buf_size(format: Format, frame_duration_ms: FrameDurationMS, fec: bool) -> usize {
-    // TODO: implement more optimized way of doing it.
-    // See https://tools.ietf.org/html/rfc6716#section-2
-    (format.sample_rate as usize) / 25 * 3
+#[allow(dead_code)]
+pub enum SupportedSampleRate {
+    SR8,
+    SR12,
+    SR16,
+    SR24,
+    SR48,
 }
+
+#[allow(unused_variables)]
+pub fn buf_size(format: Format, frame_size_ms: SupportedFrameSizeMS, fec: bool) -> usize {
+    // TODO: use smaller buffer size when possible.
+    // See https://tools.ietf.org/html/rfc6716#section-2
+    MAX_FRAME_SIZE as usize
+}
+
+/// Takes Sample Rate in kHz and Frame Size in ms and returns frame size per
+/// channel in bytes.
+pub const fn frame_size_per_channel(sample_rate_khz: u32, frame_size_ms: u32) -> usize {
+    (sample_rate_khz as usize) * (frame_size_ms as usize)
+}
+
+/// Opus codec allows up to 120 ms frames.
+pub const MAX_FRAME_SIZE_MS: u32 = 120;
+
+/// Maximum sample rate supportws by opus is 48 kHz.
+pub const MAX_SAMPLE_RATE_KHZ: u32 = 48;
+
+/// Maximum sample count per channel is 48 kHz * maximum frame size in
+/// milliseconds.
+pub const MAX_FRAME_SIZE_PER_CHANNEL: usize =
+    frame_size_per_channel(MAX_SAMPLE_RATE_KHZ, MAX_FRAME_SIZE_MS);
+
+// Maximum channels supported by opus.
+pub const MAX_CHANNELS: u32 = 2;
+
+/// Maximum sample count per frame is 48 kHz * maximum frame size in
+/// milliseconds * maximum number of channels.
+pub const MAX_FRAME_SIZE: usize = MAX_FRAME_SIZE_PER_CHANNEL * (MAX_CHANNELS as usize);

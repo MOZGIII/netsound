@@ -58,12 +58,12 @@ fn main() -> Result<(), Error> {
         CodecToUse::Opus => {
             let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
                 capture_format,
-                codec::opus::FrameDurationMS::F20,
+                codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
             let opus_decoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
                 playback_format,
-                codec::opus::FrameDurationMS::F20,
+                codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
 
