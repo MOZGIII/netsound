@@ -1,1 +1,15 @@
 language: rust
+cache: cargo
+
+matrix:
+  include:
+    - os: linux
+      dist: bionic
+      sudo: required
+      addons:
+        apt:
+          packages:
+            - libasound-dev
+            - libopus-dev
+    - os: windows
+    - os: osx
