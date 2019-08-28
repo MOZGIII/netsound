@@ -34,5 +34,5 @@ pub fn choose<T: Iterator<Item = cpal::SupportedFormat>>(
         }
     }
 
-    Err(super::errors::Error::FormatNegotioationError)
+    Err(super::errors::Error::FormatNegotiationError)
 }

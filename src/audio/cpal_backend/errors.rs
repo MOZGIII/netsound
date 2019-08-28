@@ -3,7 +3,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum Error {
     DefaultDeviceError,
-    FormatNegotioationError,
+    FormatNegotiationError,
     FormatsEnumerationError(cpal::FormatsEnumerationError),
     CreationError(cpal::CreationError),
 }
@@ -12,7 +12,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::DefaultDeviceError => write!(f, "Unable to determine default audio device"),
-            Error::FormatNegotioationError => write!(f, "Unable to determine default audio format"),
+            Error::FormatNegotiationError => write!(f, "Unable to determine default audio format"),
             Error::FormatsEnumerationError(err) => {
                 write!(f, "Unable to determine default audio format: {}", err)
             }
