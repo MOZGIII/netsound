@@ -30,6 +30,8 @@ impl<'a> super::BackendBuilderFor<Backend> for super::BackendBuilder<'a> {
 
 fn build(builder: super::BackendBuilder<'_>) -> Result<Backend, errors::Error> {
     let host = cpal::default_host();
+    println!("Cpal Host: {:?}", &host.id());
+
     let event_loop = host.event_loop();
 
     let output_device = default::output_device(&host)?;
