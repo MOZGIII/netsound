@@ -1,4 +1,4 @@
-use crate::samples::Samples;
+use crate::io::{ReadSamples, WriteSamples};
 
 mod codec;
 
@@ -7,25 +7,19 @@ pub type Endian = byteorder::LittleEndian;
 #[derive(Debug)]
 pub struct Encoder;
 
-impl super::Encoder for Encoder {
-    fn encode(
-        &mut self,
-        input: &mut Samples,
-        output: &mut [u8],
-    ) -> Result<usize, super::EncodingError> {
-        Ok(codec::encode::<Endian>(input, output))
+impl<T: ReadSamples<f32>> super::Encoder<f32, T> for Encoder {
+    fn encode(&mut self, input: &mut T, output: &mut [u8]) -> Result<usize, super::EncodingError> {
+        Ok(codec::encode::<Endian, T>(input, output)
+            .map_err(|err| super::EncodingError::Other(err.into()))?)
     }
 }
 
 #[derive(Debug)]
 pub struct Decoder;
 
-impl super::Decoder for Decoder {
-    fn decode(
-        &mut self,
-        input: &[u8],
-        output: &mut Samples,
-    ) -> Result<usize, super::DecodingError> {
-        Ok(codec::decode::<Endian>(input, output))
+impl<T: WriteSamples<f32>> super::Decoder<f32, T> for Decoder {
+    fn decode(&mut self, input: &[u8], output: &mut T) -> Result<usize, super::DecodingError> {
+        Ok(codec::decode::<Endian, T>(input, output)
+            .map_err(|err| super::DecodingError::Other(err.into()))?)
     }
 }

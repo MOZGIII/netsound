@@ -1,26 +1,30 @@
 use std::fmt;
+use std::io;
 
 #[derive(Debug)]
 pub enum Error {
+    #[allow(dead_code)]
     NotEnoughData {
-        bytes_available: usize,
-        bytes_required: usize,
+        samples_available: usize,
+        samples_required: usize,
     },
     OpusError(audiopus::Error),
+    IoError(io::Error),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::NotEnoughData {
-                bytes_available,
-                bytes_required,
+                samples_available,
+                samples_required,
             } => write!(
                 f,
-                "Not enough data: {} bytes available, {} bytes required",
-                bytes_available, bytes_required
+                "Not enough data: {} samples available, {} samples required",
+                samples_available, samples_required
             ),
             Error::OpusError(err) => write!(f, "Opus Error: {}", err),
+            Error::IoError(err) => write!(f, "IO Error: {}", err),
         }
     }
 }
@@ -50,5 +54,11 @@ impl Into<super::super::DecodingError> for Error {
             }
             err => super::super::DecodingError::Other(err.into()),
         }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::IoError(err)
     }
 }

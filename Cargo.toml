@@ -11,6 +11,7 @@ parking_lot = "0.9"
 audiopus = "0.1"
 failure = "0.1"
 cpal = "0.10"
+sample = "0.10"
 
 [dependencies.libpulse-binding]
 git = "https://github.com/MOZGIII/pulse-binding-rust.git"

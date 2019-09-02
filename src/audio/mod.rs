@@ -1,5 +1,5 @@
-use crate::samples::SharedSamples;
-use crate::Error;
+mod builder;
+pub use builder::*;
 
 pub mod cpal_backend;
 
@@ -17,34 +17,4 @@ pub trait Backend: Send + Sync {
 
     fn capture_format(&self) -> Format;
     fn playback_format(&self) -> Format;
-}
-
-#[derive(Debug)]
-pub struct BackendBuilder<'a> {
-    pub capture_buf: SharedSamples,
-    pub playback_buf: SharedSamples,
-
-    pub request_capture_formats: &'a [Format],
-    pub request_playback_formats: &'a [Format],
-}
-
-pub trait BackendBuilderFor<T: Backend>: Sized {
-    fn build(self) -> Result<T, Error>;
-}
-
-pub trait BoxedBackendBuilderFor<'a, T: Backend + 'a> {
-    type BackendType;
-    fn build_boxed(self) -> Result<Box<dyn Backend + 'a>, Error>;
-}
-
-impl<'a, TBackend, TBuilder> BoxedBackendBuilderFor<'a, TBackend> for TBuilder
-where
-    TBackend: Backend + 'a,
-    TBuilder: BackendBuilderFor<TBackend>,
-{
-    type BackendType = TBackend;
-
-    fn build_boxed(self) -> Result<Box<dyn Backend + 'a>, Error> {
-        Ok(Box::new(self.build()?))
-    }
 }

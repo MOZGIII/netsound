@@ -1,4 +1,4 @@
-#![warn(rust_2018_idioms)]
+#![warn(rust_2018_idioms, missing_debug_implementations)]
 
 use std::env;
 use std::net::SocketAddr;
@@ -8,14 +8,16 @@ use failure::Error;
 use mio::net::UdpSocket;
 
 mod audio;
+mod audio_backends;
+mod buf;
 mod codec;
 mod formats;
+mod io;
 mod net;
-mod samples;
+mod sync;
 
 use audio::Backend;
-use audio::BoxedBackendBuilderFor;
-use samples::Samples;
+use sync::synced;
 
 fn main() -> Result<(), Error> {
     let bind_addr = env::args()
@@ -29,30 +31,30 @@ fn main() -> Result<(), Error> {
     println!("Listening on: {}", socket.local_addr()?);
     println!("Sending to: {}", &send_addr);
 
-    let capture_buf = Samples::shared_with_capacity(30_000_000);
-    let playback_buf = Samples::shared_with_capacity(30_000_000);
+    let capture_buf = synced(buf::VecDequeSampleBuffer::with_capacity(30_000_000));
+    let playback_buf = synced(buf::VecDequeSampleBuffer::with_capacity(30_000_000));
 
     let audio_backend_builder = audio::BackendBuilder {
-        capture_buf: capture_buf.clone(),
-        playback_buf: playback_buf.clone(),
+        capture_data_writer: capture_buf.clone(),
+        playback_data_reader: playback_buf.clone(),
 
         request_capture_formats: formats::input(),
         request_playback_formats: formats::output(),
     };
 
-    let backend_to_use = AudioBackendToUse::from_env()?;
+    let backend_to_use = audio_backends::AudioBackendToUse::from_env()?;
     println!("Using audio backend: {:?}", backend_to_use);
 
     let codec_to_use = CodecToUse::from_env()?;
     println!("Using codec: {:?}", codec_to_use);
 
-    let audio_backend = build_audio_backend(backend_to_use, audio_backend_builder)?;
+    let audio_backend = audio_backends::build(backend_to_use, audio_backend_builder)?;
 
     let capture_format = audio_backend.capture_format();
     let playback_format = audio_backend.playback_format();
 
-    let mut encoder: Box<dyn codec::Encoder>;
-    let mut decoder: Box<dyn codec::Decoder>;
+    let mut encoder: Box<dyn codec::Encoder<f32, _>>;
+    let mut decoder: Box<dyn codec::Decoder<f32, _>>;
 
     match codec_to_use {
         CodecToUse::Opus => {
@@ -94,25 +96,6 @@ fn main() -> Result<(), Error> {
 }
 
 #[derive(Debug)]
-enum AudioBackendToUse {
-    Cpal,
-    PulseSimple,
-}
-
-impl AudioBackendToUse {
-    fn from_env() -> Result<Self, std::env::VarError> {
-        Ok(match std::env::var("AUDIO_BACKEND") {
-            Ok(ref val) if val == "pulse_simple" => AudioBackendToUse::PulseSimple,
-            Ok(ref val) if val == "cpal" => AudioBackendToUse::Cpal,
-            // Defaults.
-            Ok(_) | Err(std::env::VarError::NotPresent) => AudioBackendToUse::Cpal,
-            // Invalid value.
-            Err(e) => return Err(e),
-        })
-    }
-}
-
-#[derive(Debug)]
 enum CodecToUse {
     Opus,
     Raw,
@@ -129,34 +112,6 @@ impl CodecToUse {
             Err(e) => return Err(e),
         })
     }
-}
-
-fn build_audio_backend(
-    backend_to_use: AudioBackendToUse,
-    builder: audio::BackendBuilder<'_>,
-) -> Result<Box<dyn Backend>, Error> {
-    match backend_to_use {
-        AudioBackendToUse::Cpal => build_cpal_backend(builder),
-        AudioBackendToUse::PulseSimple => build_pulse_simple_backend(builder),
-    }
-}
-
-fn build_cpal_backend(builder: audio::BackendBuilder<'_>) -> Result<Box<dyn Backend>, Error> {
-    BoxedBackendBuilderFor::<audio::cpal_backend::Backend>::build_boxed(builder)
-}
-
-#[cfg(feature = "pulse_simple_backend")]
-fn build_pulse_simple_backend(
-    builder: audio::BackendBuilder<'_>,
-) -> Result<Box<dyn Backend>, Error> {
-    BoxedBackendBuilderFor::<audio::pulse_simple_backend::Backend>::build_boxed(builder)
-}
-
-#[cfg(not(feature = "pulse_simple_backend"))]
-fn build_pulse_simple_backend(
-    _builder: audio::BackendBuilder<'_>,
-) -> Result<Box<dyn Backend>, Error> {
-    unimplemented!();
 }
 
 fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) -> Result<(), Error> {

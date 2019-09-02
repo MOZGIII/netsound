@@ -1,10 +1,12 @@
 use mio::net::UdpSocket;
 use mio::{Events, Poll, PollOpt, Ready, Token};
+use sample::Sample;
 use std::net::SocketAddr;
 use std::time::Duration;
 
+use crate::buf::VecDequeSampleBuffer;
 use crate::codec::{Decoder, DecodingError, Encoder, EncodingError};
-use crate::samples::SharedSamples;
+use crate::sync::Synced;
 
 #[derive(Debug, Default)]
 pub struct Stats {
@@ -24,13 +26,15 @@ pub struct Stats {
     pub empty_packets_decoding_errors: usize,
 }
 
-pub struct NetService<'a, E, D>
+pub struct NetService<'a, ES, DS, E, D>
 where
-    E: Encoder + ?Sized,
-    D: Decoder + ?Sized,
+    ES: Sample,
+    DS: Sample,
+    E: Encoder<ES, VecDequeSampleBuffer<ES>> + ?Sized,
+    D: Decoder<DS, VecDequeSampleBuffer<DS>> + ?Sized,
 {
-    pub capture_buf: SharedSamples,
-    pub playback_buf: SharedSamples,
+    pub capture_buf: Synced<VecDequeSampleBuffer<ES>>,
+    pub playback_buf: Synced<VecDequeSampleBuffer<DS>>,
     pub encoder: &'a mut E,
     pub decoder: &'a mut D,
 
@@ -38,12 +42,20 @@ where
 }
 
 #[allow(dead_code)]
-pub type DynNetService<'a> = NetService<'a, dyn Encoder + 'a, dyn Decoder + 'a>;
+pub type DynNetService<'a, ES, DS> = NetService<
+    'a,
+    ES,
+    DS,
+    dyn Encoder<ES, VecDequeSampleBuffer<ES>> + 'a,
+    dyn Decoder<DS, VecDequeSampleBuffer<DS>> + 'a,
+>;
 
-impl<'a, E, D> NetService<'a, E, D>
+impl<'a, ES, DS, E, D> NetService<'a, ES, DS, E, D>
 where
-    E: Encoder + ?Sized,
-    D: Decoder + ?Sized,
+    ES: Sample,
+    DS: Sample,
+    E: Encoder<ES, VecDequeSampleBuffer<ES>> + ?Sized,
+    D: Decoder<DS, VecDequeSampleBuffer<DS>> + ?Sized,
 {
     pub fn r#loop(&mut self, socket: UdpSocket, peer_addr: SocketAddr) -> Result<(), crate::Error> {
         const SOCKET: Token = Token(0);
@@ -83,7 +95,7 @@ where
             if !ready_to_write_consumed {
                 let mut capture_buf = self.capture_buf.lock();
                 if !capture_buf.is_empty() {
-                    match self.encoder.encode(&mut capture_buf, &mut send_buf) {
+                    match self.encoder.encode(&mut *capture_buf, &mut send_buf) {
                         Ok(bytes_to_send) => {
                             self.stats.frames_encoded += 1;
                             self.stats.bytes_encoded += bytes_to_send;
@@ -138,7 +150,7 @@ where
 
                     match self
                         .decoder
-                        .decode(&recv_buf[..num_recv], &mut playback_buf)
+                        .decode(&recv_buf[..num_recv], &mut *playback_buf)
                     {
                         Ok(num_samples) => {
                             // println!(
