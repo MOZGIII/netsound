@@ -1,0 +1,37 @@
+@startuml audio-input-flow
+
+start
+
+fork
+
+partition "Audio Thread" {
+
+  while (//cpal// event loop running?)
+    ://cpal// callback is invoked;
+    :Raw PCM data copied to `shbuf`;
+  endwhile
+
+  stop
+}
+
+fork again
+
+partition "Networking Thread" {
+
+  while (network loop is running?)
+    :Poll socker to be ready for writing;
+    :Read a chunk of raw PCM data from `shbuf` to `localbuf`
+    and shift the `shbuf`;
+    partition "Codec" {
+      :Resample raw PCM data at `localbuf` if needed;
+      :Encode raw PCM data from `localbuf` to `encbuf`;
+    }
+    :Send `encbuf` over via the socket;
+  endwhile
+
+  stop
+}
+
+end fork
+
+@enduml
