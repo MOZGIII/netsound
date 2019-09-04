@@ -4,7 +4,7 @@ use sample::Sample;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use crate::buf::VecDequeSampleBuffer;
+use crate::buf::VecDequeBuffer;
 use crate::codec::{Decoder, DecodingError, Encoder, EncodingError};
 use crate::sync::Synced;
 
@@ -30,11 +30,11 @@ pub struct NetService<'a, ES, DS, E, D>
 where
     ES: Sample,
     DS: Sample,
-    E: Encoder<ES, VecDequeSampleBuffer<ES>> + ?Sized,
-    D: Decoder<DS, VecDequeSampleBuffer<DS>> + ?Sized,
+    E: Encoder<ES, VecDequeBuffer<ES>> + ?Sized,
+    D: Decoder<DS, VecDequeBuffer<DS>> + ?Sized,
 {
-    pub capture_buf: Synced<VecDequeSampleBuffer<ES>>,
-    pub playback_buf: Synced<VecDequeSampleBuffer<DS>>,
+    pub capture_buf: Synced<VecDequeBuffer<ES>>,
+    pub playback_buf: Synced<VecDequeBuffer<DS>>,
     pub encoder: &'a mut E,
     pub decoder: &'a mut D,
 
@@ -46,16 +46,16 @@ pub type DynNetService<'a, ES, DS> = NetService<
     'a,
     ES,
     DS,
-    dyn Encoder<ES, VecDequeSampleBuffer<ES>> + 'a,
-    dyn Decoder<DS, VecDequeSampleBuffer<DS>> + 'a,
+    dyn Encoder<ES, VecDequeBuffer<ES>> + 'a,
+    dyn Decoder<DS, VecDequeBuffer<DS>> + 'a,
 >;
 
 impl<'a, ES, DS, E, D> NetService<'a, ES, DS, E, D>
 where
     ES: Sample,
     DS: Sample,
-    E: Encoder<ES, VecDequeSampleBuffer<ES>> + ?Sized,
-    D: Decoder<DS, VecDequeSampleBuffer<DS>> + ?Sized,
+    E: Encoder<ES, VecDequeBuffer<ES>> + ?Sized,
+    D: Decoder<DS, VecDequeBuffer<DS>> + ?Sized,
 {
     pub fn r#loop(&mut self, socket: UdpSocket, peer_addr: SocketAddr) -> Result<(), crate::Error> {
         const SOCKET: Token = Token(0);

@@ -31,8 +31,8 @@ fn main() -> Result<(), Error> {
     println!("Listening on: {}", socket.local_addr()?);
     println!("Sending to: {}", &send_addr);
 
-    let capture_buf = synced(buf::VecDequeSampleBuffer::with_capacity(30_000_000));
-    let playback_buf = synced(buf::VecDequeSampleBuffer::with_capacity(30_000_000));
+    let capture_buf = synced(buf::VecDequeBuffer::with_capacity(30_000_000));
+    let playback_buf = synced(buf::VecDequeBuffer::with_capacity(30_000_000));
 
     let audio_backend_builder = audio::BackendBuilder {
         capture_data_writer: capture_buf.clone(),
