@@ -6,10 +6,10 @@ pub use self::decoder::Decoder;
 pub use self::encoder::Encoder;
 pub use self::error::Error;
 
-use crate::audio::Format;
+use crate::format::Format;
 use audiopus::TryFrom;
 
-pub fn make_encoder(format: Format, buf: Box<[f32]>) -> Result<Encoder, Error> {
+pub fn make_encoder(format: Format<f32>, buf: Box<[f32]>) -> Result<Encoder, Error> {
     #[allow(unstable_name_collisions)]
     let sample_rate = audiopus::SampleRate::try_from(format.sample_rate as i32)?;
     let channels = audiopus::Channels::try_from(i32::from(format.channels))?;
@@ -17,7 +17,7 @@ pub fn make_encoder(format: Format, buf: Box<[f32]>) -> Result<Encoder, Error> {
     Ok(Encoder { opus: enc, buf })
 }
 
-pub fn make_decoder(format: Format, buf: Box<[f32]>) -> Result<Decoder, Error> {
+pub fn make_decoder(format: Format<f32>, buf: Box<[f32]>) -> Result<Decoder, Error> {
     #[allow(unstable_name_collisions)]
     let sample_rate = audiopus::SampleRate::try_from(format.sample_rate as i32)?;
     let channels = audiopus::Channels::try_from(i32::from(format.channels))?;
@@ -50,7 +50,12 @@ pub enum SupportedSampleRate {
 }
 
 #[allow(unused_variables)]
-pub fn buf_size(format: Format, frame_size_ms: SupportedFrameSizeMS, fec: bool) -> usize {
+pub fn buf_size(
+    sample_rate_khz: u32,
+    channels: u16,
+    frame_size_ms: SupportedFrameSizeMS,
+    fec: bool,
+) -> usize {
     // TODO: use smaller buffer size when possible.
     // See https://tools.ietf.org/html/rfc6716#section-2
     MAX_FRAME_SIZE as usize

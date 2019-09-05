@@ -1,13 +1,19 @@
-use super::*;
+use super::{choose_format::choose_format, *};
 use crate::audio;
-use crate::io::{ReadSamples, WriteSamples};
+use crate::io::{ReadItems, WriteItems};
 use sample::Sample;
 use std::marker::PhantomData;
 
 use cpal::traits::*;
 
 fn build<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>(
-    builder: audio::BackendBuilder<'_, TCaptureDataWriter, TPlaybackDataReader>,
+    builder: audio::BackendBuilder<
+        '_,
+        TCaptureSample,
+        TPlaybackSample,
+        TCaptureDataWriter,
+        TPlaybackDataReader,
+    >,
 ) -> Result<
     Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>,
     errors::Error,
@@ -15,8 +21,13 @@ fn build<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReade
 where
     TCaptureSample: Sample + Send,
     TPlaybackSample: Sample + Send,
-    TCaptureDataWriter: WriteSamples<TCaptureSample>,
-    TPlaybackDataReader: ReadSamples<TPlaybackSample>,
+    TCaptureDataWriter: WriteItems<TCaptureSample>,
+    TPlaybackDataReader: ReadItems<TPlaybackSample>,
+
+    format::deduce::ExactCpalSampleFormatDeducer<TCaptureSample>:
+        format::deduce::CpalSampleFormatDeducer<Sample = TCaptureSample>,
+    format::deduce::ExactCpalSampleFormatDeducer<TPlaybackSample>:
+        format::deduce::CpalSampleFormatDeducer<Sample = TPlaybackSample>,
 {
     let host = cpal::default_host();
     println!("Cpal Host: {:?}", &host.id());
@@ -26,11 +37,11 @@ where
     let input_device = default::input_device(&host)?;
     let output_device = default::output_device(&host)?;
 
-    let capture_format = format::choose(
+    let capture_format = choose_format(
         input_device.supported_input_formats()?,
         builder.request_capture_formats,
     )?;
-    let playback_format = format::choose(
+    let playback_format = choose_format(
         output_device.supported_output_formats()?,
         builder.request_playback_formats,
     )?;
@@ -64,18 +75,34 @@ where
 impl<'a, TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
     audio::BackendBuilderFor<
         Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>,
-    > for audio::BackendBuilder<'a, TCaptureDataWriter, TPlaybackDataReader>
+    >
+    for audio::BackendBuilder<
+        'a,
+        TCaptureSample,
+        TPlaybackSample,
+        TCaptureDataWriter,
+        TPlaybackDataReader,
+    >
 where
     TCaptureSample: Sample + Send + Sync,
     TPlaybackSample: Sample + Send + Sync,
 
-    TCaptureDataWriter: WriteSamples<TCaptureSample> + Send,
-    TPlaybackDataReader: ReadSamples<TPlaybackSample> + Send,
+    TCaptureDataWriter: WriteItems<TCaptureSample> + Send,
+    TPlaybackDataReader: ReadItems<TPlaybackSample> + Send,
 
     conv::ExactCpalInputConverter<TCaptureSample>:
         conv::CpalInputConverter<Sample = TCaptureSample>,
     conv::ExactCpalOutputConverter<TPlaybackSample>:
         conv::CpalOutputConverter<Sample = TPlaybackSample>,
+
+    format::deduce::ExactCpalSampleFormatDeducer<TCaptureSample>:
+        format::deduce::CpalSampleFormatDeducer<Sample = TCaptureSample>,
+    format::deduce::ExactCpalSampleFormatDeducer<TPlaybackSample>:
+        format::deduce::CpalSampleFormatDeducer<Sample = TPlaybackSample>,
+    format::assert::ExactCpalSampleFormatAsserter<TCaptureSample>:
+        format::assert::CpalSampleFormatAsserter<Sample = TCaptureSample>,
+    format::assert::ExactCpalSampleFormatAsserter<TPlaybackSample>:
+        format::assert::CpalSampleFormatAsserter<Sample = TPlaybackSample>,
 {
     fn build(
         self,

@@ -1,5 +1,5 @@
 use super::Error;
-use crate::io::WriteSamples;
+use crate::io::WriteItems;
 use audiopus::coder::Decoder as OpusDecoder;
 
 #[derive(Debug)]
@@ -18,19 +18,19 @@ impl Decoder {
         fec: bool,
     ) -> Result<usize, Error>
     where
-        T: WriteSamples<f32>,
+        T: WriteItems<f32>,
     {
         let audiosize = {
             let buf = &mut self.buf[..];
             self.opus.decode_float(input, buf, fec)?
         };
         let bufsize = audiosize * self.channels;
-        let size = output.write_samples(&self.buf[..bufsize])?;
+        let size = output.write_items(&self.buf[..bufsize])?;
         Ok(size)
     }
 }
 
-impl<T: WriteSamples<f32>> super::super::Decoder<f32, T> for Decoder {
+impl<T: WriteItems<f32>> super::super::Decoder<f32, T> for Decoder {
     fn decode(
         &mut self,
         input: &[u8],

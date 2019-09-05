@@ -1,5 +1,5 @@
 use super::Error;
-use crate::io::{ReadSamples, SamplesAvailable};
+use crate::io::{ItemsAvailable, ReadItems};
 use audiopus::coder::Encoder as OpusEncoder;
 
 #[derive(Debug)]
@@ -11,9 +11,9 @@ pub struct Encoder {
 impl Encoder {
     pub fn encode_float<T>(&mut self, input: &mut T, output: &mut [u8]) -> Result<usize, Error>
     where
-        T: ReadSamples<f32> + SamplesAvailable,
+        T: ReadItems<f32> + ItemsAvailable<f32>,
     {
-        let samples_available = input.samples_available()?;
+        let samples_available = input.items_available()?;
         let samples_required = self.buf.len();
         if samples_available < samples_required {
             return Err(Error::NotEnoughData {
@@ -22,7 +22,7 @@ impl Encoder {
             });
         }
 
-        let samples_read = input.read_samples(&mut self.buf)?;
+        let samples_read = input.read_items(&mut self.buf)?;
         assert_eq!(samples_read, samples_required);
 
         let bytes_written = self.opus.encode_float(&self.buf, output)?;
@@ -30,7 +30,7 @@ impl Encoder {
     }
 }
 
-impl<T: ReadSamples<f32> + SamplesAvailable> super::super::Encoder<f32, T> for Encoder {
+impl<T: ReadItems<f32> + ItemsAvailable<f32>> super::super::Encoder<f32, T> for Encoder {
     fn encode(
         &mut self,
         input: &mut T,

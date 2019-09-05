@@ -1,7 +1,5 @@
-use crate::buf::{FrameBuffer, SampleBuffer};
-use crate::io::{
-    FramesAvailable, ReadFrames, ReadSamples, SamplesAvailable, WriteFrames, WriteSamples,
-};
+use crate::buf::{Buffer, FrameBuffer, SampleBuffer};
+use crate::io::{ItemsAvailable, ReadItems, WriteItems};
 use sample::{Frame, Sample};
 use std::collections::VecDeque;
 use std::io::Result;
@@ -50,7 +48,7 @@ impl<T> std::ops::DerefMut for VecDequeBuffer<T> {
     }
 }
 
-impl<T> VecDequeBuffer<T> {
+impl<T> ReadItems<T> for VecDequeBuffer<T> {
     fn read_items(&mut self, items: &mut [T]) -> Result<usize> {
         let vd = &mut self.0;
         let mut filled: usize = 0;
@@ -65,11 +63,13 @@ impl<T> VecDequeBuffer<T> {
         }
         Ok(filled)
     }
+}
 
-    fn write_items(&mut self, items: &[T]) -> Result<usize>
-    where
-        T: Copy,
-    {
+impl<T> WriteItems<T> for VecDequeBuffer<T>
+where
+    T: Copy,
+{
+    fn write_items(&mut self, items: &[T]) -> Result<usize> {
         let vd = &mut self.0;
         let mut filled: usize = 0;
         for item in items.iter() {
@@ -78,50 +78,23 @@ impl<T> VecDequeBuffer<T> {
         }
         Ok(filled)
     }
+}
 
+impl<T> ItemsAvailable<T> for VecDequeBuffer<T> {
     fn items_available(&self) -> Result<usize> {
         Ok(self.0.len())
     }
 }
 
-impl<S: Sample> ReadSamples<S> for VecDequeBuffer<S> {
-    fn read_samples(&mut self, samples: &mut [S]) -> Result<usize> {
-        self.read_items(samples)
-    }
-}
-
-impl<S: Sample> WriteSamples<S> for VecDequeBuffer<S> {
-    fn write_samples(&mut self, samples: &[S]) -> Result<usize> {
-        self.write_items(samples)
-    }
-}
-
-impl<S: Sample> SamplesAvailable for VecDequeBuffer<S> {
-    fn samples_available(&self) -> Result<usize> {
-        self.items_available()
-    }
+impl<T> Buffer for VecDequeBuffer<T>
+where
+    T: Copy,
+{
+    type Item = T;
 }
 
 impl<S: Sample> SampleBuffer for VecDequeBuffer<S> {
     type Sample = S;
-}
-
-impl<F: Frame> ReadFrames<F> for VecDequeBuffer<F> {
-    fn read_frames(&mut self, frames: &mut [F]) -> Result<usize> {
-        self.read_items(frames)
-    }
-}
-
-impl<F: Frame> WriteFrames<F> for VecDequeBuffer<F> {
-    fn write_frames(&mut self, frames: &[F]) -> Result<usize> {
-        self.write_items(frames)
-    }
-}
-
-impl<F: Frame> FramesAvailable for VecDequeBuffer<F> {
-    fn frames_available(&self) -> Result<usize> {
-        self.items_available()
-    }
 }
 
 impl<F: Frame> FrameBuffer for VecDequeBuffer<F> {

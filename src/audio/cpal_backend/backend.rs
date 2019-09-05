@@ -1,6 +1,7 @@
 use super::*;
 use crate::audio;
-use crate::io::{ReadSamples, WriteSamples};
+use crate::format::Format;
+use crate::io::{ReadItems, WriteItems};
 use crate::sync::Synced;
 use cpal::traits::*;
 use sample::Sample;
@@ -10,8 +11,8 @@ pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybac
 where
     TCaptureSample: Sample + Send,
     TPlaybackSample: Sample + Send,
-    TCaptureDataWriter: WriteSamples<TCaptureSample>,
-    TPlaybackDataReader: ReadSamples<TPlaybackSample>,
+    TCaptureDataWriter: WriteItems<TCaptureSample>,
+    TPlaybackDataReader: ReadItems<TPlaybackSample>,
 {
     pub(super) capture_sample: PhantomData<TCaptureSample>,
     pub(super) playback_sample: PhantomData<TPlaybackSample>,
@@ -36,14 +37,26 @@ where
     TCaptureSample: Sample + Send + Sync,
     TPlaybackSample: Sample + Send + Sync,
 
-    TCaptureDataWriter: WriteSamples<TCaptureSample> + Send,
-    TPlaybackDataReader: ReadSamples<TPlaybackSample> + Send,
+    TCaptureDataWriter: WriteItems<TCaptureSample> + Send,
+    TPlaybackDataReader: ReadItems<TPlaybackSample> + Send,
 
     conv::ExactCpalInputConverter<TCaptureSample>:
         conv::CpalInputConverter<Sample = TCaptureSample>,
     conv::ExactCpalOutputConverter<TPlaybackSample>:
         conv::CpalOutputConverter<Sample = TPlaybackSample>,
+
+    format::deduce::ExactCpalSampleFormatDeducer<TCaptureSample>:
+        format::deduce::CpalSampleFormatDeducer<Sample = TCaptureSample>,
+    format::deduce::ExactCpalSampleFormatDeducer<TPlaybackSample>:
+        format::deduce::CpalSampleFormatDeducer<Sample = TPlaybackSample>,
+    format::assert::ExactCpalSampleFormatAsserter<TCaptureSample>:
+        format::assert::CpalSampleFormatAsserter<Sample = TCaptureSample>,
+    format::assert::ExactCpalSampleFormatAsserter<TPlaybackSample>:
+        format::assert::CpalSampleFormatAsserter<Sample = TPlaybackSample>,
 {
+    type CaptureSample = TCaptureSample;
+    type PlaybackSample = TPlaybackSample;
+
     fn run(&mut self) {
         let input_converter = conv::ExactCpalInputConverter::new();
         let output_converter = conv::ExactCpalOutputConverter::new();
@@ -83,30 +96,11 @@ where
         });
     }
 
-    fn capture_format(&self) -> audio::Format {
-        audio::Format::from(&self.capture_format)
+    fn capture_format(&self) -> Format<TCaptureSample> {
+        format::interop::from_cpal_format(self.capture_format.clone())
     }
 
-    fn playback_format(&self) -> audio::Format {
-        audio::Format::from(&self.playback_format)
-    }
-}
-
-impl From<&cpal::Format> for audio::Format {
-    fn from(f: &cpal::Format) -> Self {
-        Self {
-            channels: f.channels,
-            sample_rate: f.sample_rate.0,
-        }
-    }
-}
-
-impl Into<cpal::Format> for &audio::Format {
-    fn into(self) -> cpal::Format {
-        cpal::Format {
-            channels: self.channels,
-            sample_rate: cpal::SampleRate(self.sample_rate),
-            data_type: cpal::SampleFormat::F32,
-        }
+    fn playback_format(&self) -> Format<TPlaybackSample> {
+        format::interop::from_cpal_format(self.playback_format.clone())
     }
 }

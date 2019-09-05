@@ -1,4 +1,5 @@
 #![warn(rust_2018_idioms, missing_debug_implementations)]
+#![feature(const_fn)]
 
 use std::env;
 use std::net::SocketAddr;
@@ -7,10 +8,13 @@ use failure::Error;
 
 use mio::net::UdpSocket;
 
+use sample::Sample;
+
 mod audio;
 mod audio_backends;
 mod buf;
 mod codec;
+mod format;
 mod formats;
 mod io;
 mod net;
@@ -59,12 +63,14 @@ fn main() -> Result<(), Error> {
     match codec_to_use {
         CodecToUse::Opus => {
             let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                capture_format,
+                capture_format.sample_rate,
+                capture_format.channels,
                 codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
             let opus_decoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                playback_format,
+                playback_format.sample_rate,
+                playback_format.channels,
                 codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
@@ -114,7 +120,15 @@ impl CodecToUse {
     }
 }
 
-fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) -> Result<(), Error> {
+fn run_audio_backend<TCaptureSample, TPlaybackSample>(
+    audio_backend: Box<
+        dyn Backend<CaptureSample = TCaptureSample, PlaybackSample = TPlaybackSample> + 'static,
+    >,
+) -> Result<(), Error>
+where
+    TCaptureSample: Sample + Send + 'static,
+    TPlaybackSample: Sample + Send + 'static,
+{
     std::thread::spawn(move || {
         let mut local = audio_backend;
         local.run()

@@ -1,4 +1,5 @@
 use crate::audio::*;
+use crate::io::{ReadItems, WriteItems};
 use crate::Error;
 
 #[derive(Debug)]
@@ -22,11 +23,11 @@ impl AudioBackendToUse {
 
 pub fn build<'a, TCaptureDataWriter, TPlaybackDataReader>(
     backend_to_use: AudioBackendToUse,
-    builder: BackendBuilder<'_, TCaptureDataWriter, TPlaybackDataReader>,
-) -> Result<Box<dyn Backend + 'a>, Error>
+    builder: BackendBuilder<'_, f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
+) -> Result<Box<dyn Backend<CaptureSample = f32, PlaybackSample = f32> + 'a>, Error>
 where
-    TCaptureDataWriter: crate::io::WriteSamples<f32> + Send + 'a,
-    TPlaybackDataReader: crate::io::ReadSamples<f32> + Send + 'a,
+    TCaptureDataWriter: WriteItems<f32> + Send + 'a,
+    TPlaybackDataReader: ReadItems<f32> + Send + 'a,
 {
     match backend_to_use {
         AudioBackendToUse::Cpal => build_cpal(builder),
@@ -35,22 +36,22 @@ where
 }
 
 fn build_cpal<'a, TCaptureDataWriter, TPlaybackDataReader>(
-    builder: BackendBuilder<'_, TCaptureDataWriter, TPlaybackDataReader>,
-) -> Result<Box<dyn Backend + 'a>, Error>
+    builder: BackendBuilder<'_, f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
+) -> Result<Box<dyn Backend<CaptureSample = f32, PlaybackSample = f32> + 'a>, Error>
 where
-    TCaptureDataWriter: crate::io::WriteSamples<f32> + Send + 'a,
-    TPlaybackDataReader: crate::io::ReadSamples<f32> + Send + 'a,
+    TCaptureDataWriter: WriteItems<f32> + Send + 'a,
+    TPlaybackDataReader: ReadItems<f32> + Send + 'a,
 {
     BoxedBackendBuilderFor::<cpal_backend::Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>>::build_boxed(builder)
 }
 
 #[cfg(feature = "pulse_simple_backend")]
 fn build_pulse_simple<'a, TCaptureDataWriter, TPlaybackDataReader>(
-    builder: BackendBuilder<'_, TCaptureDataWriter, TPlaybackDataReader>,
-) -> Result<Box<dyn Backend + 'a>, Error>
+    builder: BackendBuilder<'_, f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
+) -> Result<Box<dyn Backend<CaptureSample = f32, PlaybackSample = f32> + 'a>, Error>
 where
-    TCaptureDataWriter: crate::io::WriteSamples<f32> + Send + 'a,
-    TPlaybackDataReader: crate::io::ReadSamples<f32> + Send + 'a,
+    TCaptureDataWriter: WriteItems<f32> + Send + 'a,
+    TPlaybackDataReader: ReadItems<f32> + Send + 'a,
 {
     BoxedBackendBuilderFor::<
         pulse_simple_backend::Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
@@ -59,11 +60,11 @@ where
 
 #[cfg(not(feature = "pulse_simple_backend"))]
 fn build_pulse_simple<'a, TCaptureDataWriter, TPlaybackDataReader>(
-    _builder: BackendBuilder<'_, TCaptureDataWriter, TPlaybackDataReader>,
-) -> Result<Box<dyn Backend + 'a>, Error>
+    _builder: BackendBuilder<'_, f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
+) -> Result<Box<dyn Backend<CaptureSample = f32, PlaybackSample = f32> + 'a>, Error>
 where
-    TCaptureDataWriter: crate::io::WriteSamples<f32> + Send + 'a,
-    TPlaybackDataReader: crate::io::ReadSamples<f32> + Send + 'a,
+    TCaptureDataWriter: WriteItems<f32> + Send + 'a,
+    TPlaybackDataReader: ReadItems<f32> + Send + 'a,
 {
     unimplemented!()
 }

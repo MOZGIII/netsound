@@ -1,11 +1,8 @@
-use crate::io::{ReadSamples, WriteSamples};
+use crate::io::{ReadItems, WriteItems};
 use byteorder::ByteOrder;
 use std::io::Result;
 
-pub fn encode<E: ByteOrder, T: ReadSamples<f32>>(
-    input: &mut T,
-    output: &mut [u8],
-) -> Result<usize> {
+pub fn encode<E: ByteOrder, T: ReadItems<f32>>(input: &mut T, output: &mut [u8]) -> Result<usize> {
     // TODO: implement more efficiently.
 
     // Get the amount of samples to read. Must be round, otherwise we can't
@@ -17,7 +14,7 @@ pub fn encode<E: ByteOrder, T: ReadSamples<f32>>(
     let mut samples = Vec::with_capacity(samples_to_read);
     samples.resize(samples_to_read, 0f32);
 
-    let samples_read = input.read_samples(&mut samples)?;
+    let samples_read = input.read_items(&mut samples)?;
     dbg!(samples_read);
 
     for (mut chunk, &sample) in output.chunks_exact_mut(4).zip(&samples[..samples_read]) {
@@ -27,7 +24,7 @@ pub fn encode<E: ByteOrder, T: ReadSamples<f32>>(
     Ok(samples_read * 4)
 }
 
-pub fn decode<E: ByteOrder, T: WriteSamples<f32>>(input: &[u8], output: &mut T) -> Result<usize> {
+pub fn decode<E: ByteOrder, T: WriteItems<f32>>(input: &[u8], output: &mut T) -> Result<usize> {
     // TODO: implement more efficiently.
 
     // Get the amount of samples to write. Must be round, otherwise we can't
@@ -42,7 +39,7 @@ pub fn decode<E: ByteOrder, T: WriteSamples<f32>>(input: &[u8], output: &mut T) 
         *sample_slot = E::read_f32(&chunk);
     }
 
-    output.write_samples(&samples)
+    output.write_items(&samples)
 }
 
 #[cfg(test)]

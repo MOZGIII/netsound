@@ -1,5 +1,6 @@
 use crate::audio;
-use crate::io::{ReadSamples, WriteSamples};
+use crate::format::Format;
+use crate::io::{ReadItems, WriteItems};
 use crate::sync::Synced;
 use crossbeam_utils;
 use libpulse_binding as pulse;
@@ -20,8 +21,8 @@ pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybac
 where
     TCaptureSample: Sample + Send,
     TPlaybackSample: Sample + Send,
-    TCaptureDataWriter: WriteSamples<TCaptureSample>,
-    TPlaybackDataReader: ReadSamples<TPlaybackSample>,
+    TCaptureDataWriter: WriteItems<TCaptureSample>,
+    TPlaybackDataReader: ReadItems<TPlaybackSample>,
 {
     capture_sample: PhantomData<TCaptureSample>,
     playback_sample: PhantomData<TPlaybackSample>,
@@ -35,10 +36,10 @@ where
 
 impl<'a, TCaptureDataWriter, TPlaybackDataReader>
     audio::BackendBuilderFor<Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>>
-    for audio::BackendBuilder<'a, TCaptureDataWriter, TPlaybackDataReader>
+    for audio::BackendBuilder<'a, f32, f32, TCaptureDataWriter, TPlaybackDataReader>
 where
-    TCaptureDataWriter: WriteSamples<f32> + Send,
-    TPlaybackDataReader: ReadSamples<f32> + Send,
+    TCaptureDataWriter: WriteItems<f32> + Send,
+    TPlaybackDataReader: ReadItems<f32> + Send,
 {
     fn build(self) -> Result<Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>, Error> {
         let pa_record = util::build_psimple(Direction::Record);
@@ -59,9 +60,12 @@ where
 impl<TCaptureDataWriter, TPlaybackDataReader> audio::Backend
     for Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>
 where
-    TCaptureDataWriter: WriteSamples<f32> + Send,
-    TPlaybackDataReader: ReadSamples<f32> + Send,
+    TCaptureDataWriter: WriteItems<f32> + Send,
+    TPlaybackDataReader: ReadItems<f32> + Send,
 {
+    type CaptureSample = f32;
+    type PlaybackSample = f32;
+
     fn run(&mut self) {
         let capture_data_writer = &mut self.capture_data_writer;
         let playback_data_reader = &mut self.playback_data_reader;
@@ -77,7 +81,7 @@ where
                     let mut playback_data_reader = playback_data_reader.lock();
 
                     let samples_read = (*playback_data_reader)
-                        .read_samples(&mut playback_samples)
+                        .read_items(&mut playback_samples)
                         .expect("Unable to read playback data");
 
                     let write_buff = unsafe {
@@ -114,7 +118,7 @@ where
 
                     let mut capture_data_writer = capture_data_writer.lock();
                     let _ = (*capture_data_writer)
-                        .write_samples(&capture_samples)
+                        .write_items(&capture_samples)
                         .expect("Unable to write captured data");
                 }
             });
@@ -125,19 +129,13 @@ where
         .unwrap()
     }
 
-    fn capture_format(&self) -> audio::Format {
+    fn capture_format(&self) -> Format<f32> {
         // TODO: implement properly.
-        audio::Format {
-            channels: 2,
-            sample_rate: 48000,
-        }
+        Format::new(2, 48000)
     }
 
-    fn playback_format(&self) -> audio::Format {
+    fn playback_format(&self) -> Format<f32> {
         // TODO: implement properly.
-        audio::Format {
-            channels: 2,
-            sample_rate: 48000,
-        }
+        Format::new(2, 48000)
     }
 }
