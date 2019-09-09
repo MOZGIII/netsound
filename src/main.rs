@@ -9,6 +9,7 @@ use failure::Error;
 use mio::net::UdpSocket;
 
 use sample::Sample;
+use std::marker::PhantomData;
 
 mod audio;
 mod audio_backends;
@@ -20,6 +21,7 @@ mod io;
 mod match_channels;
 mod net;
 mod sync;
+mod transcoder;
 
 use audio::Backend;
 use sync::synced;
@@ -36,12 +38,24 @@ fn main() -> Result<(), Error> {
     println!("Listening on: {}", socket.local_addr()?);
     println!("Sending to: {}", &send_addr);
 
-    let capture_buf = synced(buf::VecDequeBuffer::with_capacity(30_000_000));
-    let playback_buf = synced(buf::VecDequeBuffer::with_capacity(30_000_000));
+    let capture_transcoder = synced(transcoder::resampler::Resampler::new(
+        1, // TODO: reorder the initialization and use value from the device.
+        48000.0,
+        48000.0,
+        buf::VecDequeBuffer::with_capacity(30_000_000),
+        buf::VecDequeBuffer::with_capacity(30_000_000),
+    ));
+    let playback_transcoder = synced(transcoder::resampler::Resampler::new(
+        2, // TODO: reorder the initialization and use value from the device.
+        48000.0,
+        48000.0,
+        buf::VecDequeBuffer::with_capacity(30_000_000),
+        buf::VecDequeBuffer::with_capacity(30_000_000),
+    ));
 
     let audio_backend_builder = audio::BackendBuilder {
-        capture_data_writer: capture_buf.clone(),
-        playback_data_reader: playback_buf.clone(),
+        capture_data_writer: capture_transcoder.clone(),
+        playback_data_reader: playback_transcoder.clone(),
 
         request_capture_formats: formats::input(),
         request_playback_formats: formats::output(),
@@ -91,8 +105,10 @@ fn main() -> Result<(), Error> {
     run_audio_backend(audio_backend)?;
 
     let mut net_service = net::NetService {
-        capture_buf: capture_buf.clone(),
-        playback_buf: playback_buf.clone(),
+        capture_sample: PhantomData,
+        playback_sample: PhantomData,
+        capture_data: capture_transcoder.clone(),
+        playback_data: playback_transcoder.clone(),
         encoder: &mut *encoder,
         decoder: &mut *decoder,
         stats: net::Stats::default(),

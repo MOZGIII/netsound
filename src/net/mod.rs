@@ -1,12 +1,14 @@
 use mio::net::UdpSocket;
 use mio::{Events, Poll, PollOpt, Ready, Token};
 use sample::Sample;
+use std::marker::PhantomData;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use crate::buf::VecDequeBuffer;
 use crate::codec::{Decoder, DecodingError, Encoder, EncodingError};
+use crate::io::{ReadItems, WriteItems};
 use crate::sync::Synced;
+use crate::transcoder::Transcode;
 
 #[derive(Debug, Default)]
 pub struct Stats {
@@ -26,36 +28,55 @@ pub struct Stats {
     pub empty_packets_decoding_errors: usize,
 }
 
-pub struct NetService<'a, ES, DS, E, D>
+pub struct NetService<'a, TCaptureSample, TPlaybackSample, TCaptureData, TPlaybackData, TEnc, TDec>
 where
-    ES: Sample,
-    DS: Sample,
-    E: Encoder<ES, VecDequeBuffer<ES>> + ?Sized,
-    D: Decoder<DS, VecDequeBuffer<DS>> + ?Sized,
+    TCaptureSample: Sample,
+    TPlaybackSample: Sample,
+    TCaptureData: ReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample>,
+    TPlaybackData: WriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample>,
+    <TCaptureData as Transcode<TCaptureSample, TCaptureSample>>::Error:
+        std::error::Error + std::marker::Send + std::marker::Sync,
+    <TPlaybackData as Transcode<TPlaybackSample, TPlaybackSample>>::Error:
+        std::error::Error + std::marker::Send + std::marker::Sync,
+    TEnc: Encoder<TCaptureSample, TCaptureData> + ?Sized,
+    TDec: Decoder<TPlaybackSample, TPlaybackData> + ?Sized,
 {
-    pub capture_buf: Synced<VecDequeBuffer<ES>>,
-    pub playback_buf: Synced<VecDequeBuffer<DS>>,
-    pub encoder: &'a mut E,
-    pub decoder: &'a mut D,
+    pub capture_sample: PhantomData<TCaptureSample>,
+    pub playback_sample: PhantomData<TPlaybackSample>,
+
+    pub capture_data: Synced<TCaptureData>,
+    pub playback_data: Synced<TPlaybackData>,
+    pub encoder: &'a mut TEnc,
+    pub decoder: &'a mut TDec,
 
     pub stats: Stats,
 }
 
 #[allow(dead_code)]
-pub type DynNetService<'a, ES, DS> = NetService<
-    'a,
-    ES,
-    DS,
-    dyn Encoder<ES, VecDequeBuffer<ES>> + 'a,
-    dyn Decoder<DS, VecDequeBuffer<DS>> + 'a,
->;
+pub type DynNetService<'a, TCaptureSample, TPlaybackSample, TCaptureData, TPlaybackData> =
+    NetService<
+        'a,
+        TCaptureSample,
+        TPlaybackSample,
+        TCaptureData,
+        TPlaybackData,
+        dyn Encoder<TCaptureSample, TCaptureData> + 'a,
+        dyn Decoder<TPlaybackSample, TPlaybackData> + 'a,
+    >;
 
-impl<'a, ES, DS, E, D> NetService<'a, ES, DS, E, D>
+impl<'a, TCaptureSample, TPlaybackSample, TCaptureData, TPlaybackData, TEnc, TDec>
+    NetService<'a, TCaptureSample, TPlaybackSample, TCaptureData, TPlaybackData, TEnc, TDec>
 where
-    ES: Sample,
-    DS: Sample,
-    E: Encoder<ES, VecDequeBuffer<ES>> + ?Sized,
-    D: Decoder<DS, VecDequeBuffer<DS>> + ?Sized,
+    TCaptureSample: Sample,
+    TPlaybackSample: Sample,
+    TCaptureData: ReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample>,
+    TPlaybackData: WriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample>,
+    <TCaptureData as Transcode<TCaptureSample, TCaptureSample>>::Error:
+        std::error::Error + std::marker::Send + std::marker::Sync + 'static,
+    <TPlaybackData as Transcode<TPlaybackSample, TPlaybackSample>>::Error:
+        std::error::Error + std::marker::Send + std::marker::Sync + 'static,
+    TEnc: Encoder<TCaptureSample, TCaptureData> + ?Sized,
+    TDec: Decoder<TPlaybackSample, TPlaybackData> + ?Sized,
 {
     pub fn r#loop(&mut self, socket: UdpSocket, peer_addr: SocketAddr) -> Result<(), crate::Error> {
         const SOCKET: Token = Token(0);
@@ -93,9 +114,10 @@ where
             let mut print_stats = false;
 
             if !ready_to_write_consumed {
-                let mut capture_buf = self.capture_buf.lock();
-                if !capture_buf.is_empty() {
-                    match self.encoder.encode(&mut *capture_buf, &mut send_buf) {
+                let mut capture_data = self.capture_data.lock();
+                capture_data.transcode()?;
+                if capture_data.items_available()? > 0 {
+                    match self.encoder.encode(&mut *capture_data, &mut send_buf) {
                         Ok(bytes_to_send) => {
                             self.stats.frames_encoded += 1;
                             self.stats.bytes_encoded += bytes_to_send;
@@ -117,7 +139,7 @@ where
 
                             // println!(
                             //     "Sent a non-empty packet, capture buffer len: {}",
-                            //     capture_buf.len()
+                            //     capture_data.len()
                             // );
                         }
                         Err(EncodingError::NotEnoughData) => {
@@ -131,7 +153,7 @@ where
                 } else {
                     // println!(
                     //     "Attempted to send an empty packet, capture buffer len: {}",
-                    //     capture_buf.len()
+                    //     capture_data.len()
                     // );
                     self.stats.send_ready_but_empty_capture_buf += 1;
                 }
@@ -146,11 +168,11 @@ where
                 self.stats.bytes_read += num_recv;
 
                 if num_recv > 0 {
-                    let mut playback_buf = self.playback_buf.lock();
+                    let mut playback_data = self.playback_data.lock();
 
                     match self
                         .decoder
-                        .decode(&recv_buf[..num_recv], &mut *playback_buf)
+                        .decode(&recv_buf[..num_recv], &mut *playback_data)
                     {
                         Ok(num_samples) => {
                             // println!(
@@ -159,6 +181,7 @@ where
                             // )
                             self.stats.samples_decoded += num_samples;
                             self.stats.frames_decoded += 1;
+                            playback_data.transcode()?;
                         }
                         Err(DecodingError::EmptyPacket) => {
                             self.stats.empty_packets_decoding_errors += 1;
