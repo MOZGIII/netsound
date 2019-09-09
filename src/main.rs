@@ -17,6 +17,7 @@ mod codec;
 mod format;
 mod formats;
 mod io;
+mod match_channels;
 mod net;
 mod sync;
 
