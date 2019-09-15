@@ -1,6 +1,5 @@
 use super::*;
 use crate::audio;
-use crate::format::Format;
 use crate::io::{ReadItems, WriteItems};
 use crate::sync::Synced;
 use cpal::traits::*;
@@ -19,9 +18,6 @@ where
 
     pub(super) capture_data_writer: Synced<TCaptureDataWriter>,
     pub(super) playback_data_reader: Synced<TPlaybackDataReader>,
-
-    pub(super) capture_format: cpal::Format,
-    pub(super) playback_format: cpal::Format,
 
     #[allow(dead_code)]
     pub(super) capture_stream_id: cpal::StreamId,
@@ -54,9 +50,6 @@ where
     format::assert::ExactCpalSampleFormatAsserter<TPlaybackSample>:
         format::assert::CpalSampleFormatAsserter<Sample = TPlaybackSample>,
 {
-    type CaptureSample = TCaptureSample;
-    type PlaybackSample = TPlaybackSample;
-
     fn run(&mut self) {
         let input_converter = conv::ExactCpalInputConverter::new();
         let output_converter = conv::ExactCpalOutputConverter::new();
@@ -94,13 +87,5 @@ where
                 }
             };
         });
-    }
-
-    fn capture_format(&self) -> Format<TCaptureSample> {
-        format::interop::from_cpal_format(self.capture_format.clone())
-    }
-
-    fn playback_format(&self) -> Format<TPlaybackSample> {
-        format::interop::from_cpal_format(self.playback_format.clone())
     }
 }

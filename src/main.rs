@@ -8,7 +8,6 @@ use failure::Error;
 
 use mio::net::UdpSocket;
 
-use sample::Sample;
 use std::marker::PhantomData;
 
 mod audio;
@@ -24,7 +23,6 @@ mod sync;
 mod transcoder;
 
 use audio::Backend;
-use sync::synced;
 
 fn main() -> Result<(), Error> {
     let bind_addr = env::args()
@@ -38,39 +36,40 @@ fn main() -> Result<(), Error> {
     println!("Listening on: {}", socket.local_addr()?);
     println!("Sending to: {}", &send_addr);
 
-    let capture_transcoder = synced(transcoder::resampler::Resampler::new(
-        1, // TODO: reorder the initialization and use value from the device.
-        48000.0,
-        48000.0,
-        buf::VecDequeBuffer::with_capacity(30_000_000),
-        buf::VecDequeBuffer::with_capacity(30_000_000),
-    ));
-    let playback_transcoder = synced(transcoder::resampler::Resampler::new(
-        2, // TODO: reorder the initialization and use value from the device.
-        48000.0,
-        48000.0,
-        buf::VecDequeBuffer::with_capacity(30_000_000),
-        buf::VecDequeBuffer::with_capacity(30_000_000),
-    ));
-
-    let audio_backend_builder = audio::BackendBuilder {
-        capture_data_writer: capture_transcoder.clone(),
-        playback_data_reader: playback_transcoder.clone(),
-
-        request_capture_formats: formats::input(),
-        request_playback_formats: formats::output(),
-    };
+    let codec_to_use = CodecToUse::from_env()?;
+    println!("Using codec: {:?}", codec_to_use);
 
     let backend_to_use = audio_backends::AudioBackendToUse::from_env()?;
     println!("Using audio backend: {:?}", backend_to_use);
 
-    let codec_to_use = CodecToUse::from_env()?;
-    println!("Using codec: {:?}", codec_to_use);
+    use std::convert::TryInto;
+    let audio_backend_builder = audio::Builder {
+        request_capture_formats: formats::input(),
+        request_playback_formats: formats::output(),
+        shared_capture_data_builder: |f| {
+            Ok(sync::synced(transcoder::resampler::Resampler::new(
+                f.channels.try_into()?,
+                f.sample_rate.into(),
+                48000.0,
+                buf::VecDequeBuffer::with_capacity(30_000_000),
+                buf::VecDequeBuffer::with_capacity(30_000_000),
+            )))
+        },
+        shared_playback_data_builder: |f| {
+            Ok(sync::synced(transcoder::resampler::Resampler::new(
+                f.channels.try_into()?,
+                48000.0,
+                f.sample_rate.into(),
+                buf::VecDequeBuffer::with_capacity(30_000_000),
+                buf::VecDequeBuffer::with_capacity(30_000_000),
+            )))
+        },
+    };
 
-    let audio_backend = audio_backends::build(backend_to_use, audio_backend_builder)?;
+    let audio_state = audio_backends::build(backend_to_use, audio_backend_builder)?;
 
-    let capture_format = audio_backend.capture_format();
-    let playback_format = audio_backend.playback_format();
+    let capture_format = audio_state.capture_format;
+    let playback_format = audio_state.playback_format;
 
     let mut encoder: Box<dyn codec::Encoder<f32, _>>;
     let mut decoder: Box<dyn codec::Decoder<f32, _>>;
@@ -102,13 +101,14 @@ fn main() -> Result<(), Error> {
         }
     };
 
+    let audio_backend = audio_state.backend;
     run_audio_backend(audio_backend)?;
 
     let mut net_service = net::NetService {
         capture_sample: PhantomData,
         playback_sample: PhantomData,
-        capture_data: capture_transcoder.clone(),
-        playback_data: playback_transcoder.clone(),
+        capture_data: audio_state.shared_capture_data.clone(),
+        playback_data: audio_state.shared_playback_data.clone(),
         encoder: &mut *encoder,
         decoder: &mut *decoder,
         stats: net::Stats::default(),
@@ -137,15 +137,7 @@ impl CodecToUse {
     }
 }
 
-fn run_audio_backend<TCaptureSample, TPlaybackSample>(
-    audio_backend: Box<
-        dyn Backend<CaptureSample = TCaptureSample, PlaybackSample = TPlaybackSample> + 'static,
-    >,
-) -> Result<(), Error>
-where
-    TCaptureSample: Sample + Send + 'static,
-    TPlaybackSample: Sample + Send + 'static,
-{
+fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) -> Result<(), Error> {
     std::thread::spawn(move || {
         let mut local = audio_backend;
         local.run()

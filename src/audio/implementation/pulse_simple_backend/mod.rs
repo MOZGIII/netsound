@@ -34,26 +34,75 @@ where
     pa_playback: Simple,
 }
 
-impl<'a, TCaptureDataWriter, TPlaybackDataReader>
-    audio::BackendBuilderFor<Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>>
-    for audio::BackendBuilder<'a, f32, f32, TCaptureDataWriter, TPlaybackDataReader>
+impl<'a, TCaptureData, TPlaybackData, TSharedCaptureDataBuilder, TSharedPlaybackDataBuilder>
+    audio::Build<
+        Backend<f32, f32, TCaptureData, TPlaybackData>,
+        f32,
+        f32,
+        TCaptureData,
+        TPlaybackData,
+        TSharedCaptureDataBuilder,
+        TSharedPlaybackDataBuilder,
+    >
+    for audio::Builder<
+        'a,
+        f32,
+        f32,
+        TCaptureData,
+        TPlaybackData,
+        TSharedCaptureDataBuilder,
+        TSharedPlaybackDataBuilder,
+    >
 where
-    TCaptureDataWriter: WriteItems<f32> + Send,
-    TPlaybackDataReader: ReadItems<f32> + Send,
+    TCaptureData: WriteItems<f32> + Send,
+    TPlaybackData: ReadItems<f32> + Send,
+    TSharedCaptureDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TCaptureData>, crate::Error>,
+    TSharedPlaybackDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TPlaybackData>, crate::Error>,
 {
-    fn build(self) -> Result<Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>, Error> {
+    fn build(
+        self,
+    ) -> Result<
+        audio::BuiltState<
+            Backend<f32, f32, TCaptureData, TPlaybackData>,
+            f32,
+            f32,
+            Synced<TCaptureData>,
+            Synced<TPlaybackData>,
+        >,
+        Error,
+    > {
         let pa_record = util::build_psimple(Direction::Record);
         let pa_playback = util::build_psimple(Direction::Playback);
-        Ok(Backend {
+
+        let capture_format = Format::new(2, 48000);
+        let playback_format = Format::new(2, 48000);
+
+        let shared_capture_data_builder = self.shared_capture_data_builder;
+        let shared_playback_data_builder = self.shared_playback_data_builder;
+
+        let shared_capture_data = shared_capture_data_builder(capture_format)?;
+        let shared_playback_data = shared_playback_data_builder(playback_format)?;
+
+        let backend = Backend {
             capture_sample: PhantomData,
             playback_sample: PhantomData,
 
-            capture_data_writer: self.capture_data_writer,
-            playback_data_reader: self.playback_data_reader,
+            capture_data_writer: shared_capture_data.clone(),
+            playback_data_reader: shared_playback_data.clone(),
 
             pa_record,
             pa_playback,
-        })
+        };
+
+        let built_state = audio::BuiltState {
+            backend,
+            capture_format,
+            playback_format,
+            shared_capture_data,
+            shared_playback_data,
+        };
+
+        Ok(built_state)
     }
 }
 
@@ -63,9 +112,6 @@ where
     TCaptureDataWriter: WriteItems<f32> + Send,
     TPlaybackDataReader: ReadItems<f32> + Send,
 {
-    type CaptureSample = f32;
-    type PlaybackSample = f32;
-
     fn run(&mut self) {
         let capture_data_writer = &mut self.capture_data_writer;
         let playback_data_reader = &mut self.playback_data_reader;
@@ -127,15 +173,5 @@ where
             record_handle.join().unwrap();
         })
         .unwrap()
-    }
-
-    fn capture_format(&self) -> Format<f32> {
-        // TODO: implement properly.
-        Format::new(2, 48000)
-    }
-
-    fn playback_format(&self) -> Format<f32> {
-        // TODO: implement properly.
-        Format::new(2, 48000)
     }
 }

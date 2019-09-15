@@ -10,10 +10,12 @@ fn unexpected_format_type() -> ! {
     panic!("Unexpected format type")
 }
 
+#[allow(dead_code)]
 pub struct ExactCpalSampleFormatAsserter<S: Sample> {
     phantom: PhantomData<S>,
 }
 
+#[allow(dead_code)]
 impl<S: Sample> ExactCpalSampleFormatAsserter<S> {
     pub fn new() -> Self {
         Self {

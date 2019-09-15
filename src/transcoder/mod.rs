@@ -1,5 +1,6 @@
 use crate::io::{ItemsAvailable, ReadItems, WriteItems};
 
+pub mod noop;
 pub mod resampler;
 
 pub trait Transcode<TFrom, TTo>: WriteItems<TFrom> + ReadItems<TTo> + ItemsAvailable<TTo> {

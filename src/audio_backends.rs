@@ -1,6 +1,7 @@
-use crate::audio::*;
+use crate::audio;
+use crate::format::Format;
 use crate::io::{ReadItems, WriteItems};
-use crate::Error;
+use crate::sync::Synced;
 
 #[derive(Debug)]
 pub enum AudioBackendToUse {
@@ -21,13 +22,39 @@ impl AudioBackendToUse {
     }
 }
 
-pub fn build<'a, TCaptureDataWriter, TPlaybackDataReader>(
+pub fn build<
+    'a,
+    TCaptureData,
+    TPlaybackData,
+    TSharedCaptureDataBuilder,
+    TSharedPlaybackDataBuilder,
+>(
     backend_to_use: AudioBackendToUse,
-    builder: BackendBuilder<'_, f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
-) -> Result<Box<dyn Backend<CaptureSample = f32, PlaybackSample = f32> + 'a>, Error>
+    builder: audio::Builder<
+        'a,
+        f32,
+        f32,
+        TCaptureData,
+        TPlaybackData,
+        TSharedCaptureDataBuilder,
+        TSharedPlaybackDataBuilder,
+    >,
+) -> Result<
+    audio::BuiltState<
+        Box<dyn audio::Backend>,
+        f32,
+        f32,
+        Synced<TCaptureData>,
+        Synced<TPlaybackData>,
+    >,
+    crate::Error,
+>
 where
-    TCaptureDataWriter: WriteItems<f32> + Send + 'a,
-    TPlaybackDataReader: ReadItems<f32> + Send + 'a,
+    TCaptureData: WriteItems<f32> + Send + 'static,
+    TPlaybackData: ReadItems<f32> + Send + 'static,
+
+    TSharedCaptureDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TCaptureData>, crate::Error>,
+    TSharedPlaybackDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TPlaybackData>, crate::Error>,
 {
     match backend_to_use {
         AudioBackendToUse::Cpal => build_cpal(builder),
@@ -35,36 +62,130 @@ where
     }
 }
 
-fn build_cpal<'a, TCaptureDataWriter, TPlaybackDataReader>(
-    builder: BackendBuilder<'_, f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
-) -> Result<Box<dyn Backend<CaptureSample = f32, PlaybackSample = f32> + 'a>, Error>
+fn build_cpal<
+    'a,
+    TCaptureData,
+    TPlaybackData,
+    TSharedCaptureDataBuilder,
+    TSharedPlaybackDataBuilder,
+>(
+    builder: audio::Builder<
+        'a,
+        f32,
+        f32,
+        TCaptureData,
+        TPlaybackData,
+        TSharedCaptureDataBuilder,
+        TSharedPlaybackDataBuilder,
+    >,
+) -> Result<
+    audio::BuiltState<
+        Box<dyn audio::Backend>,
+        f32,
+        f32,
+        Synced<TCaptureData>,
+        Synced<TPlaybackData>,
+    >,
+    crate::Error,
+>
 where
-    TCaptureDataWriter: WriteItems<f32> + Send + 'a,
-    TPlaybackDataReader: ReadItems<f32> + Send + 'a,
+    TCaptureData: WriteItems<f32> + Send + 'static,
+    TPlaybackData: ReadItems<f32> + Send + 'static,
+
+    TSharedCaptureDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TCaptureData>, crate::Error>,
+    TSharedPlaybackDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TPlaybackData>, crate::Error>,
 {
-    BoxedBackendBuilderFor::<cpal_backend::Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>>::build_boxed(builder)
+    Ok(audio::Build::<
+        crate::audio::cpal_backend::Backend<f32, f32, TCaptureData, TPlaybackData>,
+        f32,
+        f32,
+        TCaptureData,
+        TPlaybackData,
+        TSharedCaptureDataBuilder,
+        TSharedPlaybackDataBuilder,
+    >::build(builder)?
+    .into_dyn_backend())
 }
 
 #[cfg(feature = "pulse_simple_backend")]
-fn build_pulse_simple<'a, TCaptureDataWriter, TPlaybackDataReader>(
-    builder: BackendBuilder<'_, f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
-) -> Result<Box<dyn Backend<CaptureSample = f32, PlaybackSample = f32> + 'a>, Error>
+fn build_pulse_simple<
+    'a,
+    TCaptureData,
+    TPlaybackData,
+    TSharedCaptureDataBuilder,
+    TSharedPlaybackDataBuilder,
+>(
+    builder: audio::Builder<
+        'a,
+        f32,
+        f32,
+        TCaptureData,
+        TPlaybackData,
+        TSharedCaptureDataBuilder,
+        TSharedPlaybackDataBuilder,
+    >,
+) -> Result<
+    audio::BuiltState<
+        Box<dyn audio::Backend>,
+        f32,
+        f32,
+        Synced<TCaptureData>,
+        Synced<TPlaybackData>,
+    >,
+    crate::Error,
+>
 where
-    TCaptureDataWriter: WriteItems<f32> + Send + 'a,
-    TPlaybackDataReader: ReadItems<f32> + Send + 'a,
+    TCaptureData: WriteItems<f32> + Send + 'static,
+    TPlaybackData: ReadItems<f32> + Send + 'static,
+
+    TSharedCaptureDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TCaptureData>, crate::Error>,
+    TSharedPlaybackDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TPlaybackData>, crate::Error>,
 {
-    BoxedBackendBuilderFor::<
-        pulse_simple_backend::Backend<f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
-    >::build_boxed(builder)
+    Ok(audio::Build::<
+        crate::audio::pulse_simple_backend::Backend<f32, f32, TCaptureData, TPlaybackData>,
+        f32,
+        f32,
+        TCaptureData,
+        TPlaybackData,
+        TSharedCaptureDataBuilder,
+        TSharedPlaybackDataBuilder,
+    >::build(builder)?
+    .into_dyn_backend())
 }
 
 #[cfg(not(feature = "pulse_simple_backend"))]
-fn build_pulse_simple<'a, TCaptureDataWriter, TPlaybackDataReader>(
-    _builder: BackendBuilder<'_, f32, f32, TCaptureDataWriter, TPlaybackDataReader>,
-) -> Result<Box<dyn Backend<CaptureSample = f32, PlaybackSample = f32> + 'a>, Error>
+fn build_pulse_simple<
+    'a,
+    TCaptureData,
+    TPlaybackData,
+    TSharedCaptureDataBuilder,
+    TSharedPlaybackDataBuilder,
+>(
+    _builder: audio::Builder<
+        'a,
+        f32,
+        f32,
+        TCaptureData,
+        TPlaybackData,
+        TSharedCaptureDataBuilder,
+        TSharedPlaybackDataBuilder,
+    >,
+) -> Result<
+    audio::BuiltState<
+        Box<dyn audio::Backend>,
+        f32,
+        f32,
+        Synced<TCaptureData>,
+        Synced<TPlaybackData>,
+    >,
+    crate::Error,
+>
 where
-    TCaptureDataWriter: WriteItems<f32> + Send + 'a,
-    TPlaybackDataReader: ReadItems<f32> + Send + 'a,
+    TCaptureData: WriteItems<f32> + Send + 'static,
+    TPlaybackData: ReadItems<f32> + Send + 'static,
+
+    TSharedCaptureDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TCaptureData>, crate::Error>,
+    TSharedPlaybackDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TPlaybackData>, crate::Error>,
 {
     unimplemented!()
 }

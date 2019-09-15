@@ -1,7 +1,7 @@
 use sample::Sample;
 use std::marker::PhantomData;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Format<S: Sample> {
     pub channels: u16,
     pub sample_rate: u32,

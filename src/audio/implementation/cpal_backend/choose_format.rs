@@ -5,7 +5,7 @@ use sample::Sample;
 pub fn choose_format<S: Sample, I: Iterator<Item = cpal::SupportedFormat>>(
     iter: I,
     requested_formats: &[Format<S>],
-) -> Result<cpal::Format, super::errors::Error>
+) -> Result<Format<S>, super::errors::Error>
 where
     format::deduce::ExactCpalSampleFormatDeducer<S>:
         format::deduce::CpalSampleFormatDeducer<Sample = S>,
@@ -21,9 +21,7 @@ where
             channels: 2,
         } = &supported_formats[0]
         {
-            return Ok(format::interop::to_cpal_format(
-                requested_formats[0].clone(),
-            ));
+            return Ok(requested_formats[0]);
         }
     }
 
@@ -45,7 +43,7 @@ where
                 continue;
             }
 
-            return Ok(format::interop::to_cpal_format(requested_format.clone()));
+            return Ok(*requested_format);
         }
     }
 
