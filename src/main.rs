@@ -73,8 +73,12 @@ fn errmain() -> Result<(), Error> {
 
     let audio_state = audio_backends::build(backend_to_use, audio_backend_builder)?;
 
-    let capture_format = audio_state.capture_format;
-    let playback_format = audio_state.playback_format;
+    let resampled_capture_format =
+        format::Format::new(std::cmp::min(2, audio_state.capture_format.channels), 48000);
+    let resampled_playback_format = format::Format::new(
+        std::cmp::min(2, audio_state.playback_format.channels),
+        48000,
+    );
 
     let mut encoder: Box<dyn codec::Encoder<f32, _>>;
     let mut decoder: Box<dyn codec::Decoder<f32, _>>;
@@ -82,21 +86,24 @@ fn errmain() -> Result<(), Error> {
     match codec_to_use {
         CodecToUse::Opus => {
             let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                capture_format.sample_rate,
-                capture_format.channels,
+                resampled_capture_format.sample_rate,
+                resampled_capture_format.channels,
                 codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
             let opus_decoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                playback_format.sample_rate,
-                playback_format.channels,
+                resampled_playback_format.sample_rate,
+                resampled_playback_format.channels,
                 codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
 
-            encoder = Box::new(codec::opus::make_encoder(capture_format, opus_encoder_buf)?);
+            encoder = Box::new(codec::opus::make_encoder(
+                resampled_capture_format,
+                opus_encoder_buf,
+            )?);
             decoder = Box::new(codec::opus::make_decoder(
-                playback_format,
+                resampled_playback_format,
                 opus_decoder_buf,
             )?);
         }
