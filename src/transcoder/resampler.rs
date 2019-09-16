@@ -1,7 +1,7 @@
 use super::*;
 use crate::buf::VecDequeBuffer;
 use crate::match_channels;
-use crate::samples_filter::CutExtraChannelsExt;
+use crate::samples_filter::NormalizeChannelsExt;
 use sample::{interpolate, Duplex, Sample};
 use std::io::Result;
 
@@ -71,7 +71,7 @@ where
                 use sample::{signal, Signal};
 
                 let mut from_signal =
-                    signal::from_interleaved_samples_iter::<_, F<S>>(self.from_buf.drain(..).cut_extra_channels(self.from_channels, to_channels));
+                    signal::from_interleaved_samples_iter::<_, F<S>>(self.from_buf.drain(..).normalize_channels(self.from_channels, to_channels));
                 let interpolator = interpolate::Linear::from_source(&mut from_signal);
                 let converter = interpolate::Converter::from_hz_to_hz(
                     from_signal,
