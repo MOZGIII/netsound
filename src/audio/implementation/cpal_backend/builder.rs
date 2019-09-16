@@ -99,13 +99,13 @@ where
         let shared_capture_data = shared_capture_data_builder(capture_format)?;
         let shared_playback_data = shared_playback_data_builder(playback_format)?;
 
-        print_config("Playback", &output_device.name()?, &cpal_capture_format);
-        print_config("Capture", &input_device.name()?, &cpal_playback_format);
+        print_config("Playback", &output_device.name()?, &cpal_playback_format);
+        print_config("Capture", &input_device.name()?, &cpal_capture_format);
 
         let playback_stream_id =
-            event_loop.build_output_stream(&output_device, &cpal_capture_format)?;
+            event_loop.build_output_stream(&output_device, &cpal_playback_format)?;
         let capture_stream_id =
-            event_loop.build_input_stream(&input_device, &cpal_playback_format)?;
+            event_loop.build_input_stream(&input_device, &cpal_capture_format)?;
 
         event_loop.play_stream(playback_stream_id.clone())?;
         event_loop.play_stream(capture_stream_id.clone())?;
