@@ -1,13 +1,15 @@
 use super::*;
 use crate::buf::VecDequeBuffer;
 use crate::match_channels;
+use crate::samples_filter::CutExtraChannelsExt;
 use sample::{interpolate, Duplex, Sample};
 use std::io::Result;
 
 /// Resampler acts as writer, reader and transcoder.
 #[derive(Debug)]
 pub struct Resampler<S: Sample> {
-    pub channels: usize,
+    pub from_channels: usize,
+    pub to_channels: usize,
 
     pub from_hz: f64,
     pub to_hz: f64,
@@ -18,14 +20,16 @@ pub struct Resampler<S: Sample> {
 
 impl<S: Sample> Resampler<S> {
     pub fn new(
-        channels: usize,
+        from_channels: usize,
+        to_channels: usize,
         from_hz: f64,
         to_hz: f64,
         from_buf: VecDequeBuffer<S>,
         to_buf: VecDequeBuffer<S>,
     ) -> Self {
         Self {
-            channels,
+            from_channels,
+            to_channels,
             from_hz,
             to_hz,
             from_buf,
@@ -60,14 +64,14 @@ where
     type Error = std::io::Error;
 
     fn transcode(&mut self) -> Result<Self::Ok> {
-        let channels = self.channels;
+        let to_channels = self.to_channels;
 
         match_channels! {
-            F => [channels] => {
+            F => [to_channels] => {
                 use sample::{signal, Signal};
 
                 let mut from_signal =
-                    signal::from_interleaved_samples_iter::<_, F<S>>(self.from_buf.drain(..));
+                    signal::from_interleaved_samples_iter::<_, F<S>>(self.from_buf.drain(..).cut_extra_channels(self.from_channels, to_channels));
                 let interpolator = interpolate::Linear::from_source(&mut from_signal);
                 let converter = interpolate::Converter::from_hz_to_hz(
                     from_signal,

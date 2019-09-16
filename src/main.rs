@@ -19,6 +19,7 @@ mod formats;
 mod io;
 mod match_channels;
 mod net;
+mod samples_filter;
 mod sync;
 mod transcoder;
 
@@ -47,8 +48,10 @@ fn main() -> Result<(), Error> {
         request_capture_formats: formats::input(),
         request_playback_formats: formats::output(),
         shared_capture_data_builder: |f| {
+            let channels = f.channels.try_into()?;
             Ok(sync::synced(transcoder::resampler::Resampler::new(
-                f.channels.try_into()?,
+                channels,
+                std::cmp::min(2, channels),
                 f.sample_rate.into(),
                 48000.0,
                 buf::VecDequeBuffer::with_capacity(30_000_000),
@@ -56,8 +59,10 @@ fn main() -> Result<(), Error> {
             )))
         },
         shared_playback_data_builder: |f| {
+            let channels = f.channels.try_into()?;
             Ok(sync::synced(transcoder::resampler::Resampler::new(
-                f.channels.try_into()?,
+                std::cmp::min(2, channels),
+                channels,
                 48000.0,
                 f.sample_rate.into(),
                 buf::VecDequeBuffer::with_capacity(30_000_000),
