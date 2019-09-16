@@ -25,7 +25,7 @@ mod transcoder;
 
 use audio::Backend;
 
-fn main() -> Result<(), Error> {
+fn errmain() -> Result<(), Error> {
     let bind_addr = env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:8080".to_string());
@@ -121,6 +121,13 @@ fn main() -> Result<(), Error> {
     net_service.r#loop(socket, send_addr)?;
 
     Ok(())
+}
+
+fn main() {
+    if let Err(err) = errmain() {
+        eprintln!("Error: {} [{:?}]", err, err);
+        std::process::exit(1);
+    }
 }
 
 #[derive(Debug)]
