@@ -16,6 +16,16 @@ where
 }
 
 #[allow(dead_code)]
+pub fn from_cpal_supported_format<S: Sample>(f: cpal::SupportedFormat) -> Format<S>
+where
+    assert::ExactCpalSampleFormatAsserter<S>: assert::CpalSampleFormatAsserter<Sample = S>,
+{
+    let asserter = assert::ExactCpalSampleFormatAsserter::<S>::new();
+    asserter.assert(f.data_type);
+    Format::<S>::new(f.channels, f.max_sample_rate.0)
+}
+
+#[allow(dead_code)]
 pub fn to_cpal_format<S: Sample>(f: Format<S>) -> cpal::Format
 where
     deduce::ExactCpalSampleFormatDeducer<S>: deduce::CpalSampleFormatDeducer<Sample = S>,

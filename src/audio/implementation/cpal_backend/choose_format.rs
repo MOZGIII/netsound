@@ -9,26 +9,16 @@ pub fn choose_format<S: Sample, I: Iterator<Item = cpal::SupportedFormat>>(
 where
     format::deduce::ExactCpalSampleFormatDeducer<S>:
         format::deduce::CpalSampleFormatDeducer<Sample = S>,
+    format::assert::ExactCpalSampleFormatAsserter<S>:
+        format::assert::CpalSampleFormatAsserter<Sample = S>,
 {
     let supported_formats: Vec<_> = iter.collect();
-
-    // FIXME: Windows hack.
-    if supported_formats.len() == 1 {
-        if let cpal::SupportedFormat {
-            min_sample_rate: cpal::SampleRate(48000),
-            max_sample_rate: cpal::SampleRate(48000),
-            data_type: cpal::SampleFormat::F32,
-            channels: 2,
-        } = &supported_formats[0]
-        {
-            return Ok(requested_formats[0]);
-        }
-    }
 
     use format::deduce::CpalSampleFormatDeducer;
     let deducer = format::deduce::ExactCpalSampleFormatDeducer::<S>::new();
     let cpal_sample_format = deducer.deduce();
 
+    // Try to use format from the preferred formats list.
     for requested_format in requested_formats {
         for supported_format in &supported_formats {
             if supported_format.data_type != cpal_sample_format {
@@ -45,6 +35,11 @@ where
 
             return Ok(*requested_format);
         }
+    }
+
+    // Preferred format wasn't found, use the first one that's supported.
+    if let Some(format) = supported_formats.into_iter().next() {
+        return Ok(format::interop::from_cpal_supported_format(format));
     }
 
     Err(super::errors::Error::FormatNegotiationError)
