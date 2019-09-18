@@ -3,7 +3,6 @@ use crate::audio;
 use crate::format::Format;
 use crate::io::{ReadItems, WriteItems};
 use crate::sync::Synced;
-use sample::Sample;
 use std::marker::PhantomData;
 
 use cpal::traits::*;
@@ -36,8 +35,8 @@ impl<
         TSharedPlaybackDataBuilder,
     >
 where
-    TCaptureSample: Sample + Send + Sync,
-    TPlaybackSample: Sample + Send + Sync,
+    TCaptureSample: CompatibleSample + Send + Sync,
+    TPlaybackSample: CompatibleSample + Send + Sync,
 
     TCaptureData: WriteItems<TCaptureSample> + Send,
     TPlaybackData: ReadItems<TPlaybackSample> + Send,
@@ -46,20 +45,6 @@ where
         FnOnce(Format<TCaptureSample>) -> Result<Synced<TCaptureData>, crate::Error>,
     TSharedPlaybackDataBuilder:
         FnOnce(Format<TPlaybackSample>) -> Result<Synced<TPlaybackData>, crate::Error>,
-
-    conv::ExactCpalInputConverter<TCaptureSample>:
-        conv::CpalInputConverter<Sample = TCaptureSample>,
-    conv::ExactCpalOutputConverter<TPlaybackSample>:
-        conv::CpalOutputConverter<Sample = TPlaybackSample>,
-
-    format::deduce::ExactCpalSampleFormatDeducer<TCaptureSample>:
-        format::deduce::CpalSampleFormatDeducer<Sample = TCaptureSample>,
-    format::deduce::ExactCpalSampleFormatDeducer<TPlaybackSample>:
-        format::deduce::CpalSampleFormatDeducer<Sample = TPlaybackSample>,
-    format::assert::ExactCpalSampleFormatAsserter<TCaptureSample>:
-        format::assert::CpalSampleFormatAsserter<Sample = TCaptureSample>,
-    format::assert::ExactCpalSampleFormatAsserter<TPlaybackSample>:
-        format::assert::CpalSampleFormatAsserter<Sample = TPlaybackSample>,
 {
     fn build(
         self,
@@ -90,8 +75,8 @@ where
             self.request_playback_formats,
         )?;
 
-        let cpal_capture_format = format::interop::to_cpal_format(capture_format);
-        let cpal_playback_format = format::interop::to_cpal_format(playback_format);
+        let cpal_capture_format = format::to_cpal_format(capture_format);
+        let cpal_playback_format = format::to_cpal_format(playback_format);
 
         let shared_capture_data_builder = self.shared_capture_data_builder;
         let shared_playback_data_builder = self.shared_playback_data_builder;

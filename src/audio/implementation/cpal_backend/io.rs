@@ -1,27 +1,21 @@
-use super::conv::{CpalInputConverter, CpalOutputConverter};
+use super::CompatibleSample;
 use crate::io::{ReadItems, WriteItems};
-use sample::Sample;
 
-pub fn capture<'a, S, W, C>(
-    converter: &C,
-    from: &'a mut cpal::UnknownTypeInputBuffer<'a>,
-    to: &mut W,
-) where
-    S: Sample + 'a,
+pub fn capture<'a, S, W>(from: &'a mut cpal::UnknownTypeInputBuffer<'a>, to: &mut W)
+where
+    S: CompatibleSample + 'a,
     W: WriteItems<S>,
-    C: CpalInputConverter<Sample = S>,
 {
-    to.write_items(converter.convert(from))
+    to.write_items(S::unwrap_cpal_input_buffer(from))
         .expect("failed to write to shared buf");
 }
 
-pub fn play<'a, S, R, C>(converter: &C, from: &mut R, to: &'a mut cpal::UnknownTypeOutputBuffer<'a>)
+pub fn play<'a, S, R>(from: &mut R, to: &'a mut cpal::UnknownTypeOutputBuffer<'a>)
 where
-    S: Sample + 'a,
+    S: CompatibleSample + 'a,
     R: ReadItems<S>,
-    C: CpalOutputConverter<Sample = S>,
 {
-    let to = converter.convert(to);
+    let to = S::unwrap_cpal_output_buffer(to);
     let samples_read = from.read_items(to).expect("failed to read from shared buf");
 
     // We _must_ fill the whole `to` buffer.

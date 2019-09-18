@@ -1,22 +1,12 @@
-use super::format;
+use super::{format, CompatibleSample};
 use crate::format::Format;
-use sample::Sample;
 
-pub fn choose_format<S: Sample, I: Iterator<Item = cpal::SupportedFormat>>(
+pub fn choose_format<S: CompatibleSample, I: Iterator<Item = cpal::SupportedFormat>>(
     iter: I,
     requested_formats: &[Format<S>],
-) -> Result<Format<S>, super::errors::Error>
-where
-    format::deduce::ExactCpalSampleFormatDeducer<S>:
-        format::deduce::CpalSampleFormatDeducer<Sample = S>,
-    format::assert::ExactCpalSampleFormatAsserter<S>:
-        format::assert::CpalSampleFormatAsserter<Sample = S>,
-{
+) -> Result<Format<S>, super::errors::Error> {
     let supported_formats: Vec<_> = iter.collect();
-
-    use format::deduce::CpalSampleFormatDeducer;
-    let deducer = format::deduce::ExactCpalSampleFormatDeducer::<S>::new();
-    let cpal_sample_format = deducer.deduce();
+    let cpal_sample_format = S::cpal_sample_format();
 
     // Try to use format from the preferred formats list.
     for requested_format in requested_formats {
@@ -39,7 +29,7 @@ where
 
     // Preferred format wasn't found, use the first one that's supported.
     if let Some(format) = supported_formats.into_iter().next() {
-        return Ok(format::interop::from_cpal_supported_format(format));
+        return Ok(format::from_cpal_supported_format(format));
     }
 
     Err(super::errors::Error::FormatNegotiationError)

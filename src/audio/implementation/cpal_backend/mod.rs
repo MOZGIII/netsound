@@ -1,12 +1,12 @@
 mod backend;
 mod builder;
 mod choose_format;
-mod conv;
+mod compatible_sample;
 mod default;
 mod errors;
-mod format;
 mod io;
 
 pub use backend::*;
 pub use builder::*;
+pub use compatible_sample::*;
 pub use errors::*;
