@@ -13,6 +13,7 @@ use crate::transcoder::Transcode;
 #[derive(Debug, Default)]
 pub struct Stats {
     pub send_ready_but_empty_capture_buf: usize,
+    pub send_ready_but_try_lock_failed: usize,
     pub frames_encoded: usize,
     pub bytes_encoded: usize,
     pub not_enough_data_at_encoding_errors: usize,
@@ -20,6 +21,7 @@ pub struct Stats {
     pub bytes_sent: usize,
     pub bytes_sent_mismatches: usize,
 
+    pub data_arrived_but_was_dropped_due_to_lock_conention: usize,
     pub packets_read: usize,
     pub bytes_read: usize,
     pub samples_decoded: usize,
@@ -69,12 +71,15 @@ impl<'a, TCaptureSample, TPlaybackSample, TCaptureData, TPlaybackData, TEnc, TDe
 where
     TCaptureSample: Sample,
     TPlaybackSample: Sample,
+
     TCaptureData: ReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample>,
     TPlaybackData: WriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample>,
+
     <TCaptureData as Transcode<TCaptureSample, TCaptureSample>>::Error:
         std::error::Error + std::marker::Send + std::marker::Sync + 'static,
     <TPlaybackData as Transcode<TPlaybackSample, TPlaybackSample>>::Error:
         std::error::Error + std::marker::Send + std::marker::Sync + 'static,
+
     TEnc: Encoder<TCaptureSample, TCaptureData> + ?Sized,
     TDec: Decoder<TPlaybackSample, TPlaybackData> + ?Sized,
 {
@@ -114,48 +119,51 @@ where
             let mut print_stats = false;
 
             if !ready_to_write_consumed {
-                let mut capture_data = self.capture_data.lock();
-                capture_data.transcode()?;
-                if capture_data.items_available()? > 0 {
-                    match self.encoder.encode(&mut *capture_data, &mut send_buf) {
-                        Ok(bytes_to_send) => {
-                            self.stats.frames_encoded += 1;
-                            self.stats.bytes_encoded += bytes_to_send;
+                if let Some(mut capture_data) = self.capture_data.try_lock() {
+                    capture_data.transcode()?;
+                    if capture_data.items_available()? > 0 {
+                        match self.encoder.encode(&mut *capture_data, &mut send_buf) {
+                            Ok(bytes_to_send) => {
+                                self.stats.frames_encoded += 1;
+                                self.stats.bytes_encoded += bytes_to_send;
 
-                            ready_to_write_consumed = true;
-                            print_stats = true;
-                            let bytes_sent =
-                                socket.send_to(&send_buf[..bytes_to_send], &peer_addr)?;
-                            self.stats.packets_sent += 1;
-                            self.stats.bytes_sent += bytes_sent;
+                                ready_to_write_consumed = true;
+                                print_stats = true;
+                                let bytes_sent =
+                                    socket.send_to(&send_buf[..bytes_to_send], &peer_addr)?;
+                                self.stats.packets_sent += 1;
+                                self.stats.bytes_sent += bytes_sent;
 
-                            if bytes_sent != bytes_to_send {
-                                println!(
-                                    "sent {} bytes while expecting to send {} bytes ({} buffer size)",
-                                    bytes_sent, bytes_to_send, send_buf.len(),
-                                );
-                                self.stats.bytes_sent_mismatches += 1;
+                                if bytes_sent != bytes_to_send {
+                                    println!(
+                                        "sent {} bytes while expecting to send {} bytes ({} buffer size)",
+                                        bytes_sent, bytes_to_send, send_buf.len(),
+                                    );
+                                    self.stats.bytes_sent_mismatches += 1;
+                                }
+
+                                // println!(
+                                //     "Sent a non-empty packet, capture buffer len: {}",
+                                //     capture_data.len()
+                                // );
                             }
-
-                            // println!(
-                            //     "Sent a non-empty packet, capture buffer len: {}",
-                            //     capture_data.len()
-                            // );
-                        }
-                        Err(EncodingError::NotEnoughData) => {
-                            self.stats.not_enough_data_at_encoding_errors += 1;
-                        }
-                        Err(err) => {
-                            println!("Encoding failed: {}", &err);
-                            return Err(err)?;
-                        }
-                    };
+                            Err(EncodingError::NotEnoughData) => {
+                                self.stats.not_enough_data_at_encoding_errors += 1;
+                            }
+                            Err(err) => {
+                                println!("Encoding failed: {}", &err);
+                                return Err(err)?;
+                            }
+                        };
+                    } else {
+                        // println!(
+                        //     "Attempted to send an empty packet, capture buffer len: {}",
+                        //     capture_data.len()
+                        // );
+                        self.stats.send_ready_but_empty_capture_buf += 1;
+                    }
                 } else {
-                    // println!(
-                    //     "Attempted to send an empty packet, capture buffer len: {}",
-                    //     capture_data.len()
-                    // );
-                    self.stats.send_ready_but_empty_capture_buf += 1;
+                    self.stats.send_ready_but_try_lock_failed += 1;
                 }
             }
 
@@ -168,30 +176,33 @@ where
                 self.stats.bytes_read += num_recv;
 
                 if num_recv > 0 {
-                    let mut playback_data = self.playback_data.lock();
-
-                    match self
-                        .decoder
-                        .decode(&recv_buf[..num_recv], &mut *playback_data)
-                    {
-                        Ok(num_samples) => {
-                            // println!(
-                            //     "Successfully decoded the packet into {} samples",
-                            //     num_samples
-                            // )
-                            self.stats.samples_decoded += num_samples;
-                            self.stats.frames_decoded += 1;
-                            playback_data.transcode()?;
-                        }
-                        Err(DecodingError::EmptyPacket) => {
-                            self.stats.empty_packets_decoding_errors += 1;
-                            // noop
-                        }
-                        Err(err) => {
-                            println!("Decoding failed: {}", &err);
-                            return Err(err)?;
-                        }
-                    };
+                    if let Some(mut playback_data) = self.playback_data.try_lock() {
+                        match self
+                            .decoder
+                            .decode(&recv_buf[..num_recv], &mut *playback_data)
+                        {
+                            Ok(num_samples) => {
+                                // println!(
+                                //     "Successfully decoded the packet into {} samples",
+                                //     num_samples
+                                // )
+                                self.stats.samples_decoded += num_samples;
+                                self.stats.frames_decoded += 1;
+                                playback_data.transcode()?;
+                            }
+                            Err(DecodingError::EmptyPacket) => {
+                                self.stats.empty_packets_decoding_errors += 1;
+                                // noop
+                            }
+                            Err(err) => {
+                                println!("Decoding failed: {}", &err);
+                                return Err(err)?;
+                            }
+                        };
+                    } else {
+                        self.stats
+                            .data_arrived_but_was_dropped_due_to_lock_conention += 1;
+                    }
                 } else {
                     // println!("Skipped processing of an empty incoming packet");
                     self.stats.empty_packets_read += 1;
