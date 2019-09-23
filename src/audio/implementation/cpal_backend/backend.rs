@@ -25,7 +25,7 @@ where
     #[allow(dead_code)]
     pub(super) playback_stream_id: cpal::StreamId,
 
-    pub(super) cpal_eventloop: cpal::EventLoop,
+    pub(super) cpal_event_loop: cpal::EventLoop,
 }
 
 impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader> audio::Backend
@@ -41,7 +41,7 @@ where
         let capture_data_writer = &self.capture_data_writer;
         let playback_data_reader = &self.playback_data_reader;
 
-        self.cpal_eventloop.run(move |stream_id, stream_result| {
+        self.cpal_event_loop.run(move |stream_id, stream_result| {
             let stream_data = match stream_result {
                 Ok(data) => data,
                 Err(err) => {

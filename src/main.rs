@@ -44,7 +44,7 @@ fn errmain() -> Result<(), Error> {
     println!("Using audio backend: {:?}", backend_to_use);
 
     use std::convert::TryInto;
-    let audio_backend_builder = audio::Builder {
+    let audio_backend_build_params = audio::build_flow::BuildParams {
         request_capture_formats: formats::input(),
         request_playback_formats: formats::output(),
         shared_capture_data_builder: |f| {
@@ -71,12 +71,14 @@ fn errmain() -> Result<(), Error> {
         },
     };
 
-    let audio_state = audio_backends::build(backend_to_use, audio_backend_builder)?;
+    let audio_state = audio_backends::build(backend_to_use, audio_backend_build_params)?;
 
-    let resampled_capture_format =
-        format::Format::new(std::cmp::min(2, audio_state.capture_format.channels), 48000);
+    let resampled_capture_format = format::Format::new(
+        std::cmp::min(2, audio_state.negotiated_formats.capture_format.channels),
+        48000,
+    );
     let resampled_playback_format = format::Format::new(
-        std::cmp::min(2, audio_state.playback_format.channels),
+        std::cmp::min(2, audio_state.negotiated_formats.playback_format.channels),
         48000,
     );
 
