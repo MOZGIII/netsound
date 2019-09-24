@@ -3,6 +3,7 @@ use crate::audio;
 use crate::io::{ReadItems, WriteItems};
 use crate::sync::Synced;
 use crossbeam_utils;
+use futures::executor::block_on;
 use libpulse_binding as pulse;
 use libpulse_simple_binding as psimple;
 use std::marker::PhantomData;
@@ -49,7 +50,8 @@ where
             let playback_handle = s.spawn(move |_| {
                 loop {
                     // Play what's in playback buffer.
-                    let mut playback_data_reader = playback_data_reader.lock();
+                    let mut playback_data_reader =
+                        block_on(async { playback_data_reader.lock().await });
 
                     let samples_read = (*playback_data_reader)
                         .read_items(&mut playback_samples)
@@ -87,7 +89,8 @@ where
                         }
                     }
 
-                    let mut capture_data_writer = capture_data_writer.lock();
+                    let mut capture_data_writer =
+                        block_on(async { capture_data_writer.lock().await });
                     let _ = (*capture_data_writer)
                         .write_items(&capture_samples)
                         .expect("Unable to write captured data");

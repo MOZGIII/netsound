@@ -1,4 +1,4 @@
-use parking_lot::Mutex;
+use futures::lock::Mutex;
 use std::sync::Arc;
 
 pub type Synced<T> = Arc<Mutex<T>>;

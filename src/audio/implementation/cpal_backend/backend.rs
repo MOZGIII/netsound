@@ -3,6 +3,7 @@ use crate::audio;
 use crate::io::{ReadItems, WriteItems};
 use crate::sync::Synced;
 use cpal::traits::*;
+use futures::executor::block_on;
 use sample::Sample;
 use std::marker::PhantomData;
 
@@ -53,14 +54,16 @@ where
                 cpal::StreamData::Input {
                     buffer: mut input_buf,
                 } => {
-                    let mut capture_data_writer_guard = capture_data_writer.lock();
-                    io::capture(&mut input_buf, &mut *capture_data_writer_guard)
+                    let mut capture_data_writer_guard =
+                        block_on(async { capture_data_writer.lock().await });
+                    io::capture(&mut input_buf, &mut *capture_data_writer_guard);
                 }
                 cpal::StreamData::Output {
                     buffer: mut output_buf,
                 } => {
-                    let mut playback_data_reader_guard = playback_data_reader.lock();
-                    io::play(&mut *playback_data_reader_guard, &mut output_buf)
+                    let mut playback_data_reader_guard =
+                        block_on(async { playback_data_reader.lock().await });
+                    io::play(&mut *playback_data_reader_guard, &mut output_buf);
                 }
             };
         });
