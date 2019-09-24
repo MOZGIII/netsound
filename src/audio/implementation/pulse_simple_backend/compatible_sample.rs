@@ -1,5 +1,5 @@
+use crate::sample::Sample;
 use libpulse_binding::sample as pulse_sample;
-use sample::Sample;
 
 pub trait CompatibleSample: Sample {
     fn pulse_sample_format() -> pulse_sample::Format;

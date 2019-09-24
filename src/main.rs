@@ -19,6 +19,7 @@ mod formats;
 mod io;
 mod match_channels;
 mod net;
+mod sample;
 mod samples_filter;
 mod sync;
 mod transcoder;

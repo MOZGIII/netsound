@@ -1,10 +1,9 @@
-use async_std::net::UdpSocket;
-use sample::Sample;
-use std::net::SocketAddr;
-
 use crate::codec::{Decoder, Encoder};
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::sample::Sample;
 use crate::transcoder::Transcode;
+use async_std::net::UdpSocket;
+use std::net::SocketAddr;
 
 mod recv;
 mod send;
@@ -23,12 +22,14 @@ pub struct NetService<
 > where
     TCaptureSample: Sample,
     TPlaybackSample: Sample,
-    TCaptureData: ReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample>,
-    TPlaybackData: WriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample>,
+    TCaptureData:
+        AsyncReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample> + Unpin,
+    TPlaybackData:
+        AsyncWriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample> + Unpin,
     <TCaptureData as Transcode<TCaptureSample, TCaptureSample>>::Error:
-        std::error::Error + std::marker::Send + std::marker::Sync,
+        std::error::Error + Send + Sync,
     <TPlaybackData as Transcode<TPlaybackSample, TPlaybackSample>>::Error:
-        std::error::Error + std::marker::Send + std::marker::Sync,
+        std::error::Error + Send + Sync,
     TEncoder: Encoder<TCaptureSample, TCaptureData> + ?Sized,
     TDecoder: Decoder<TPlaybackSample, TPlaybackData> + ?Sized,
 {
@@ -62,13 +63,17 @@ where
     TCaptureSample: Sample + Send,
     TPlaybackSample: Sample + Send,
 
-    TCaptureData: ReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample> + Send,
-    TPlaybackData: WriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample> + Send,
+    TCaptureData:
+        AsyncReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample> + Unpin + Send,
+    TPlaybackData: AsyncWriteItems<TPlaybackSample>
+        + Transcode<TPlaybackSample, TPlaybackSample>
+        + Unpin
+        + Send,
 
     <TCaptureData as Transcode<TCaptureSample, TCaptureSample>>::Error:
-        std::error::Error + std::marker::Send + std::marker::Sync + 'static,
+        std::error::Error + Send + Sync + 'static,
     <TPlaybackData as Transcode<TPlaybackSample, TPlaybackSample>>::Error:
-        std::error::Error + std::marker::Send + std::marker::Sync + 'static,
+        std::error::Error + Send + Sync + 'static,
 
     TEncoder: Encoder<TCaptureSample, TCaptureData> + Send + ?Sized,
     TDecoder: Decoder<TPlaybackSample, TPlaybackData> + Send + ?Sized,

@@ -1,15 +1,18 @@
-use crate::io::{ItemsAvailable, ReadItems, WriteItems};
-use sample::{Frame, Sample};
+use crate::io::{AsyncItemsAvailable, AsyncReadItems, AsyncWriteItems};
+use crate::sample::Sample;
+use sample::Frame;
 
 mod vecdeque;
 pub use vecdeque::*;
 
 pub trait Buffer:
-    ReadItems<<Self as Buffer>::Item>
-    + WriteItems<<Self as Buffer>::Item>
-    + ItemsAvailable<<Self as Buffer>::Item>
+    AsyncReadItems<<Self as Buffer>::Item>
+    + AsyncWriteItems<<Self as Buffer>::Item>
+    + AsyncItemsAvailable<<Self as Buffer>::Item>
+    + Send
+    + Unpin
 {
-    type Item;
+    type Item: Unpin;
 }
 
 pub trait SampleBuffer: Buffer<Item = <Self as SampleBuffer>::Sample> {
@@ -17,5 +20,5 @@ pub trait SampleBuffer: Buffer<Item = <Self as SampleBuffer>::Sample> {
 }
 
 pub trait FrameBuffer: Buffer<Item = <Self as FrameBuffer>::Frame> {
-    type Frame: Frame;
+    type Frame: Frame + Unpin;
 }

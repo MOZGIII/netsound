@@ -1,7 +1,7 @@
 use super::*;
 use crate::audio;
 use crate::format::Format;
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::sync::Synced;
 use libpulse_binding as pulse;
 use std::marker::PhantomData;
@@ -71,8 +71,8 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: WriteItems<TCaptureSample> + Send,
-    TPlaybackDataReader: ReadItems<TPlaybackSample> + Send,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Send,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Send,
 
     Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>:
         audio::backend::Backend,

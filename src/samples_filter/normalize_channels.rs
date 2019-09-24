@@ -1,5 +1,5 @@
 use super::*;
-use sample::Sample;
+use crate::sample::Sample;
 
 pub enum NormalizeChannels<I>
 where

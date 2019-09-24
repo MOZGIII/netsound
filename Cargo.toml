@@ -13,6 +13,7 @@ cpal = "0.10"
 sample = "0.10"
 futures-preview = { version = "0.3.0-alpha.18", features = ["nightly", "async-await"] }
 async-std = "0.99"
+async-trait = "0.1"
 
 [dependencies.libpulse-binding]
 git = "https://github.com/MOZGIII/pulse-binding-rust.git"

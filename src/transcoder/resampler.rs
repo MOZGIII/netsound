@@ -1,9 +1,12 @@
 use super::*;
 use crate::buf::VecDequeBuffer;
 use crate::match_channels;
+use crate::sample::Sample;
 use crate::samples_filter::NormalizeChannelsExt;
-use sample::{interpolate, Duplex, Sample};
+use sample::{interpolate, Duplex};
 use std::io::Result;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 /// Resampler acts as writer, reader and transcoder.
 #[derive(Debug)]
@@ -38,21 +41,29 @@ impl<S: Sample> Resampler<S> {
     }
 }
 
-impl<S: Sample> WriteItems<S> for Resampler<S> {
-    fn write_items(&mut self, items: &[S]) -> Result<usize> {
-        self.from_buf.write_items(items)
+impl<S: Sample> AsyncWriteItems<S> for Resampler<S> {
+    fn poll_write_items(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        items: &[S],
+    ) -> Poll<Result<usize>> {
+        Pin::new(&mut self.from_buf).poll_write_items(cx, items)
     }
 }
 
-impl<S: Sample> ReadItems<S> for Resampler<S> {
-    fn read_items(&mut self, items: &mut [S]) -> Result<usize> {
-        self.to_buf.read_items(items)
+impl<S: Sample> AsyncReadItems<S> for Resampler<S> {
+    fn poll_read_items(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        items: &mut [S],
+    ) -> Poll<Result<usize>> {
+        Pin::new(&mut self.to_buf).poll_read_items(cx, items)
     }
 }
 
-impl<S: Sample> ItemsAvailable<S> for Resampler<S> {
-    fn items_available(&self) -> Result<usize> {
-        self.to_buf.items_available()
+impl<S: Sample> AsyncItemsAvailable<S> for Resampler<S> {
+    fn poll_items_available(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<usize>> {
+        Pin::new(&mut self.to_buf).poll_items_available(cx)
     }
 }
 

@@ -1,6 +1,6 @@
 use super::*;
 use crate::audio;
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt};
 use crate::sync::Synced;
 use crossbeam_utils;
 use futures::executor::block_on;
@@ -16,8 +16,8 @@ pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybac
 where
     TCaptureSample: CompatibleSample + Send,
     TPlaybackSample: CompatibleSample + Send,
-    TCaptureDataWriter: WriteItems<TCaptureSample>,
-    TPlaybackDataReader: ReadItems<TPlaybackSample>,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample>,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample>,
 {
     pub(super) capture_sample: PhantomData<TCaptureSample>,
     pub(super) playback_sample: PhantomData<TPlaybackSample>,
@@ -35,8 +35,8 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: WriteItems<TCaptureSample> + Send,
-    TPlaybackDataReader: ReadItems<TPlaybackSample> + Send,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Send + Unpin,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Send + Unpin,
 {
     fn run(&mut self) {
         let capture_data_writer = &mut self.capture_data_writer;
@@ -50,12 +50,13 @@ where
             let playback_handle = s.spawn(move |_| {
                 loop {
                     // Play what's in playback buffer.
-                    let mut playback_data_reader =
-                        block_on(async { playback_data_reader.lock().await });
-
-                    let samples_read = (*playback_data_reader)
-                        .read_items(&mut playback_samples)
-                        .expect("Unable to read playback data");
+                    let samples_read = block_on(async {
+                        let mut playback_data_reader = playback_data_reader.lock().await;
+                        (*playback_data_reader)
+                            .read_items(&mut playback_samples)
+                            .await
+                            .expect("Unable to read playback data")
+                    });
 
                     let write_buff = unsafe {
                         std::slice::from_raw_parts(
@@ -89,11 +90,13 @@ where
                         }
                     }
 
-                    let mut capture_data_writer =
-                        block_on(async { capture_data_writer.lock().await });
-                    let _ = (*capture_data_writer)
-                        .write_items(&capture_samples)
-                        .expect("Unable to write captured data");
+                    let _ = block_on(async {
+                        let mut capture_data_writer = capture_data_writer.lock().await;
+                        (*capture_data_writer)
+                            .write_items(&capture_samples)
+                            .await
+                            .expect("Unable to write captured data")
+                    });
                 }
             });
 

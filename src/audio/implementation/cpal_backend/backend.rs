@@ -1,10 +1,10 @@
 use super::*;
 use crate::audio;
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::sample::Sample;
 use crate::sync::Synced;
 use cpal::traits::*;
 use futures::executor::block_on;
-use sample::Sample;
 use std::marker::PhantomData;
 
 pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
@@ -12,8 +12,8 @@ where
     TCaptureSample: Sample,
     TPlaybackSample: Sample,
 
-    TCaptureDataWriter: WriteItems<TCaptureSample>,
-    TPlaybackDataReader: ReadItems<TPlaybackSample>,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample>,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample>,
 {
     pub(super) capture_sample: PhantomData<TCaptureSample>,
     pub(super) playback_sample: PhantomData<TPlaybackSample>,
@@ -35,8 +35,8 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: WriteItems<TCaptureSample> + Send,
-    TPlaybackDataReader: ReadItems<TPlaybackSample> + Send,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Send + Unpin,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Send + Unpin,
 {
     fn run(&mut self) {
         let capture_data_writer = &self.capture_data_writer;
@@ -54,16 +54,18 @@ where
                 cpal::StreamData::Input {
                     buffer: mut input_buf,
                 } => {
-                    let mut capture_data_writer_guard =
-                        block_on(async { capture_data_writer.lock().await });
-                    io::capture(&mut input_buf, &mut *capture_data_writer_guard);
+                    block_on(async {
+                        let mut capture_data_writer_guard = capture_data_writer.lock().await;
+                        io::capture(&mut input_buf, &mut *capture_data_writer_guard).await;
+                    });
                 }
                 cpal::StreamData::Output {
                     buffer: mut output_buf,
                 } => {
-                    let mut playback_data_reader_guard =
-                        block_on(async { playback_data_reader.lock().await });
-                    io::play(&mut *playback_data_reader_guard, &mut output_buf);
+                    block_on(async {
+                        let mut playback_data_reader_guard = playback_data_reader.lock().await;
+                        io::play(&mut *playback_data_reader_guard, &mut output_buf).await;
+                    });
                 }
             };
         });

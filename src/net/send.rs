@@ -1,12 +1,11 @@
-use async_std::net::UdpSocket;
-use sample::Sample;
-use std::marker::PhantomData;
-use std::net::SocketAddr;
-
 use crate::codec::{Encoder, EncodingError};
-use crate::io::ReadItems;
+use crate::io::{AsyncItemsAvailableExt, AsyncReadItems};
+use crate::sample::Sample;
 use crate::sync::Synced;
 use crate::transcoder::Transcode;
+use async_std::net::UdpSocket;
+use std::marker::PhantomData;
+use std::net::SocketAddr;
 
 use super::*;
 
@@ -25,9 +24,9 @@ pub struct SendStats {
 pub struct SendService<'a, TCaptureSample, TCaptureData, TEncoder>
 where
     TCaptureSample: Sample,
-    TCaptureData: ReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample>,
+    TCaptureData: AsyncReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample>,
     <TCaptureData as Transcode<TCaptureSample, TCaptureSample>>::Error:
-        std::error::Error + std::marker::Send + std::marker::Sync,
+        std::error::Error + Send + Sync,
     TEncoder: Encoder<TCaptureSample, TCaptureData> + ?Sized,
 {
     pub capture_sample: PhantomData<TCaptureSample>,
@@ -40,9 +39,10 @@ impl<'a, TCaptureSample, TCaptureData, TEncoder>
     SendService<'a, TCaptureSample, TCaptureData, TEncoder>
 where
     TCaptureSample: Sample,
-    TCaptureData: ReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample>,
+    TCaptureData:
+        AsyncReadItems<TCaptureSample> + Transcode<TCaptureSample, TCaptureSample> + Unpin,
     <TCaptureData as Transcode<TCaptureSample, TCaptureSample>>::Error:
-        std::error::Error + std::marker::Send + std::marker::Sync + 'static,
+        std::error::Error + Send + Sync + 'static,
     TEncoder: Encoder<TCaptureSample, TCaptureData> + ?Sized,
 {
     // TODO: for some reason, rustc detects this code as unreachable.
@@ -57,8 +57,8 @@ where
             let mut capture_data = self.capture_data.lock().await;
 
             capture_data.transcode()?;
-            if capture_data.items_available()? > 0 {
-                match self.encoder.encode(&mut *capture_data, &mut send_buf) {
+            if capture_data.items_available().await? > 0 {
+                match self.encoder.encode(&mut *capture_data, &mut send_buf).await {
                     Ok(bytes_to_send) => {
                         self.stats.frames_encoded += 1;
                         self.stats.bytes_encoded += bytes_to_send;

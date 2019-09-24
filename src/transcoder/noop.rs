@@ -1,18 +1,20 @@
 use super::*;
-use sample::Sample;
+use crate::sample::Sample;
 use std::io::Result;
 use std::marker::PhantomData;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 /// Noop acts as writer, reader and transcoder.
 #[allow(dead_code)]
 #[derive(Debug)]
-pub struct Noop<S: Sample, T: WriteItems<S> + ReadItems<S> + ItemsAvailable<S>> {
+pub struct Noop<S: Sample, T> {
     buf: T,
     sample_type: PhantomData<S>,
 }
 
 #[allow(dead_code)]
-impl<S: Sample, T: WriteItems<S> + ReadItems<S> + ItemsAvailable<S>> Noop<S, T> {
+impl<S: Sample, T: AsyncWriteItems<S> + AsyncReadItems<S> + AsyncItemsAvailable<S>> Noop<S, T> {
     pub fn new(buf: T) -> Self {
         Self {
             buf,
@@ -21,28 +23,34 @@ impl<S: Sample, T: WriteItems<S> + ReadItems<S> + ItemsAvailable<S>> Noop<S, T> 
     }
 }
 
-impl<S: Sample, T: WriteItems<S> + ReadItems<S> + ItemsAvailable<S>> WriteItems<S> for Noop<S, T> {
-    fn write_items(&mut self, items: &[S]) -> Result<usize> {
-        self.buf.write_items(items)
+impl<S: Sample, T: AsyncWriteItems<S> + Unpin> AsyncWriteItems<S> for Noop<S, T> {
+    fn poll_write_items(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        items: &[S],
+    ) -> Poll<Result<usize>> {
+        Pin::new(&mut self.buf).poll_write_items(cx, items)
     }
 }
 
-impl<S: Sample, T: WriteItems<S> + ReadItems<S> + ItemsAvailable<S>> ReadItems<S> for Noop<S, T> {
-    fn read_items(&mut self, items: &mut [S]) -> Result<usize> {
-        self.buf.read_items(items)
+impl<S: Sample, T: AsyncReadItems<S> + Unpin> AsyncReadItems<S> for Noop<S, T> {
+    fn poll_read_items(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        items: &mut [S],
+    ) -> Poll<Result<usize>> {
+        Pin::new(&mut self.buf).poll_read_items(cx, items)
     }
 }
 
-impl<S: Sample, T: WriteItems<S> + ReadItems<S> + ItemsAvailable<S>> ItemsAvailable<S>
-    for Noop<S, T>
-{
-    fn items_available(&self) -> Result<usize> {
-        self.buf.items_available()
+impl<S: Sample, T: AsyncItemsAvailable<S> + Unpin> AsyncItemsAvailable<S> for Noop<S, T> {
+    fn poll_items_available(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<usize>> {
+        Pin::new(&mut self.buf).poll_items_available(cx)
     }
 }
 
-impl<S: Sample, T: WriteItems<S> + ReadItems<S> + ItemsAvailable<S>> Transcode<S, S>
-    for Noop<S, T>
+impl<S: Sample, T: AsyncWriteItems<S> + AsyncReadItems<S> + AsyncItemsAvailable<S> + Unpin>
+    Transcode<S, S> for Noop<S, T>
 {
     type Ok = ();
     type Error = ();

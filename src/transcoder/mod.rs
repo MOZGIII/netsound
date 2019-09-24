@@ -1,9 +1,11 @@
-use crate::io::{ItemsAvailable, ReadItems, WriteItems};
+use crate::io::{AsyncItemsAvailable, AsyncReadItems, AsyncWriteItems};
 
 pub mod noop;
 pub mod resampler;
 
-pub trait Transcode<TFrom, TTo>: WriteItems<TFrom> + ReadItems<TTo> + ItemsAvailable<TTo> {
+pub trait Transcode<TFrom: Unpin, TTo: Unpin>:
+    AsyncWriteItems<TFrom> + AsyncReadItems<TTo> + AsyncItemsAvailable<TTo>
+{
     type Ok;
     type Error;
 

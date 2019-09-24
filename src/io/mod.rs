@@ -1,13 +1,10 @@
-use std::io::Result;
+mod async_items_available;
+mod async_read_items;
+mod async_write_items;
 
-pub trait WriteItems<T> {
-    fn write_items(&mut self, items: &[T]) -> Result<usize>;
-}
+pub use async_items_available::*;
+pub use async_read_items::*;
+pub use async_write_items::*;
 
-pub trait ReadItems<T> {
-    fn read_items(&mut self, items: &mut [T]) -> Result<usize>;
-}
-
-pub trait ItemsAvailable<T> {
-    fn items_available(&self) -> Result<usize>;
-}
+mod ext;
+pub use ext::*;

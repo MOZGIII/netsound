@@ -1,7 +1,7 @@
 use super::Backend;
 use crate::format::Format;
+use crate::sample::Sample;
 use crate::Error;
-use sample::Sample;
 
 pub trait FormatNegotiator<TCaptureSample, TPlaybackSample>
 where

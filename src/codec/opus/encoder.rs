@@ -1,5 +1,6 @@
 use super::Error;
-use crate::io::{ItemsAvailable, ReadItems};
+use crate::io::{AsyncItemsAvailable, AsyncItemsAvailableExt, AsyncReadItems, AsyncReadItemsExt};
+use async_trait::async_trait;
 use audiopus::coder::Encoder as OpusEncoder;
 
 #[derive(Debug)]
@@ -12,11 +13,15 @@ pub struct Encoder {
 unsafe impl Send for Encoder {}
 
 impl Encoder {
-    pub fn encode_float<T>(&mut self, input: &mut T, output: &mut [u8]) -> Result<usize, Error>
+    pub async fn encode_float<T>(
+        &mut self,
+        input: &mut T,
+        output: &mut [u8],
+    ) -> Result<usize, Error>
     where
-        T: ReadItems<f32> + ItemsAvailable<f32>,
+        T: AsyncReadItems<f32> + AsyncItemsAvailable<f32> + Unpin,
     {
-        let samples_available = input.items_available()?;
+        let samples_available = input.items_available().await?;
         let samples_required = self.buf.len();
         if samples_available < samples_required {
             return Err(Error::NotEnoughData {
@@ -25,7 +30,7 @@ impl Encoder {
             });
         }
 
-        let samples_read = input.read_items(&mut self.buf)?;
+        let samples_read = input.read_items(&mut self.buf).await?;
         assert_eq!(samples_read, samples_required);
 
         let bytes_written = self.opus.encode_float(&self.buf, output)?;
@@ -33,12 +38,18 @@ impl Encoder {
     }
 }
 
-impl<T: ReadItems<f32> + ItemsAvailable<f32>> super::super::Encoder<f32, T> for Encoder {
-    fn encode(
+#[async_trait]
+impl<T> super::super::Encoder<f32, T> for Encoder
+where
+    T: AsyncReadItems<f32> + AsyncItemsAvailable<f32> + Unpin + Send,
+{
+    async fn encode(
         &mut self,
         input: &mut T,
         output: &mut [u8],
     ) -> Result<usize, super::super::EncodingError> {
-        self.encode_float(input, output).map_err(|err| err.into())
+        self.encode_float(input, output)
+            .await
+            .map_err(|err| err.into())
     }
 }

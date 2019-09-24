@@ -1,7 +1,7 @@
 use super::{choose_format::choose_format, *};
 use crate::audio;
 use crate::format::Format;
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::sync::Synced;
 use std::marker::PhantomData;
 
@@ -82,8 +82,8 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: WriteItems<TCaptureSample> + Send,
-    TPlaybackDataReader: ReadItems<TPlaybackSample> + Send,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send,
 {
     pub continuation: FormatNegotiationContinuation<TCaptureSample, TPlaybackSample>,
 
@@ -97,8 +97,8 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: WriteItems<TCaptureSample> + Send,
-    TPlaybackDataReader: ReadItems<TPlaybackSample> + Send,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send,
 {
     type Backend =
         Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>;

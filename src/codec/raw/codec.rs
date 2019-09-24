@@ -1,8 +1,12 @@
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt};
 use byteorder::ByteOrder;
 use std::io::Result;
 
-pub fn encode<E: ByteOrder, T: ReadItems<f32>>(input: &mut T, output: &mut [u8]) -> Result<usize> {
+pub async fn encode<E, T>(input: &mut T, output: &mut [u8]) -> Result<usize>
+where
+    E: ByteOrder,
+    T: AsyncReadItems<f32> + Unpin,
+{
     // TODO: implement more efficiently.
 
     // Get the amount of samples to read. Must be round, otherwise we can't
@@ -14,7 +18,7 @@ pub fn encode<E: ByteOrder, T: ReadItems<f32>>(input: &mut T, output: &mut [u8])
     let mut samples = Vec::with_capacity(samples_to_read);
     samples.resize(samples_to_read, 0f32);
 
-    let samples_read = input.read_items(&mut samples)?;
+    let samples_read = input.read_items(&mut samples).await?;
     dbg!(samples_read);
 
     for (mut chunk, &sample) in output.chunks_exact_mut(4).zip(&samples[..samples_read]) {
@@ -24,7 +28,11 @@ pub fn encode<E: ByteOrder, T: ReadItems<f32>>(input: &mut T, output: &mut [u8])
     Ok(samples_read * 4)
 }
 
-pub fn decode<E: ByteOrder, T: WriteItems<f32>>(input: &[u8], output: &mut T) -> Result<usize> {
+pub async fn decode<E, T>(input: &[u8], output: &mut T) -> Result<usize>
+where
+    E: ByteOrder,
+    T: AsyncWriteItems<f32> + Unpin,
+{
     // TODO: implement more efficiently.
 
     // Get the amount of samples to write. Must be round, otherwise we can't
@@ -39,107 +47,125 @@ pub fn decode<E: ByteOrder, T: WriteItems<f32>>(input: &[u8], output: &mut T) ->
         *sample_slot = E::read_f32(&chunk);
     }
 
-    output.write_items(&samples)
+    output.write_items(&samples).await
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::buf::VecDequeBuffer;
+    use futures::executor::block_on;
 
     #[test]
     fn test_encode() {
-        let mut output = [0u8; 32];
-        let mut input: VecDequeBuffer<f32> = (0..1024).map(|sample| sample as f32).collect();
-        let f32_size_in_bytes = 32 / 8;
+        block_on(async {
+            let mut output = [0u8; 32];
+            let mut input: VecDequeBuffer<f32> = (0..1024).map(|sample| sample as f32).collect();
+            let f32_size_in_bytes = 32 / 8;
 
-        use byteorder::BigEndian;
-        let filled = encode::<BigEndian, VecDequeBuffer<f32>>(&mut input, &mut output).unwrap();
+            use byteorder::BigEndian;
+            let filled = encode::<BigEndian, VecDequeBuffer<f32>>(&mut input, &mut output)
+                .await
+                .unwrap();
 
-        // The whole buffer should be filled in.
-        assert_eq!(filled, 32);
+            // The whole buffer should be filled in.
+            assert_eq!(filled, 32);
 
-        // VecDeque's length should've decreased appropriately.
-        assert_eq!(input.len(), 1024 - (filled / f32_size_in_bytes));
+            // VecDeque's length should've decreased appropriately.
+            assert_eq!(input.len(), 1024 - (filled / f32_size_in_bytes));
+        });
     }
 
     #[test]
     fn test_encode_values() {
-        let mut output = [0u8; 32];
-        let mut input = VecDequeBuffer::from(vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]);
+        block_on(async {
+            let mut output = [0u8; 32];
+            let mut input = VecDequeBuffer::from(vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]);
 
-        let f32_size_in_bytes = std::mem::size_of::<f32>();
-        let input_len_before_op = input.len();
+            let f32_size_in_bytes = std::mem::size_of::<f32>();
+            let input_len_before_op = input.len();
 
-        use byteorder::BigEndian;
-        let filled = encode::<BigEndian, VecDequeBuffer<f32>>(&mut input, &mut output).unwrap();
-        assert_eq!(filled, input_len_before_op * f32_size_in_bytes);
-        assert_eq!(input.len(), 0);
+            use byteorder::BigEndian;
+            let filled = encode::<BigEndian, VecDequeBuffer<f32>>(&mut input, &mut output)
+                .await
+                .unwrap();
+            assert_eq!(filled, input_len_before_op * f32_size_in_bytes);
+            assert_eq!(input.len(), 0);
 
-        assert_eq!(
-            &output[..filled],
-            &[
-                /* 0.0 -------------------------------------------------------- */
-                0x00, 0x00, 0x00, 0x00,
-                /* 1.0 -------------------------------------------------------- */
-                0x3F, 0x80, 0x00, 0x00,
-                /* 2.0 -------------------------------------------------------- */
-                0x40, 0x00, 0x00, 0x00,
-                /* 3.0 -------------------------------------------------------- */
-                0x40, 0x40, 0x00, 0x00,
-                /* 4.0 -------------------------------------------------------- */
-                0x40, 0x80, 0x00, 0x00,
-                /* 5.0 -------------------------------------------------------- */
-                0x40, 0xA0, 0x00, 0x00,
-                /* 6.0 -------------------------------------------------------- */
-                0x40, 0xC0, 0x00, 0x00,
-                /* 7.0 -------------------------------------------------------- */
-                0x40, 0xE0, 0x00, 0x00,
-            ]
-        );
+            assert_eq!(
+                &output[..filled],
+                &[
+                    /* 0.0 -------------------------------------------------------- */
+                    0x00, 0x00, 0x00, 0x00,
+                    /* 1.0 -------------------------------------------------------- */
+                    0x3F, 0x80, 0x00, 0x00,
+                    /* 2.0 -------------------------------------------------------- */
+                    0x40, 0x00, 0x00, 0x00,
+                    /* 3.0 -------------------------------------------------------- */
+                    0x40, 0x40, 0x00, 0x00,
+                    /* 4.0 -------------------------------------------------------- */
+                    0x40, 0x80, 0x00, 0x00,
+                    /* 5.0 -------------------------------------------------------- */
+                    0x40, 0xA0, 0x00, 0x00,
+                    /* 6.0 -------------------------------------------------------- */
+                    0x40, 0xC0, 0x00, 0x00,
+                    /* 7.0 -------------------------------------------------------- */
+                    0x40, 0xE0, 0x00, 0x00,
+                ]
+            );
+        });
     }
 
     #[test]
     fn test_decode() {
-        let mut output: VecDequeBuffer<f32> = (0..1024).map(|sample| sample as f32).collect();
-        let input = [0u8; 32];
-        let f32_size_in_bytes = 32 / 8;
+        block_on(async {
+            let mut output: VecDequeBuffer<f32> = (0..1024).map(|sample| sample as f32).collect();
+            let input = [0u8; 32];
+            let f32_size_in_bytes = 32 / 8;
 
-        use byteorder::BigEndian;
-        decode::<BigEndian, VecDequeBuffer<f32>>(&input, &mut output).unwrap();
-        assert_eq!(output.len(), 1024 + (input.len() / f32_size_in_bytes));
+            use byteorder::BigEndian;
+            decode::<BigEndian, VecDequeBuffer<f32>>(&input, &mut output)
+                .await
+                .unwrap();
+            assert_eq!(output.len(), 1024 + (input.len() / f32_size_in_bytes));
+        });
     }
 
     #[test]
     fn test_e2e() {
-        let sample: Vec<f32> = (0..1024).map(|sample| sample as f32).collect();
+        block_on(async {
+            let sample: Vec<f32> = (0..1024).map(|sample| sample as f32).collect();
 
-        let mut vecdeque: VecDequeBuffer<f32> = From::from(sample.clone());
-        let mut send_recv_buf = [0u8; 32];
-        let f32_size_in_bytes = 32 / 8;
-        let samples_per_op = send_recv_buf.len() / f32_size_in_bytes;
+            let mut vecdeque: VecDequeBuffer<f32> = From::from(sample.clone());
+            let mut send_recv_buf = [0u8; 32];
+            let f32_size_in_bytes = 32 / 8;
+            let samples_per_op = send_recv_buf.len() / f32_size_in_bytes;
 
-        let full_rotation = vecdeque.len() / samples_per_op;
+            let full_rotation = vecdeque.len() / samples_per_op;
 
-        for _ in 0..full_rotation {
-            // dbg!(&vecdeque);
+            for _ in 0..full_rotation {
+                // dbg!(&vecdeque);
 
-            use byteorder::BigEndian;
-            let filled =
-                encode::<BigEndian, VecDequeBuffer<f32>>(&mut vecdeque, &mut send_recv_buf)
+                use byteorder::BigEndian;
+                let filled =
+                    encode::<BigEndian, VecDequeBuffer<f32>>(&mut vecdeque, &mut send_recv_buf)
+                        .await
+                        .unwrap();
+                assert_eq!(filled, send_recv_buf.len());
+                assert_eq!(vecdeque.len(), sample.len() - samples_per_op);
+
+                // dbg!(&vecdeque);
+
+                decode::<BigEndian, VecDequeBuffer<f32>>(&send_recv_buf, &mut vecdeque)
+                    .await
                     .unwrap();
-            assert_eq!(filled, send_recv_buf.len());
-            assert_eq!(vecdeque.len(), sample.len() - samples_per_op);
+                assert_eq!(vecdeque.len(), sample.len());
 
-            // dbg!(&vecdeque);
+                // dbg!(&vecdeque);
+            }
 
-            decode::<BigEndian, VecDequeBuffer<f32>>(&send_recv_buf, &mut vecdeque).unwrap();
-            assert_eq!(vecdeque.len(), sample.len());
-
-            // dbg!(&vecdeque);
-        }
-
-        let result: Vec<f32> = vecdeque.into();
-        assert!(sample == result);
+            let result: Vec<f32> = vecdeque.into();
+            assert!(sample == result);
+        });
     }
 }

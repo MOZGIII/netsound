@@ -1,8 +1,8 @@
 use crate::audio;
 use crate::format::Format;
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::sample::Sample;
 use crate::sync::Synced;
-use sample::Sample;
 
 pub struct BuildParams<
     'a,
@@ -77,8 +77,8 @@ where
         &Synced<TPlaybackData>,
     ) -> TBackendBuilder,
 
-    TCaptureData: WriteItems<TCaptureSample> + Send + 'static,
-    TPlaybackData: ReadItems<TPlaybackSample> + Send + 'static,
+    TCaptureData: AsyncWriteItems<TCaptureSample> + Unpin + Send + 'static,
+    TPlaybackData: AsyncReadItems<TPlaybackSample> + Unpin + Send + 'static,
 
     TSharedCaptureDataBuilder:
         FnOnce(Format<TCaptureSample>) -> Result<Synced<TCaptureData>, crate::Error>,

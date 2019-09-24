@@ -1,11 +1,10 @@
-use async_std::net::UdpSocket;
-use sample::Sample;
-use std::marker::PhantomData;
-
 use crate::codec::{Decoder, DecodingError};
-use crate::io::WriteItems;
+use crate::io::AsyncWriteItems;
+use crate::sample::Sample;
 use crate::sync::Synced;
 use crate::transcoder::Transcode;
+use async_std::net::UdpSocket;
+use std::marker::PhantomData;
 
 use super::*;
 
@@ -23,9 +22,10 @@ pub struct RecvStats {
 pub struct RecvService<'a, TPlaybackSample, TPlaybackData, TDecoder>
 where
     TPlaybackSample: Sample,
-    TPlaybackData: WriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample>,
+    TPlaybackData:
+        AsyncWriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample> + Unpin,
     <TPlaybackData as Transcode<TPlaybackSample, TPlaybackSample>>::Error:
-        std::error::Error + std::marker::Send + std::marker::Sync,
+        std::error::Error + Send + Sync,
     TDecoder: Decoder<TPlaybackSample, TPlaybackData> + ?Sized,
 {
     pub playback_sample: PhantomData<TPlaybackSample>,
@@ -38,9 +38,10 @@ impl<'a, TPlaybackSample, TPlaybackData, TDecoder>
     RecvService<'a, TPlaybackSample, TPlaybackData, TDecoder>
 where
     TPlaybackSample: Sample,
-    TPlaybackData: WriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample>,
+    TPlaybackData:
+        AsyncWriteItems<TPlaybackSample> + Transcode<TPlaybackSample, TPlaybackSample> + Unpin,
     <TPlaybackData as Transcode<TPlaybackSample, TPlaybackSample>>::Error:
-        std::error::Error + std::marker::Send + std::marker::Sync + 'static,
+        std::error::Error + Send + Sync + 'static,
     TDecoder: Decoder<TPlaybackSample, TPlaybackData> + ?Sized,
 {
     // TODO: for some reason, rustc detects this code as unreachable.
@@ -61,6 +62,7 @@ where
                 match self
                     .decoder
                     .decode(&recv_buf[..num_recv], &mut *playback_data)
+                    .await
                 {
                     Ok(num_samples) => {
                         // println!(

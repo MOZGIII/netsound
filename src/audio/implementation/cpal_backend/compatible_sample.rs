@@ -1,4 +1,4 @@
-use sample::Sample;
+use crate::sample::Sample;
 
 pub trait CompatibleSample: Sample {
     fn unwrap_cpal_input_buffer<'a>(buf: &'a cpal::UnknownTypeInputBuffer<'a>) -> &'a [Self];

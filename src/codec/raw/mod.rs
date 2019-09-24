@@ -1,4 +1,5 @@
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems};
+use async_trait::async_trait;
 
 mod codec;
 
@@ -7,9 +8,18 @@ pub type Endian = byteorder::LittleEndian;
 #[derive(Debug)]
 pub struct Encoder;
 
-impl<T: ReadItems<f32>> super::Encoder<f32, T> for Encoder {
-    fn encode(&mut self, input: &mut T, output: &mut [u8]) -> Result<usize, super::EncodingError> {
+#[async_trait]
+impl<T> super::Encoder<f32, T> for Encoder
+where
+    T: AsyncReadItems<f32> + Send + Unpin,
+{
+    async fn encode(
+        &mut self,
+        input: &mut T,
+        output: &mut [u8],
+    ) -> Result<usize, super::EncodingError> {
         Ok(codec::encode::<Endian, T>(input, output)
+            .await
             .map_err(|err| super::EncodingError::Other(err.into()))?)
     }
 }
@@ -17,9 +27,18 @@ impl<T: ReadItems<f32>> super::Encoder<f32, T> for Encoder {
 #[derive(Debug)]
 pub struct Decoder;
 
-impl<T: WriteItems<f32>> super::Decoder<f32, T> for Decoder {
-    fn decode(&mut self, input: &[u8], output: &mut T) -> Result<usize, super::DecodingError> {
+#[async_trait]
+impl<T> super::Decoder<f32, T> for Decoder
+where
+    T: AsyncWriteItems<f32> + Send + Unpin,
+{
+    async fn decode(
+        &mut self,
+        input: &[u8],
+        output: &mut T,
+    ) -> Result<usize, super::DecodingError> {
         Ok(codec::decode::<Endian, T>(input, output)
+            .await
             .map_err(|err| super::DecodingError::Other(err.into()))?)
     }
 }

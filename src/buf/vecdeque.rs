@@ -1,8 +1,11 @@
 use crate::buf::{Buffer, FrameBuffer, SampleBuffer};
-use crate::io::{ItemsAvailable, ReadItems, WriteItems};
-use sample::{Frame, Sample};
+use crate::io::{AsyncItemsAvailable, AsyncReadItems, AsyncWriteItems};
+use crate::sample::Sample;
+use sample::Frame;
 use std::collections::VecDeque;
 use std::io::Result;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 #[derive(Debug, Clone)]
 pub struct VecDequeBuffer<T>(VecDeque<T>);
@@ -48,8 +51,12 @@ impl<T> std::ops::DerefMut for VecDequeBuffer<T> {
     }
 }
 
-impl<T> ReadItems<T> for VecDequeBuffer<T> {
-    fn read_items(&mut self, items: &mut [T]) -> Result<usize> {
+impl<T: Unpin> AsyncReadItems<T> for VecDequeBuffer<T> {
+    fn poll_read_items(
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+        items: &mut [T],
+    ) -> Poll<Result<usize>> {
         let vd = &mut self.0;
         let mut filled: usize = 0;
         for item_slot in items.iter_mut() {
@@ -61,35 +68,33 @@ impl<T> ReadItems<T> for VecDequeBuffer<T> {
                 }
             }
         }
-        Ok(filled)
+        Poll::Ready(Ok(filled))
     }
 }
 
-impl<T> WriteItems<T> for VecDequeBuffer<T>
-where
-    T: Copy,
-{
-    fn write_items(&mut self, items: &[T]) -> Result<usize> {
+impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBuffer<T> {
+    fn poll_write_items(
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+        items: &[T],
+    ) -> Poll<Result<usize>> {
         let vd = &mut self.0;
         let mut filled: usize = 0;
         for item in items.iter() {
             vd.push_back(*item);
             filled += 1;
         }
-        Ok(filled)
+        Poll::Ready(Ok(filled))
     }
 }
 
-impl<T> ItemsAvailable<T> for VecDequeBuffer<T> {
-    fn items_available(&self) -> Result<usize> {
-        Ok(self.0.len())
+impl<T: Unpin> AsyncItemsAvailable<T> for VecDequeBuffer<T> {
+    fn poll_items_available(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<usize>> {
+        Poll::Ready(Ok(self.0.len()))
     }
 }
 
-impl<T> Buffer for VecDequeBuffer<T>
-where
-    T: Copy,
-{
+impl<T: Copy + Unpin + Send> Buffer for VecDequeBuffer<T> {
     type Item = T;
 }
 
@@ -97,6 +102,6 @@ impl<S: Sample> SampleBuffer for VecDequeBuffer<S> {
     type Sample = S;
 }
 
-impl<F: Frame> FrameBuffer for VecDequeBuffer<F> {
+impl<F: Frame + Send + Unpin> FrameBuffer for VecDequeBuffer<F> {
     type Frame = F;
 }

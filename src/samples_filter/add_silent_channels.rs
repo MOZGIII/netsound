@@ -1,4 +1,4 @@
-use sample::Sample;
+use crate::sample::Sample;
 
 pub struct AddSilentChannels<I>
 where
@@ -36,7 +36,7 @@ where
         let item = if self.current_channel < self.source_channels {
             self.source_iter.next()
         } else {
-            Some(<<I as Iterator>::Item as Sample>::equilibrium())
+            Some(<<I as Iterator>::Item as sample::Sample>::equilibrium())
         };
 
         self.current_channel += 1;

@@ -1,4 +1,4 @@
-use sample::Sample;
+use crate::sample::Sample;
 use std::marker::PhantomData;
 
 #[derive(Debug, Clone, Copy)]

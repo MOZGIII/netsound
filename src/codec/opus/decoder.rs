@@ -1,5 +1,6 @@
 use super::Error;
-use crate::io::WriteItems;
+use crate::io::{AsyncWriteItems, AsyncWriteItemsExt};
+use async_trait::async_trait;
 use audiopus::coder::Decoder as OpusDecoder;
 
 #[derive(Debug)]
@@ -14,32 +15,37 @@ pub struct Decoder {
 unsafe impl Send for Decoder {}
 
 impl Decoder {
-    pub fn decode_float<T>(
+    pub async fn decode_float<T>(
         &mut self,
         input: &[u8],
         output: &mut T,
         fec: bool,
     ) -> Result<usize, Error>
     where
-        T: WriteItems<f32>,
+        T: AsyncWriteItems<f32> + Unpin,
     {
         let audiosize = {
             let buf = &mut self.buf[..];
             self.opus.decode_float(input, buf, fec)?
         };
         let bufsize = audiosize * self.channels;
-        let size = output.write_items(&self.buf[..bufsize])?;
+        let size = output.write_items(&self.buf[..bufsize]).await?;
         Ok(size)
     }
 }
 
-impl<T: WriteItems<f32>> super::super::Decoder<f32, T> for Decoder {
-    fn decode(
+#[async_trait]
+impl<T> super::super::Decoder<f32, T> for Decoder
+where
+    T: AsyncWriteItems<f32> + Unpin + Send,
+{
+    async fn decode(
         &mut self,
         input: &[u8],
         output: &mut T,
     ) -> Result<usize, super::super::DecodingError> {
         self.decode_float(input, output, self.fec)
+            .await
             .map_err(|err| err.into())
     }
 }

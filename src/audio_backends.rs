@@ -1,8 +1,8 @@
 use crate::audio;
 use crate::format::Format;
-use crate::io::{ReadItems, WriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::sample::Sample;
 use crate::sync::Synced;
-use sample::Sample;
 
 #[derive(Debug)]
 pub enum AudioBackendToUse {
@@ -45,8 +45,8 @@ pub fn build<
     crate::Error,
 >
 where
-    TCaptureData: WriteItems<f32> + Send + 'static,
-    TPlaybackData: ReadItems<f32> + Send + 'static,
+    TCaptureData: AsyncWriteItems<f32> + Unpin + Send + 'static,
+    TPlaybackData: AsyncReadItems<f32> + Unpin + Send + 'static,
 
     TSharedCaptureDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TCaptureData>, crate::Error>,
     TSharedPlaybackDataBuilder: FnOnce(Format<f32>) -> Result<Synced<TPlaybackData>, crate::Error>,
@@ -88,8 +88,8 @@ where
     TCaptureSample: Sample + audio::cpal_backend::CompatibleSample + Send + Sync + 'static,
     TPlaybackSample: Sample + audio::cpal_backend::CompatibleSample + Send + Sync + 'static,
 
-    TCaptureData: WriteItems<TCaptureSample> + Send + 'static,
-    TPlaybackData: ReadItems<TPlaybackSample> + Send + 'static,
+    TCaptureData: AsyncWriteItems<TCaptureSample> + Unpin + Send + 'static,
+    TPlaybackData: AsyncReadItems<TPlaybackSample> + Unpin + Send + 'static,
 
     TSharedCaptureDataBuilder:
         FnOnce(Format<TCaptureSample>) -> Result<Synced<TCaptureData>, crate::Error>,
@@ -141,8 +141,8 @@ where
     TCaptureSample: Sample + audio::pulse_simple_backend::CompatibleSample + Send + Sync + 'static,
     TPlaybackSample: Sample + audio::pulse_simple_backend::CompatibleSample + Send + Sync + 'static,
 
-    TCaptureData: WriteItems<TCaptureSample> + Send + 'static,
-    TPlaybackData: ReadItems<TPlaybackSample> + Send + 'static,
+    TCaptureData: AsyncWriteItems<TCaptureSample> + Unpin + Send + 'static,
+    TPlaybackData: AsyncReadItems<TPlaybackSample> + Unpin + Send + 'static,
 
     TSharedCaptureDataBuilder:
         FnOnce(Format<TCaptureSample>) -> Result<Synced<TCaptureData>, crate::Error>,
@@ -194,8 +194,8 @@ where
     TCaptureSample: Sample,
     TPlaybackSample: Sample,
 
-    TCaptureData: WriteItems<TCaptureSample> + Send + 'static,
-    TPlaybackData: ReadItems<TPlaybackSample> + Send + 'static,
+    TCaptureData: AsyncWriteItems<TCaptureSample> + Unpin + Send + 'static,
+    TPlaybackData: AsyncReadItems<TPlaybackSample> + Unpin + Send + 'static,
 
     TSharedCaptureDataBuilder:
         FnOnce(Format<TCaptureSample>) -> Result<Synced<TCaptureData>, crate::Error>,
