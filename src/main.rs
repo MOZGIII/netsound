@@ -6,7 +6,7 @@ use std::net::SocketAddr;
 
 use failure::Error;
 
-use mio::net::UdpSocket;
+use async_std::net::UdpSocket;
 
 use std::marker::PhantomData;
 
@@ -25,7 +25,7 @@ mod transcoder;
 
 use audio::Backend;
 
-fn errmain() -> Result<(), Error> {
+async fn asyncmain() -> Result<(), Error> {
     let bind_addr = env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:8080".to_string());
@@ -33,7 +33,7 @@ fn errmain() -> Result<(), Error> {
     let bind_addr: SocketAddr = bind_addr.parse()?;
     let send_addr: SocketAddr = send_addr.parse()?;
 
-    let socket = UdpSocket::bind(&bind_addr)?;
+    let socket = UdpSocket::bind(&bind_addr).await?;
     println!("Listening on: {}", socket.local_addr()?);
     println!("Sending to: {}", &send_addr);
 
@@ -82,8 +82,8 @@ fn errmain() -> Result<(), Error> {
         48000,
     );
 
-    let mut encoder: Box<dyn codec::Encoder<f32, _>>;
-    let mut decoder: Box<dyn codec::Decoder<f32, _>>;
+    let mut encoder: Box<dyn codec::Encoder<f32, _> + Send>;
+    let mut decoder: Box<dyn codec::Decoder<f32, _> + Send>;
 
     match codec_to_use {
         CodecToUse::Opus => {
@@ -119,17 +119,27 @@ fn errmain() -> Result<(), Error> {
     run_audio_backend(audio_backend)?;
 
     let mut net_service = net::NetService {
-        capture_sample: PhantomData,
-        playback_sample: PhantomData,
-        capture_data: audio_state.shared_capture_data.clone(),
-        playback_data: audio_state.shared_playback_data.clone(),
-        encoder: &mut *encoder,
-        decoder: &mut *decoder,
-        stats: net::Stats::default(),
+        send_service: net::SendService {
+            capture_sample: PhantomData,
+            capture_data: audio_state.shared_capture_data.clone(),
+            encoder: &mut *encoder,
+            stats: net::SendStats::default(),
+        },
+        recv_service: net::RecvService {
+            playback_sample: PhantomData,
+            playback_data: audio_state.shared_playback_data.clone(),
+            decoder: &mut *decoder,
+            stats: net::RecvStats::default(),
+        },
     };
-    net_service.r#loop(socket, send_addr)?;
+    net_service.net_loop(socket, send_addr).await?;
 
     Ok(())
+}
+
+fn errmain() -> Result<(), Error> {
+    let mut runtime = futures::executor::ThreadPool::new()?;
+    runtime.run(asyncmain())
 }
 
 fn main() {

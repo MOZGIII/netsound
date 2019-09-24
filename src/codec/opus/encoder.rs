@@ -8,6 +8,9 @@ pub struct Encoder {
     pub(super) buf: Box<[f32]>,
 }
 
+// TODO: switch to `opus` crate and remove this.
+unsafe impl Send for Encoder {}
+
 impl Encoder {
     pub fn encode_float<T>(&mut self, input: &mut T, output: &mut [u8]) -> Result<usize, Error>
     where

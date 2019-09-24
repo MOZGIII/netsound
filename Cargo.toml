@@ -11,7 +11,8 @@ audiopus = "0.1"
 failure = "0.1"
 cpal = "0.10"
 sample = "0.10"
-futures-preview = "0.3.0-alpha.18"
+futures-preview = { version = "0.3.0-alpha.18", features = ["nightly", "async-await"] }
+async-std = "0.99"
 
 [dependencies.libpulse-binding]
 git = "https://github.com/MOZGIII/pulse-binding-rust.git"
