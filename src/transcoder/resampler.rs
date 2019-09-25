@@ -3,6 +3,7 @@ use crate::buf::VecDequeBuffer;
 use crate::match_channels;
 use crate::sample::Sample;
 use crate::samples_filter::NormalizeChannelsExt;
+use async_trait::async_trait;
 use sample::{interpolate, Duplex};
 use std::io::Result;
 use std::pin::Pin;
@@ -67,32 +68,34 @@ impl<S: Sample> AsyncItemsAvailable<S> for Resampler<S> {
     }
 }
 
-impl<S: Sample> Transcode<S, S> for Resampler<S>
+#[async_trait]
+impl<S> Transcode<S, S> for Resampler<S>
 where
-    S: Duplex<f64>,
+    S: Sample + Duplex<f64> + Unpin,
 {
     type Ok = ();
     type Error = std::io::Error;
 
-    fn transcode(&mut self) -> Result<Self::Ok> {
+    async fn transcode(&mut self) -> Result<Self::Ok> {
         let to_channels = self.to_channels;
+        let this = &mut *self;
 
         match_channels! {
             F => [to_channels] => {
                 use sample::{signal, Signal};
 
                 let mut from_signal =
-                    signal::from_interleaved_samples_iter::<_, F<S>>(self.from_buf.drain(..).normalize_channels(self.from_channels, to_channels));
+                    signal::from_interleaved_samples_iter::<_, F<S>>(this.from_buf.drain(..).normalize_channels(this.from_channels, to_channels));
                 let interpolator = interpolate::Linear::from_source(&mut from_signal);
                 let converter = interpolate::Converter::from_hz_to_hz(
                     from_signal,
                     interpolator,
-                    self.from_hz,
-                    self.to_hz,
+                    this.from_hz,
+                    this.to_hz,
                 );
 
                 use sample::Frame;
-                self.to_buf.extend(
+                this.to_buf.extend(
                     converter
                         .until_exhausted()
                         .flat_map(|frame| frame.channels()),

@@ -71,7 +71,7 @@ where
                         // )
                         self.stats.samples_decoded += num_samples;
                         self.stats.frames_decoded += 1;
-                        playback_data.transcode()?;
+                        playback_data.transcode().await?;
                     }
                     Err(DecodingError::EmptyPacket) => {
                         self.stats.empty_packets_decoding_errors += 1;

@@ -1,5 +1,6 @@
 use super::*;
 use crate::sample::Sample;
+use async_trait::async_trait;
 use std::io::Result;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -49,13 +50,16 @@ impl<S: Sample, T: AsyncItemsAvailable<S> + Unpin> AsyncItemsAvailable<S> for No
     }
 }
 
-impl<S: Sample, T: AsyncWriteItems<S> + AsyncReadItems<S> + AsyncItemsAvailable<S> + Unpin>
-    Transcode<S, S> for Noop<S, T>
+#[async_trait]
+impl<S, T> Transcode<S, S> for Noop<S, T>
+where
+    S: Sample + Unpin,
+    T: AsyncWriteItems<S> + AsyncReadItems<S> + AsyncItemsAvailable<S> + Unpin + Send,
 {
     type Ok = ();
     type Error = ();
 
-    fn transcode(&mut self) -> std::result::Result<Self::Ok, Self::Error> {
+    async fn transcode(&mut self) -> std::result::Result<Self::Ok, Self::Error> {
         Ok(())
     }
 }

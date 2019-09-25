@@ -56,7 +56,7 @@ where
         loop {
             let mut capture_data = self.capture_data.lock().await;
 
-            capture_data.transcode()?;
+            capture_data.transcode().await?;
             if capture_data.items_available().await? > 0 {
                 match self.encoder.encode(&mut *capture_data, &mut send_buf).await {
                     Ok(bytes_to_send) => {
