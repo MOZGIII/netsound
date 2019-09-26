@@ -60,8 +60,8 @@ where
 {
     pub continuation: FormatNegotiatonContinuation<TCaptureSample, TPlaybackSample>,
 
-    pub shared_capture_data_writer: Synced<TCaptureDataWriter>,
-    pub shared_playback_data_reader: Synced<TPlaybackDataReader>,
+    pub capture_data_writer: Synced<TCaptureDataWriter>,
+    pub playback_data_reader: Synced<TPlaybackDataReader>,
 }
 
 impl<'a, TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
@@ -91,8 +91,8 @@ where
             capture_sample: PhantomData,
             playback_sample: PhantomData,
 
-            capture_data_writer: self.shared_capture_data_writer,
-            playback_data_reader: self.shared_playback_data_reader,
+            capture_data_writer: self.capture_data_writer,
+            playback_data_reader: self.playback_data_reader,
 
             pa_record,
             pa_playback,

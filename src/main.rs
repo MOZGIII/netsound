@@ -44,42 +44,45 @@ async fn asyncmain() -> Result<(), Error> {
     let backend_to_use = audio_backends::AudioBackendToUse::from_env()?;
     println!("Using audio backend: {:?}", backend_to_use);
 
-    use std::convert::TryInto;
-    let audio_backend_build_params = audio::build_flow::BuildParams {
+    let audio_backend_build_params = audio_backends::BuildParams {
         request_capture_formats: formats::input(),
         request_playback_formats: formats::output(),
-        shared_capture_data_builder: |f| {
-            let channels = f.channels.try_into()?;
-            Ok(sync::synced(transcoder::resampler::Resampler::new(
-                channels,
-                std::cmp::min(2, channels),
-                f.sample_rate.into(),
-                48000.0,
-                buf::VecDequeBuffer::with_capacity(30_000_000),
-                buf::VecDequeBuffer::with_capacity(30_000_000),
-            )))
-        },
-        shared_playback_data_builder: |f| {
-            let channels = f.channels.try_into()?;
-            Ok(sync::synced(transcoder::resampler::Resampler::new(
-                std::cmp::min(2, channels),
-                channels,
-                48000.0,
-                f.sample_rate.into(),
-                buf::VecDequeBuffer::with_capacity(30_000_000),
-                buf::VecDequeBuffer::with_capacity(30_000_000),
-            )))
-        },
+    };
+    let (negotiated_formats, continuation) =
+        audio_backends::negotiate_formats(backend_to_use, audio_backend_build_params)?;
+
+    use std::convert::TryInto;
+    let capture_data = {
+        let format = negotiated_formats.capture_format;
+        let channels = format.channels.try_into()?;
+        sync::synced(transcoder::resampler::Resampler::new(
+            channels,
+            std::cmp::min(2, channels),
+            format.sample_rate.into(),
+            48000.0,
+            buf::VecDequeBuffer::with_capacity(30_000_000),
+            buf::VecDequeBuffer::with_capacity(30_000_000),
+        ))
+    };
+    let playback_data = {
+        let format = negotiated_formats.capture_format;
+        let channels = format.channels.try_into()?;
+        sync::synced(transcoder::resampler::Resampler::new(
+            std::cmp::min(2, channels),
+            channels,
+            48000.0,
+            format.sample_rate.into(),
+            buf::VecDequeBuffer::with_capacity(30_000_000),
+            buf::VecDequeBuffer::with_capacity(30_000_000),
+        ))
     };
 
-    let audio_state = audio_backends::build(backend_to_use, audio_backend_build_params)?;
-
     let resampled_capture_format = format::Format::new(
-        std::cmp::min(2, audio_state.negotiated_formats.capture_format.channels),
+        std::cmp::min(2, negotiated_formats.capture_format.channels),
         48000,
     );
     let resampled_playback_format = format::Format::new(
-        std::cmp::min(2, audio_state.negotiated_formats.playback_format.channels),
+        std::cmp::min(2, negotiated_formats.playback_format.channels),
         48000,
     );
 
@@ -116,19 +119,19 @@ async fn asyncmain() -> Result<(), Error> {
         }
     };
 
-    let audio_backend = audio_state.backend;
+    let audio_backend = continuation(capture_data.clone(), playback_data.clone())?;
     run_audio_backend(audio_backend)?;
 
     let mut net_service = net::NetService {
         send_service: net::SendService {
             capture_sample: PhantomData,
-            capture_data: audio_state.shared_capture_data.clone(),
+            capture_data,
             encoder: &mut *encoder,
             stats: net::SendStats::default(),
         },
         recv_service: net::RecvService {
             playback_sample: PhantomData,
-            playback_data: audio_state.shared_playback_data.clone(),
+            playback_data,
             decoder: &mut *decoder,
             stats: net::RecvStats::default(),
         },
