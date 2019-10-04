@@ -51,7 +51,7 @@ impl<S: Sample, T: AsyncItemsAvailable<S> + Unpin> AsyncItemsAvailable<S> for No
 }
 
 #[async_trait]
-impl<S, T> Transcode<S, S> for Noop<S, T>
+impl<S, T> Transcode for Noop<S, T>
 where
     S: Sample + Unpin,
     T: AsyncWriteItems<S> + AsyncReadItems<S> + AsyncItemsAvailable<S> + Unpin + Send,

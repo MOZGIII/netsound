@@ -2,7 +2,6 @@ use crate::audio::{self, BackendBuilder, FormatNegotiator};
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::sample::Sample;
-use crate::sync::Synced;
 
 #[derive(Debug)]
 pub enum AudioBackendToUse {
@@ -40,16 +39,16 @@ pub fn negotiate_formats<'a, TCaptureDataWriter, TPlaybackDataReader>(
         audio::NegotiatedFormats<f32, f32>,
         Box<
             dyn FnOnce(
-                Synced<TCaptureDataWriter>,
-                Synced<TPlaybackDataReader>,
+                TCaptureDataWriter,
+                TPlaybackDataReader,
             ) -> Result<Box<dyn audio::Backend>, crate::Error>,
         >,
     ),
     crate::Error,
 >
 where
-    TCaptureDataWriter: AsyncWriteItems<f32> + Unpin + Send + 'static,
-    TPlaybackDataReader: AsyncReadItems<f32> + Unpin + Send + 'static,
+    TCaptureDataWriter: AsyncWriteItems<f32> + Unpin + Send + Sync + 'static,
+    TPlaybackDataReader: AsyncReadItems<f32> + Unpin + Send + Sync + 'static,
 {
     match backend_to_use {
         AudioBackendToUse::Cpal => build_cpal(build_params),
@@ -64,8 +63,8 @@ fn build_cpal<'a, TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlayback
         audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
         Box<
             dyn FnOnce(
-                Synced<TCaptureDataWriter>,
-                Synced<TPlaybackDataReader>,
+                TCaptureDataWriter,
+                TPlaybackDataReader,
             ) -> Result<Box<dyn audio::Backend>, crate::Error>,
         >,
     ),
@@ -75,8 +74,8 @@ where
     TCaptureSample: Sample + audio::cpal_backend::CompatibleSample + Send + Sync + 'static,
     TPlaybackSample: Sample + audio::cpal_backend::CompatibleSample + Send + Sync + 'static,
 
-    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + 'static,
-    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + 'static,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync + 'static,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync + 'static,
 {
     let format_negotiator = audio::cpal_backend::FormatNegotiator;
     let (negotiated_formats, continuation) = format_negotiator.negotiate_formats(
@@ -113,8 +112,8 @@ fn build_pulse_simple<
         audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
         Box<
             dyn FnOnce(
-                Synced<TCaptureDataWriter>,
-                Synced<TPlaybackDataReader>,
+                TCaptureDataWriter,
+                TPlaybackDataReader,
             ) -> Result<Box<dyn audio::Backend>, crate::Error>,
         >,
     ),
@@ -124,8 +123,8 @@ where
     TCaptureSample: Sample + audio::pulse_simple_backend::CompatibleSample + Send + Sync + 'static,
     TPlaybackSample: Sample + audio::pulse_simple_backend::CompatibleSample + Send + Sync + 'static,
 
-    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + 'static,
-    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + 'static,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync + 'static,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync + 'static,
 {
     let format_negotiator = audio::pulse_simple_backend::FormatNegotiator;
     let (negotiated_formats, continuation) = format_negotiator.negotiate_formats(
@@ -162,8 +161,8 @@ fn build_pulse_simple<
         audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
         Box<
             dyn FnOnce(
-                Synced<TCaptureDataWriter>,
-                Synced<TPlaybackDataReader>,
+                TCaptureDataWriter,
+                TPlaybackDataReader,
             ) -> Result<Box<dyn audio::Backend>, crate::Error>,
         >,
     ),
@@ -173,8 +172,8 @@ where
     TCaptureSample: Sample + Send + Sync + 'static,
     TPlaybackSample: Sample + Send + Sync + 'static,
 
-    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + 'static,
-    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + 'static,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync + 'static,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync + 'static,
 {
     unimplemented!()
 }

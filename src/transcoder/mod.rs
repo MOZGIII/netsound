@@ -5,9 +5,7 @@ pub mod noop;
 pub mod resampler;
 
 #[async_trait]
-pub trait Transcode<TFrom: Unpin, TTo: Unpin>:
-    AsyncWriteItems<TFrom> + AsyncReadItems<TTo> + AsyncItemsAvailable<TTo>
-{
+pub trait Transcode {
     type Ok;
     type Error;
 

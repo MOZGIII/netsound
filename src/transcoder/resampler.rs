@@ -1,13 +1,11 @@
 use super::*;
-use crate::buf::VecDequeBuffer;
+use crate::buf::{VecDequeBufferReader, VecDequeBufferWriter};
 use crate::match_channels;
 use crate::sample::Sample;
 use crate::samples_filter::NormalizeChannelsExt;
 use async_trait::async_trait;
 use sample::{interpolate, Duplex};
 use std::io::Result;
-use std::pin::Pin;
-use std::task::{Context, Poll};
 
 /// Resampler acts as writer, reader and transcoder.
 #[derive(Debug)]
@@ -18,8 +16,8 @@ pub struct Resampler<S: Sample> {
     pub from_hz: f64,
     pub to_hz: f64,
 
-    pub from_buf: VecDequeBuffer<S>,
-    pub to_buf: VecDequeBuffer<S>,
+    pub from_buf: VecDequeBufferReader<S>,
+    pub to_buf: VecDequeBufferWriter<S>,
 }
 
 impl<S: Sample> Resampler<S> {
@@ -28,8 +26,8 @@ impl<S: Sample> Resampler<S> {
         to_channels: usize,
         from_hz: f64,
         to_hz: f64,
-        from_buf: VecDequeBuffer<S>,
-        to_buf: VecDequeBuffer<S>,
+        from_buf: VecDequeBufferReader<S>,
+        to_buf: VecDequeBufferWriter<S>,
     ) -> Self {
         Self {
             from_channels,
@@ -42,34 +40,8 @@ impl<S: Sample> Resampler<S> {
     }
 }
 
-impl<S: Sample> AsyncWriteItems<S> for Resampler<S> {
-    fn poll_write_items(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        items: &[S],
-    ) -> Poll<Result<usize>> {
-        Pin::new(&mut self.from_buf).poll_write_items(cx, items)
-    }
-}
-
-impl<S: Sample> AsyncReadItems<S> for Resampler<S> {
-    fn poll_read_items(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        items: &mut [S],
-    ) -> Poll<Result<usize>> {
-        Pin::new(&mut self.to_buf).poll_read_items(cx, items)
-    }
-}
-
-impl<S: Sample> AsyncItemsAvailable<S> for Resampler<S> {
-    fn poll_items_available(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<usize>> {
-        Pin::new(&mut self.to_buf).poll_items_available(cx)
-    }
-}
-
 #[async_trait]
-impl<S> Transcode<S, S> for Resampler<S>
+impl<S> Transcode for Resampler<S>
 where
     S: Sample + Duplex<f64> + Unpin,
 {
@@ -84,22 +56,36 @@ where
             F => [to_channels] => {
                 use sample::{signal, Signal};
 
-                let mut from_signal =
-                    signal::from_interleaved_samples_iter::<_, F<S>>(this.from_buf.drain(..).normalize_channels(this.from_channels, to_channels));
-                let interpolator = interpolate::Linear::from_source(&mut from_signal);
-                let converter = interpolate::Converter::from_hz_to_hz(
-                    from_signal,
-                    interpolator,
-                    this.from_hz,
-                    this.to_hz,
-                );
+                let mut from_buf = this.from_buf.lock().await;
+                let mut to_buf = this.to_buf.lock().await;
 
-                use sample::Frame;
-                this.to_buf.extend(
-                    converter
-                        .until_exhausted()
-                        .flat_map(|frame| frame.channels()),
-                );
+                // let from_buf_size_before = from_buf.len();
+                // let to_buf_size_before = to_buf.len();
+
+                if from_buf.len() > 0 {
+                    let mut from_signal =
+                        signal::from_interleaved_samples_iter::<_, F<S>>(from_buf.drain(..).normalize_channels(this.from_channels, to_channels));
+
+                    let interpolator = interpolate::Linear::from_source(&mut from_signal);
+                    let converter = interpolate::Converter::from_hz_to_hz(
+                        from_signal,
+                        interpolator,
+                        this.from_hz,
+                        this.to_hz,
+                    );
+
+                    use sample::Frame;
+                    to_buf.extend(
+                        converter
+                            .until_exhausted()
+                            .flat_map(|frame| frame.channels()),
+                    );
+                }
+
+                // let from_buf_size_after = from_buf.len();
+                // let to_buf_size_after = to_buf.len();
+
+                // println!("resampler done: {} -> {}  =>  {} -> {}", from_buf_size_before, to_buf_size_before, from_buf_size_after, to_buf_size_after);
             }
         }
 

@@ -21,7 +21,6 @@ mod match_channels;
 mod net;
 mod sample;
 mod samples_filter;
-mod sync;
 mod transcoder;
 
 use audio::Backend;
@@ -52,29 +51,41 @@ async fn asyncmain() -> Result<(), Error> {
         audio_backends::negotiate_formats(backend_to_use, audio_backend_build_params)?;
 
     use std::convert::TryInto;
-    let capture_data = {
+    let (capture_transcoder, capture_data_writer, capture_data_reader) = {
         let format = negotiated_formats.capture_format;
         let channels = format.channels.try_into()?;
-        sync::synced(transcoder::resampler::Resampler::new(
-            channels,
-            std::cmp::min(2, channels),
-            format.sample_rate.into(),
-            48000.0,
-            buf::VecDequeBuffer::with_capacity(30_000_000),
-            buf::VecDequeBuffer::with_capacity(30_000_000),
-        ))
+        let (audio_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
+        let (trascoder_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
+        (
+            transcoder::resampler::Resampler::new(
+                channels,
+                std::cmp::min(2, channels),
+                format.sample_rate.into(),
+                48000.0,
+                transcoder_reader,
+                trascoder_writer,
+            ),
+            audio_writer,
+            net_reader,
+        )
     };
-    let playback_data = {
+    let (playback_transcoder, playback_data_writer, playback_data_reader) = {
         let format = negotiated_formats.capture_format;
         let channels = format.channels.try_into()?;
-        sync::synced(transcoder::resampler::Resampler::new(
-            std::cmp::min(2, channels),
-            channels,
-            48000.0,
-            format.sample_rate.into(),
-            buf::VecDequeBuffer::with_capacity(30_000_000),
-            buf::VecDequeBuffer::with_capacity(30_000_000),
-        ))
+        let (net_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
+        let (trascoder_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
+        (
+            transcoder::resampler::Resampler::new(
+                std::cmp::min(2, channels),
+                channels,
+                48000.0,
+                format.sample_rate.into(),
+                transcoder_reader,
+                trascoder_writer,
+            ),
+            net_writer,
+            audio_reader,
+        )
     };
 
     let resampled_capture_format = format::Format::new(
@@ -119,19 +130,21 @@ async fn asyncmain() -> Result<(), Error> {
         }
     };
 
-    let audio_backend = continuation(capture_data.clone(), playback_data.clone())?;
+    let audio_backend = continuation(capture_data_writer, playback_data_reader)?;
     run_audio_backend(audio_backend)?;
 
     let mut net_service = net::NetService {
         send_service: net::SendService {
             capture_sample: PhantomData,
-            capture_data,
+            capture_data_reader,
+            capture_transcoder,
             encoder: &mut *encoder,
             stats: net::SendStats::default(),
         },
         recv_service: net::RecvService {
             playback_sample: PhantomData,
-            playback_data,
+            playback_data_writer,
+            playback_transcoder,
             decoder: &mut *decoder,
             stats: net::RecvStats::default(),
         },
@@ -142,8 +155,7 @@ async fn asyncmain() -> Result<(), Error> {
 }
 
 fn errmain() -> Result<(), Error> {
-    let mut runtime = futures::executor::ThreadPool::new()?;
-    runtime.run(asyncmain())
+    async_std::task::block_on(asyncmain())
 }
 
 fn main() {

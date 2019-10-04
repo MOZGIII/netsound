@@ -1,63 +1,74 @@
-use crate::buf::{Buffer, FrameBuffer, SampleBuffer};
 use crate::io::{AsyncItemsAvailable, AsyncReadItems, AsyncWriteItems};
-use crate::sample::Sample;
-use sample::Frame;
+use futures::lock::{BiLock, BiLockAcquire, BiLockGuard};
+use futures::ready;
 use std::collections::VecDeque;
+use std::future::Future;
 use std::io::Result;
+use std::ops::{Deref, DerefMut};
 use std::pin::Pin;
-use std::task::{Context, Poll};
+use std::task::{Context, Poll, Waker};
 
-#[derive(Debug, Clone)]
-pub struct VecDequeBuffer<T>(VecDeque<T>);
+#[derive(Debug)]
+struct Inner<T> {
+    vd: VecDeque<T>,
 
-impl<T> VecDequeBuffer<T> {
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self(VecDeque::with_capacity(capacity))
-    }
+    // Waits on read on buffer becoming non-empty.
+    read_waker: Option<Waker>,
+
+    // Waits on write for buffer becoming non-full.
+    write_waker: Option<Waker>,
 }
 
-impl<A> std::iter::FromIterator<A> for VecDequeBuffer<A> {
-    fn from_iter<T>(iter: T) -> Self
-    where
-        T: IntoIterator<Item = A>,
-    {
-        Self(VecDeque::from_iter(iter))
-    }
+pub fn vec_deque_buffer_with_capacity<T>(
+    capacity: usize,
+) -> (VecDequeBufferWriter<T>, VecDequeBufferReader<T>) {
+    vec_deque_buffer(VecDeque::with_capacity(capacity))
 }
 
-impl<T> From<Vec<T>> for VecDequeBuffer<T> {
-    fn from(vec: Vec<T>) -> Self {
-        Self(VecDeque::from(vec))
-    }
+pub fn vec_deque_buffer<T>(vd: VecDeque<T>) -> (VecDequeBufferWriter<T>, VecDequeBufferReader<T>) {
+    let (reader_inner, writer_inner) = BiLock::new(Inner {
+        vd,
+        read_waker: None,
+        write_waker: None,
+    });
+    let writer = VecDequeBufferWriter {
+        inner: writer_inner,
+    };
+    let reader = VecDequeBufferReader {
+        inner: reader_inner,
+    };
+    (writer, reader)
 }
 
-impl<T> Into<Vec<T>> for VecDequeBuffer<T> {
-    fn into(self) -> Vec<T> {
-        self.0.into()
-    }
+#[derive(Debug)]
+pub struct VecDequeBufferReader<T> {
+    inner: BiLock<Inner<T>>,
 }
 
-impl<T> std::ops::Deref for VecDequeBuffer<T> {
-    type Target = VecDeque<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+#[derive(Debug)]
+pub struct VecDequeBufferWriter<T> {
+    inner: BiLock<Inner<T>>,
 }
 
-impl<T> std::ops::DerefMut for VecDequeBuffer<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
+fn is_full<T>(vd: &VecDeque<T>) -> bool {
+    vd.len() >= vd.capacity()
 }
 
-impl<T: Unpin> AsyncReadItems<T> for VecDequeBuffer<T> {
+impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
     fn poll_read_items(
-        mut self: Pin<&mut Self>,
-        _cx: &mut Context<'_>,
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
         items: &mut [T],
     ) -> Poll<Result<usize>> {
-        let vd = &mut self.0;
+        let mut inner = ready!(self.inner.poll_lock(cx));
+        let vd = &mut inner.vd;
+
+        if vd.is_empty() {
+            assert!(inner.read_waker.is_none());
+            inner.read_waker = Some(cx.waker().clone());
+            return Poll::Pending;
+        }
+
         let mut filled: usize = 0;
         for item_slot in items.iter_mut() {
             match vd.pop_front() {
@@ -68,40 +79,101 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBuffer<T> {
                 }
             }
         }
+
+        let wake_writer = !is_full(vd);
+
+        if wake_writer {
+            if let Some(waker) = inner.write_waker.take() {
+                waker.wake();
+            }
+        }
+
         Poll::Ready(Ok(filled))
     }
 }
 
-impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBuffer<T> {
+impl<T: Unpin> AsyncItemsAvailable<T> for VecDequeBufferReader<T> {
+    fn poll_items_available(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<usize>> {
+        let inner = ready!(self.inner.poll_lock(cx));
+        Poll::Ready(Ok(inner.vd.len()))
+    }
+}
+
+impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
     fn poll_write_items(
-        mut self: Pin<&mut Self>,
-        _cx: &mut Context<'_>,
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
         items: &[T],
     ) -> Poll<Result<usize>> {
-        let vd = &mut self.0;
+        let mut inner = ready!(self.inner.poll_lock(cx));
+        let vd = &mut inner.vd;
+
+        if is_full(&vd) {
+            assert!(inner.write_waker.is_none());
+            inner.write_waker = Some(cx.waker().clone());
+            return Poll::Pending;
+        }
+
         let mut filled: usize = 0;
         for item in items.iter() {
             vd.push_back(*item);
             filled += 1;
         }
+
+        let wake_reader = vd.is_empty();
+
+        if wake_reader {
+            if let Some(waker) = inner.read_waker.take() {
+                waker.wake();
+            }
+        }
+
         Poll::Ready(Ok(filled))
     }
 }
 
-impl<T: Unpin> AsyncItemsAvailable<T> for VecDequeBuffer<T> {
-    fn poll_items_available(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<usize>> {
-        Poll::Ready(Ok(self.0.len()))
+pub struct InnerVecDequeGuard<'a, T> {
+    inner_guard: BiLockGuard<'a, Inner<T>>,
+}
+
+impl<T> Deref for InnerVecDequeGuard<'_, T> {
+    type Target = VecDeque<T>;
+    fn deref(&self) -> &VecDeque<T> {
+        &self.inner_guard.vd
     }
 }
 
-impl<T: Copy + Unpin + Send> Buffer for VecDequeBuffer<T> {
-    type Item = T;
+impl<T: Unpin> DerefMut for InnerVecDequeGuard<'_, T> {
+    fn deref_mut(&mut self) -> &mut VecDeque<T> {
+        &mut self.inner_guard.vd
+    }
 }
 
-impl<S: Sample> SampleBuffer for VecDequeBuffer<S> {
-    type Sample = S;
+pub struct InnerVecDequeAcquire<'a, T> {
+    inner_acquire: BiLockAcquire<'a, Inner<T>>,
 }
 
-impl<F: Frame + Send + Unpin> FrameBuffer for VecDequeBuffer<F> {
-    type Frame = F;
+impl<T> Unpin for InnerVecDequeAcquire<'_, T> {}
+
+impl<'a, T> Future for InnerVecDequeAcquire<'a, T> {
+    type Output = InnerVecDequeGuard<'a, T>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let inner_guard = ready!(Pin::new(&mut self.inner_acquire).poll(cx));
+        Poll::Ready(InnerVecDequeGuard { inner_guard })
+    }
+}
+
+impl<T> VecDequeBufferReader<T> {
+    pub fn lock<'a>(&'a mut self) -> InnerVecDequeAcquire<'a, T> {
+        let inner_acquire = self.inner.lock();
+        InnerVecDequeAcquire { inner_acquire }
+    }
+}
+
+impl<T> VecDequeBufferWriter<T> {
+    pub fn lock<'a>(&'a mut self) -> InnerVecDequeAcquire<'a, T> {
+        let inner_acquire = self.inner.lock();
+        InnerVecDequeAcquire { inner_acquire }
+    }
 }

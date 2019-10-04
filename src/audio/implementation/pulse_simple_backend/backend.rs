@@ -1,7 +1,6 @@
 use super::*;
 use crate::audio;
 use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt};
-use crate::sync::Synced;
 use crossbeam_utils;
 use futures::executor::block_on;
 use libpulse_binding as pulse;
@@ -22,8 +21,8 @@ where
     pub(super) capture_sample: PhantomData<TCaptureSample>,
     pub(super) playback_sample: PhantomData<TPlaybackSample>,
 
-    pub(super) capture_data_writer: Synced<TCaptureDataWriter>,
-    pub(super) playback_data_reader: Synced<TPlaybackDataReader>,
+    pub(super) capture_data_writer: TCaptureDataWriter,
+    pub(super) playback_data_reader: TPlaybackDataReader,
 
     pub(super) pa_record: Simple,
     pub(super) pa_playback: Simple,
@@ -35,8 +34,8 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Send + Unpin,
-    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Send + Unpin,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync,
 {
     fn run(&mut self) {
         let capture_data_writer = &mut self.capture_data_writer;
@@ -51,8 +50,7 @@ where
                 loop {
                     // Play what's in playback buffer.
                     let samples_read = block_on(async {
-                        let mut playback_data_reader = playback_data_reader.lock().await;
-                        (*playback_data_reader)
+                        playback_data_reader
                             .read_items(&mut playback_samples)
                             .await
                             .expect("Unable to read playback data")
@@ -91,8 +89,7 @@ where
                     }
 
                     let _ = block_on(async {
-                        let mut capture_data_writer = capture_data_writer.lock().await;
-                        (*capture_data_writer)
+                        capture_data_writer
                             .write_items(&capture_samples)
                             .await
                             .expect("Unable to write captured data")

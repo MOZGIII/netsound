@@ -2,7 +2,6 @@ use super::{choose_format::choose_format, *};
 use crate::audio;
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::sync::Synced;
 use std::marker::PhantomData;
 
 use cpal::traits::*;
@@ -82,13 +81,13 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send,
-    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync,
 {
     pub continuation: FormatNegotiationContinuation<TCaptureSample, TPlaybackSample>,
 
-    pub capture_data_writer: Synced<TCaptureDataWriter>,
-    pub playback_data_reader: Synced<TPlaybackDataReader>,
+    pub capture_data_writer: TCaptureDataWriter,
+    pub playback_data_reader: TPlaybackDataReader,
 }
 
 impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader> audio::BackendBuilder
@@ -97,8 +96,8 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send,
-    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync,
 {
     type Backend =
         Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>;

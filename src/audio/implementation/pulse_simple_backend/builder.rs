@@ -2,7 +2,6 @@ use super::*;
 use crate::audio;
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::sync::Synced;
 use libpulse_binding as pulse;
 use std::marker::PhantomData;
 
@@ -60,8 +59,8 @@ where
 {
     pub continuation: FormatNegotiatonContinuation<TCaptureSample, TPlaybackSample>,
 
-    pub capture_data_writer: Synced<TCaptureDataWriter>,
-    pub playback_data_reader: Synced<TPlaybackDataReader>,
+    pub capture_data_writer: TCaptureDataWriter,
+    pub playback_data_reader: TPlaybackDataReader,
 }
 
 impl<'a, TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
@@ -71,8 +70,8 @@ where
     TCaptureSample: CompatibleSample + Send + Sync,
     TPlaybackSample: CompatibleSample + Send + Sync,
 
-    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Send,
-    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Send,
+    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Send + Sync,
+    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Send + Sync,
 
     Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>:
         audio::backend::Backend,
