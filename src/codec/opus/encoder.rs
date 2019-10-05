@@ -21,14 +21,8 @@ impl Encoder {
     where
         T: AsyncReadItems<f32> + AsyncItemsAvailable<f32> + Unpin,
     {
-        let samples_available = input.items_available().await?;
         let samples_required = self.buf.len();
-        if samples_available < samples_required {
-            return Err(Error::NotEnoughData {
-                samples_available,
-                samples_required,
-            });
-        }
+        let _ = input.wait_for_items_available(samples_required).await?;
 
         let samples_read = input.read_items(&mut self.buf).await?;
         assert_eq!(samples_read, samples_required);

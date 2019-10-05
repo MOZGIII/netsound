@@ -97,6 +97,22 @@ impl<T: Unpin> AsyncItemsAvailable<T> for VecDequeBufferReader<T> {
         let inner = ready!(self.inner.poll_lock(cx));
         Poll::Ready(Ok(inner.vd.len()))
     }
+
+    fn poll_wait_for_items_available(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        required_amount: usize,
+    ) -> Poll<Result<usize>> {
+        let mut inner = ready!(self.inner.poll_lock(cx));
+
+        if inner.vd.len() < required_amount {
+            assert!(inner.read_waker.is_none());
+            inner.read_waker = Some(cx.waker().clone());
+            return Poll::Pending;
+        }
+
+        Poll::Ready(Ok(inner.vd.len()))
+    }
 }
 
 impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {

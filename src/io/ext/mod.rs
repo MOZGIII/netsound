@@ -9,6 +9,9 @@ pub use read_items::*;
 mod items_available;
 pub use items_available::*;
 
+mod wait_for_items_available;
+pub use wait_for_items_available::*;
+
 pub trait AsyncWriteItemsExt<T: Unpin>: AsyncWriteItems<T> {
     fn write_items<'a>(&'a mut self, buf: &'a [T]) -> WriteItems<'a, T, Self>
     where
@@ -37,6 +40,16 @@ pub trait AsyncItemsAvailableExt<T: Unpin>: AsyncItemsAvailable<T> {
         Self: Unpin,
     {
         ItemsAvailable::new(self)
+    }
+
+    fn wait_for_items_available<'a>(
+        &'a mut self,
+        required_items: usize,
+    ) -> WaitForItemsAvailable<'a, T, Self>
+    where
+        Self: Unpin,
+    {
+        WaitForItemsAvailable::new(self, required_items)
     }
 }
 

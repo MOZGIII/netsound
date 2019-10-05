@@ -48,6 +48,14 @@ impl<S: Sample, T: AsyncItemsAvailable<S> + Unpin> AsyncItemsAvailable<S> for No
     fn poll_items_available(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<usize>> {
         Pin::new(&mut self.buf).poll_items_available(cx)
     }
+
+    fn poll_wait_for_items_available(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        required_amount: usize,
+    ) -> Poll<Result<usize>> {
+        Pin::new(&mut self.buf).poll_wait_for_items_available(cx, required_amount)
+    }
 }
 
 #[async_trait]
