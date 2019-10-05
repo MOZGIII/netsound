@@ -6,7 +6,6 @@ pub mod resampler;
 #[async_trait]
 pub trait Transcode {
     type Ok;
-    type Error;
 
-    async fn transcode(&mut self) -> Result<Self::Ok, Self::Error>;
+    async fn transcode(&mut self) -> Result<Self::Ok, crate::Error>;
 }

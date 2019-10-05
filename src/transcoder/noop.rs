@@ -7,9 +7,8 @@ pub struct Noop;
 #[async_trait]
 impl Transcode for Noop {
     type Ok = ();
-    type Error = ();
 
-    async fn transcode(&mut self) -> std::result::Result<Self::Ok, Self::Error> {
+    async fn transcode(&mut self) -> std::result::Result<Self::Ok, crate::Error> {
         Ok(())
     }
 }

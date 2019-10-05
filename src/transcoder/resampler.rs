@@ -5,7 +5,6 @@ use crate::sample::Sample;
 use crate::samples_filter::NormalizeChannelsExt;
 use async_trait::async_trait;
 use sample::{interpolate, Duplex};
-use std::io::Result;
 
 #[derive(Debug)]
 pub struct Resampler<S: Sample> {
@@ -45,9 +44,8 @@ where
     S: Sample + Duplex<f64> + Unpin,
 {
     type Ok = ();
-    type Error = std::io::Error;
 
-    async fn transcode(&mut self) -> Result<Self::Ok> {
+    async fn transcode(&mut self) -> Result<Self::Ok, crate::Error> {
         let to_channels = self.to_channels;
         let this = &mut *self;
 

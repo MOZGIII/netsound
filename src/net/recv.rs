@@ -23,7 +23,6 @@ where
     TPlaybackSample: Sample,
     TPlaybackDataWriter: AsyncWriteItems<TPlaybackSample>,
     TPlaybackTranscoder: Transcode,
-    <TPlaybackTranscoder as Transcode>::Error: std::error::Error + Send + Sync,
     TDecoder: Decoder<TPlaybackSample, TPlaybackDataWriter> + ?Sized,
 {
     pub playback_sample: PhantomData<TPlaybackSample>,
@@ -39,7 +38,6 @@ where
     TPlaybackSample: Sample,
     TPlaybackDataWriter: AsyncWriteItems<TPlaybackSample> + Unpin,
     TPlaybackTranscoder: Transcode,
-    <TPlaybackTranscoder as Transcode>::Error: std::error::Error + Send + Sync + 'static,
     TDecoder: Decoder<TPlaybackSample, TPlaybackDataWriter> + ?Sized,
 {
     pub async fn recv_loop(

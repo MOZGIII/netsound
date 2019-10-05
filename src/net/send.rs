@@ -23,7 +23,6 @@ where
     TCaptureSample: Sample,
     TCaptureDataReader: AsyncReadItems<TCaptureSample>,
     TCaptureTranscoder: Transcode,
-    <TCaptureTranscoder as Transcode>::Error: std::error::Error + Send + Sync,
     TEncoder: Encoder<TCaptureSample, TCaptureDataReader> + ?Sized,
 {
     pub capture_sample: PhantomData<TCaptureSample>,
@@ -39,7 +38,6 @@ where
     TCaptureSample: Sample,
     TCaptureDataReader: AsyncReadItems<TCaptureSample>,
     TCaptureTranscoder: Transcode,
-    <TCaptureTranscoder as Transcode>::Error: std::error::Error + Send + Sync + 'static,
     TEncoder: Encoder<TCaptureSample, TCaptureDataReader> + ?Sized,
 {
     pub async fn send_loop(

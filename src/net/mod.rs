@@ -31,9 +31,6 @@ pub struct NetService<
     TCaptureTranscoder: Transcode + Unpin,
     TPlaybackTranscoder: Transcode + Unpin,
 
-    <TCaptureTranscoder as Transcode>::Error: std::error::Error + Send + Sync,
-    <TPlaybackTranscoder as Transcode>::Error: std::error::Error + Send + Sync,
-
     TEncoder: Encoder<TCaptureSample, TCaptureDataReader> + ?Sized,
     TDecoder: Decoder<TPlaybackSample, TPlaybackDataWriter> + ?Sized,
 {
@@ -103,9 +100,6 @@ where
 
     TCaptureTranscoder: Transcode + Unpin + Send,
     TPlaybackTranscoder: Transcode + Unpin + Send,
-
-    <TCaptureTranscoder as Transcode>::Error: std::error::Error + Send + Sync + 'static,
-    <TPlaybackTranscoder as Transcode>::Error: std::error::Error + Send + Sync + 'static,
 
     TEncoder: Encoder<TCaptureSample, TCaptureDataReader> + Send + ?Sized,
     TDecoder: Decoder<TPlaybackSample, TPlaybackDataWriter> + Send + ?Sized,
