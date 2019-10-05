@@ -1,56 +1,11 @@
 use super::*;
-use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::sample::Sample;
 use async_trait::async_trait;
-use std::io::Result;
-use std::marker::PhantomData;
-use std::pin::Pin;
-use std::task::{Context, Poll};
 
-/// Noop acts as writer, reader and transcoder.
-#[allow(dead_code)]
 #[derive(Debug)]
-pub struct Noop<S: Sample, T> {
-    buf: T,
-    sample_type: PhantomData<S>,
-}
-
-#[allow(dead_code)]
-impl<S: Sample, T> Noop<S, T> {
-    pub fn new(buf: T) -> Self {
-        Self {
-            buf,
-            sample_type: PhantomData,
-        }
-    }
-}
-
-impl<S: Sample, T: AsyncWriteItems<S> + Unpin> AsyncWriteItems<S> for Noop<S, T> {
-    fn poll_write_items(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        items: &[S],
-    ) -> Poll<Result<usize>> {
-        Pin::new(&mut self.buf).poll_write_items(cx, items)
-    }
-}
-
-impl<S: Sample, T: AsyncReadItems<S> + Unpin> AsyncReadItems<S> for Noop<S, T> {
-    fn poll_read_items(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        items: &mut [S],
-    ) -> Poll<Result<usize>> {
-        Pin::new(&mut self.buf).poll_read_items(cx, items)
-    }
-}
+pub struct Noop;
 
 #[async_trait]
-impl<S, T> Transcode for Noop<S, T>
-where
-    S: Sample + Unpin,
-    T: Send,
-{
+impl Transcode for Noop {
     type Ok = ();
     type Error = ();
 
