@@ -7,7 +7,6 @@ use async_trait::async_trait;
 use sample::{interpolate, Duplex};
 use std::io::Result;
 
-/// Resampler acts as writer, reader and transcoder.
 #[derive(Debug)]
 pub struct Resampler<S: Sample> {
     pub from_channels: usize,
