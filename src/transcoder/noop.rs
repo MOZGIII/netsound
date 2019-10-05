@@ -1,4 +1,5 @@
 use super::*;
+use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::sample::Sample;
 use async_trait::async_trait;
 use std::io::Result;
@@ -15,7 +16,7 @@ pub struct Noop<S: Sample, T> {
 }
 
 #[allow(dead_code)]
-impl<S: Sample, T: AsyncWriteItems<S> + AsyncReadItems<S> + AsyncItemsAvailable<S>> Noop<S, T> {
+impl<S: Sample, T> Noop<S, T> {
     pub fn new(buf: T) -> Self {
         Self {
             buf,
@@ -44,25 +45,11 @@ impl<S: Sample, T: AsyncReadItems<S> + Unpin> AsyncReadItems<S> for Noop<S, T> {
     }
 }
 
-impl<S: Sample, T: AsyncItemsAvailable<S> + Unpin> AsyncItemsAvailable<S> for Noop<S, T> {
-    fn poll_items_available(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<usize>> {
-        Pin::new(&mut self.buf).poll_items_available(cx)
-    }
-
-    fn poll_wait_for_items_available(
-        mut self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        required_amount: usize,
-    ) -> Poll<Result<usize>> {
-        Pin::new(&mut self.buf).poll_wait_for_items_available(cx, required_amount)
-    }
-}
-
 #[async_trait]
 impl<S, T> Transcode for Noop<S, T>
 where
     S: Sample + Unpin,
-    T: AsyncWriteItems<S> + AsyncReadItems<S> + AsyncItemsAvailable<S> + Unpin + Send,
+    T: Send,
 {
     type Ok = ();
     type Error = ();

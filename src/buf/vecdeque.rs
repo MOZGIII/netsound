@@ -1,4 +1,4 @@
-use crate::io::{AsyncItemsAvailable, AsyncReadItems, AsyncWriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems};
 use futures::lock::{BiLock, BiLockAcquire, BiLockGuard};
 use futures::ready;
 use std::collections::VecDeque;
@@ -89,29 +89,6 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
         }
 
         Poll::Ready(Ok(filled))
-    }
-}
-
-impl<T: Unpin> AsyncItemsAvailable<T> for VecDequeBufferReader<T> {
-    fn poll_items_available(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<usize>> {
-        let inner = ready!(self.inner.poll_lock(cx));
-        Poll::Ready(Ok(inner.vd.len()))
-    }
-
-    fn poll_wait_for_items_available(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        required_amount: usize,
-    ) -> Poll<Result<usize>> {
-        let mut inner = ready!(self.inner.poll_lock(cx));
-
-        if inner.vd.len() < required_amount {
-            assert!(inner.read_waker.is_none());
-            inner.read_waker = Some(cx.waker().clone());
-            return Poll::Pending;
-        }
-
-        Poll::Ready(Ok(inner.vd.len()))
     }
 }
 
