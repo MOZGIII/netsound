@@ -170,3 +170,6 @@ impl<T> VecDequeBufferWriter<T> {
         InnerVecDequeAcquire { inner_acquire }
     }
 }
+
+#[cfg(test)]
+mod tests;
