@@ -6,6 +6,9 @@ pub use write_items::*;
 mod read_items;
 pub use read_items::*;
 
+mod read_exact_items;
+pub use read_exact_items::*;
+
 mod items_available;
 pub use items_available::*;
 
@@ -29,6 +32,13 @@ pub trait AsyncReadItemsExt<T: Unpin>: AsyncReadItems<T> {
         Self: Unpin,
     {
         ReadItems::new(self, buf)
+    }
+
+    fn read_exact_items<'a>(&'a mut self, buf: &'a mut [T]) -> ReadExactItems<'a, T, Self>
+    where
+        Self: Unpin,
+    {
+        ReadExactItems::new(self, buf)
     }
 }
 

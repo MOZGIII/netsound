@@ -1,5 +1,5 @@
 use super::Error;
-use crate::io::{AsyncItemsAvailable, AsyncItemsAvailableExt, AsyncReadItems, AsyncReadItemsExt};
+use crate::io::{AsyncReadItems, AsyncReadItemsExt};
 use async_trait::async_trait;
 use audiopus::coder::Encoder as OpusEncoder;
 
@@ -19,14 +19,9 @@ impl Encoder {
         output: &mut [u8],
     ) -> Result<usize, Error>
     where
-        T: AsyncReadItems<f32> + AsyncItemsAvailable<f32> + Unpin,
+        T: AsyncReadItems<f32> + Unpin,
     {
-        let samples_required = self.buf.len();
-        let _ = input.wait_for_items_available(samples_required).await?;
-
-        let samples_read = input.read_items(&mut self.buf).await?;
-        assert_eq!(samples_read, samples_required);
-
+        input.read_exact_items(&mut self.buf).await?;
         let bytes_written = self.opus.encode_float(&self.buf, output)?;
         Ok(bytes_written)
     }
@@ -35,7 +30,7 @@ impl Encoder {
 #[async_trait]
 impl<T> super::super::Encoder<f32, T> for Encoder
 where
-    T: AsyncReadItems<f32> + AsyncItemsAvailable<f32> + Unpin + Send,
+    T: AsyncReadItems<f32> + Unpin + Send,
 {
     async fn encode(
         &mut self,
