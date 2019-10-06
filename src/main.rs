@@ -7,6 +7,7 @@ use std::net::SocketAddr;
 use failure::Error;
 
 use async_std::net::UdpSocket;
+use futures::executor::block_on;
 
 use std::marker::PhantomData;
 
@@ -25,7 +26,7 @@ mod transcoder;
 
 use audio::Backend;
 
-async fn asyncmain() -> Result<(), Error> {
+fn errmain() -> Result<(), Error> {
     let bind_addr = env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:8080".to_string());
@@ -33,7 +34,7 @@ async fn asyncmain() -> Result<(), Error> {
     let bind_addr: SocketAddr = bind_addr.parse()?;
     let send_addr: SocketAddr = send_addr.parse()?;
 
-    let socket = UdpSocket::bind(&bind_addr).await?;
+    let socket = block_on(UdpSocket::bind(&bind_addr))?;
     println!("Listening on: {}", socket.local_addr()?);
     println!("Sending to: {}", &send_addr);
 
@@ -149,13 +150,9 @@ async fn asyncmain() -> Result<(), Error> {
             stats: net::RecvStats::default(),
         },
     };
-    net_service.net_loop(socket, send_addr).await?;
+    block_on(net_service.net_loop(socket, send_addr))?;
 
     Ok(())
-}
-
-fn errmain() -> Result<(), Error> {
-    async_std::task::block_on(asyncmain())
 }
 
 fn main() {
