@@ -31,5 +31,8 @@ optional = true
 version = "0.6"
 optional = true
 
+[dev-dependencies]
+futures-test-preview = "0.3.0-alpha.19"
+
 [features]
 pulse_simple_backend = ["libpulse-binding", "libpulse-simple-binding", "crossbeam-utils"]
