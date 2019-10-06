@@ -107,8 +107,10 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
             return Poll::Pending;
         }
 
+        let free_slots = dbg!(vd.capacity()) - dbg!(vd.len());
+
         let mut filled: usize = 0;
-        for item in items.iter() {
+        for item in items.iter().take(free_slots) {
             vd.push_back(*item);
             filled += 1;
         }
