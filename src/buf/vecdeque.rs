@@ -115,7 +115,7 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
             filled += 1;
         }
 
-        let wake_reader = vd.is_empty();
+        let wake_reader = !vd.is_empty();
 
         if wake_reader {
             if let Some(waker) = inner.read_waker.take() {
