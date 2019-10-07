@@ -37,10 +37,7 @@ fn test_read_non_pending_underflowing() {
 
     let cx = &mut panic_context();
     let poll_result = reader.poll_read_items(cx, &mut read_buf[..]);
-    let result = match poll_result {
-        Poll::Pending => panic!("not supposed to be pending"),
-        Poll::Ready(val) => val,
-    };
+    let result = assert_extract_ready(poll_result);
     assert_eq!(result.unwrap(), 3);
 }
 
@@ -57,10 +54,7 @@ fn test_read_non_pending_non_underflowing() {
 
     let cx = &mut panic_context();
     let poll_result = reader.poll_read_items(cx, &mut read_buf[..]);
-    let result = match poll_result {
-        Poll::Pending => panic!("not supposed to be pending"),
-        Poll::Ready(val) => val,
-    };
+    let result = assert_extract_ready(poll_result);
     assert_eq!(result.unwrap(), 2);
 }
 
@@ -93,10 +87,7 @@ fn test_write_non_pending_non_overflowing() {
 
     let cx = &mut panic_context();
     let poll_result = writer.poll_write_items(cx, &write_buf[..]);
-    let result = match poll_result {
-        Poll::Pending => panic!("not supposed to be pending"),
-        Poll::Ready(val) => val,
-    };
+    let result = assert_extract_ready(poll_result);
     assert_eq!(result.unwrap(), 2);
 }
 
@@ -113,10 +104,7 @@ fn test_write_non_pending_overflowing() {
 
     let cx = &mut panic_context();
     let poll_result = writer.poll_write_items(cx, &write_buf[..]);
-    let result = match poll_result {
-        Poll::Pending => panic!("not supposed to be pending"),
-        Poll::Ready(val) => val,
-    };
+    let result = assert_extract_ready(poll_result);
     assert_eq!(result.unwrap(), 3);
 }
 
