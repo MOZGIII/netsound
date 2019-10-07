@@ -127,11 +127,11 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
     }
 }
 
-pub struct InnerVecDequeGuard<'a, T> {
+pub struct InnerVecDequeGuard<'a, T: Unpin> {
     inner_guard: BiLockGuard<'a, Inner<T>>,
 }
 
-impl<T> Deref for InnerVecDequeGuard<'_, T> {
+impl<T: Unpin> Deref for InnerVecDequeGuard<'_, T> {
     type Target = VecDeque<T>;
     fn deref(&self) -> &VecDeque<T> {
         &self.inner_guard.vd
@@ -144,13 +144,30 @@ impl<T: Unpin> DerefMut for InnerVecDequeGuard<'_, T> {
     }
 }
 
+impl<T: Unpin> Drop for InnerVecDequeGuard<'_, T> {
+    #[inline]
+    fn drop(&mut self) {
+        // On lock drop, since we don't know what happened, we have to notify
+        // all our wakers again, assuminbg they can now progress.
+
+        if let Some(waker) = self.inner_guard.read_waker.take() {
+            waker.wake();
+        }
+        if let Some(waker) = self.inner_guard.write_waker.take() {
+            waker.wake();
+        }
+
+        println!("InnerVecDequeGuard: wakers triggered on Drop");
+    }
+}
+
 pub struct InnerVecDequeAcquire<'a, T> {
     inner_acquire: BiLockAcquire<'a, Inner<T>>,
 }
 
 impl<T> Unpin for InnerVecDequeAcquire<'_, T> {}
 
-impl<'a, T> Future for InnerVecDequeAcquire<'a, T> {
+impl<'a, T: Unpin> Future for InnerVecDequeAcquire<'a, T> {
     type Output = InnerVecDequeGuard<'a, T>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
