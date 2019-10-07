@@ -83,6 +83,9 @@ where
                 // let to_buf_size_after = to_buf.len();
 
                 // println!("resampler done: {} -> {}  =>  {} -> {}", from_buf_size_before, to_buf_size_before, from_buf_size_after, to_buf_size_after);
+
+                drop(to_buf);
+                drop(from_buf);
             }
         }
 
