@@ -12,7 +12,7 @@ failure = "0.1"
 cpal = "0.10"
 sample = "0.10"
 futures-preview = { version = "0.3.0-alpha.19", features = ["unstable", "async-await", "bilock"] }
-async-std = { git = "https://github.com/async-rs/async-std.git", rev = "6ab154be7cdaf2ec24e637ef3dd683d94c04fd20" }
+tokio = "0.2.0-alpha.6"
 async-trait = "0.1"
 
 [dependencies.libpulse-binding]

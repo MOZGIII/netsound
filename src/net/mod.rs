@@ -63,12 +63,6 @@ pub type DynNetService<
 
 const SIZE: usize = 1024 * 4 * 2;
 
-type SharedSocket<T> = std::sync::Arc<T>;
-
-fn shared_socket<T>(t: T) -> SharedSocket<T> {
-    std::sync::Arc::new(t)
-}
-
 impl<
         'a,
         TCaptureSample,
@@ -111,11 +105,12 @@ where
     ) -> Result<futures::Never, crate::Error> {
         let send_service = &mut self.send_service;
         let recv_service = &mut self.recv_service;
-        let socket = shared_socket(socket);
+
+        let (socket_recv_half, socket_send_half) = socket.split();
 
         use futures::FutureExt;
-        let send_future = send_service.send_loop(socket.clone(), peer_addr).boxed();
-        let recv_future = recv_service.recv_loop(socket).boxed();
+        let send_future = send_service.send_loop(socket_send_half, peer_addr).boxed();
+        let recv_future = recv_service.recv_loop(socket_recv_half).boxed();
 
         let (val, _) = futures::future::select(recv_future, send_future)
             .await

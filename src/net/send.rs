@@ -2,9 +2,9 @@ use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
 use crate::sample::Sample;
 use crate::transcoder::Transcode;
-use crate::UdpSocket;
 use std::marker::PhantomData;
 use std::net::SocketAddr;
+use tokio::net::udp::split::UdpSocketSendHalf;
 
 use super::*;
 
@@ -42,7 +42,7 @@ where
 {
     pub async fn send_loop(
         &mut self,
-        socket: SharedSocket<UdpSocket>,
+        mut socket: UdpSocketSendHalf,
         peer_addr: SocketAddr,
     ) -> Result<futures::Never, crate::Error> {
         let mut send_buf = [0u8; SIZE];

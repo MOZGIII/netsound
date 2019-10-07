@@ -2,8 +2,8 @@ use crate::codec::{Decoder, DecodingError};
 use crate::io::AsyncWriteItems;
 use crate::sample::Sample;
 use crate::transcoder::Transcode;
-use crate::UdpSocket;
 use std::marker::PhantomData;
+use tokio::net::udp::split::UdpSocketRecvHalf;
 
 use super::*;
 
@@ -42,7 +42,7 @@ where
 {
     pub async fn recv_loop(
         &mut self,
-        socket: SharedSocket<UdpSocket>,
+        mut socket: UdpSocketRecvHalf,
     ) -> Result<futures::Never, crate::Error> {
         let mut recv_buf = [0u8; SIZE];
         loop {

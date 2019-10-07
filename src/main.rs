@@ -6,8 +6,8 @@ use std::net::SocketAddr;
 
 use failure::Error;
 
-use async_std::net::UdpSocket;
 use futures::executor::block_on;
+use tokio::{net::UdpSocket, runtime::Runtime};
 
 use std::marker::PhantomData;
 
@@ -150,7 +150,9 @@ fn errmain() -> Result<(), Error> {
             stats: net::RecvStats::default(),
         },
     };
-    block_on(net_service.net_loop(socket, send_addr))?;
+
+    let rt = Runtime::new()?;
+    rt.block_on(net_service.net_loop(socket, send_addr))?;
 
     Ok(())
 }
