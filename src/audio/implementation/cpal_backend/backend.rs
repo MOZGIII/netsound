@@ -4,7 +4,6 @@ use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::*;
 use crate::sample::Sample;
 use cpal::traits::*;
-use futures::executor::block_on;
 use std::marker::PhantomData;
 
 pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
@@ -43,6 +42,7 @@ where
         let playback_data_reader = &mut self.playback_data_reader;
 
         self.cpal_event_loop.run(move |stream_id, stream_result| {
+            warn!("cpal: at event loop");
             let stream_data = match stream_result {
                 Ok(data) => data,
                 Err(err) => {
@@ -54,20 +54,16 @@ where
                 cpal::StreamData::Input {
                     buffer: mut input_buf,
                 } => {
-                    block_on(async {
-                        trace!("cpal: before capture");
-                        io::capture(&mut input_buf, capture_data_writer).await;
-                        trace!("cpal: after capture");
-                    });
+                    trace!("cpal: before capture");
+                    io::capture(&mut input_buf, capture_data_writer);
+                    trace!("cpal: after capture");
                 }
                 cpal::StreamData::Output {
                     buffer: mut output_buf,
                 } => {
-                    block_on(async {
-                        trace!("cpal: before play");
-                        io::play(playback_data_reader, &mut output_buf).await;
-                        trace!("cpal: after play");
-                    });
+                    trace!("cpal: before play");
+                    io::play(playback_data_reader, &mut output_buf);
+                    trace!("cpal: after play");
                 }
             };
         });
