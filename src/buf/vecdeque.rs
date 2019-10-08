@@ -1,4 +1,5 @@
 use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::log::*;
 use futures::lock::{BiLock, BiLockAcquire, BiLockGuard};
 use futures::ready;
 use std::collections::VecDeque;
@@ -60,12 +61,16 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
         cx: &mut Context<'_>,
         items: &mut [T],
     ) -> Poll<Result<usize>> {
+        trace!("read: before lock");
         let mut inner = ready!(self.inner.poll_lock(cx));
+        trace!("read: after lock");
+
         let vd = &mut inner.vd;
 
         if vd.is_empty() {
             assert!(inner.read_waker.is_none());
             inner.read_waker = Some(cx.waker().clone());
+            trace!("read: return with pending");
             return Poll::Pending;
         }
 
@@ -81,13 +86,13 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
         }
 
         let wake_writer = !is_full(vd);
-
         if wake_writer {
             if let Some(waker) = inner.write_waker.take() {
                 waker.wake();
             }
         }
 
+        trace!("read: return with ready");
         Poll::Ready(Ok(filled))
     }
 }
@@ -98,16 +103,20 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
         cx: &mut Context<'_>,
         items: &[T],
     ) -> Poll<Result<usize>> {
+        trace!("write: before lock");
         let mut inner = ready!(self.inner.poll_lock(cx));
+        trace!("write: after lock");
         let vd = &mut inner.vd;
 
         if is_full(&vd) {
             assert!(inner.write_waker.is_none());
             inner.write_waker = Some(cx.waker().clone());
+            trace!("write: return with pending");
             return Poll::Pending;
         }
 
-        let free_slots = dbg!(vd.capacity()) - dbg!(vd.len());
+        let free_slots = vd.capacity() - vd.len();
+        trace!("write: free slots: {}", free_slots);
 
         let mut filled: usize = 0;
         for item in items.iter().take(free_slots) {
@@ -116,13 +125,13 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
         }
 
         let wake_reader = !vd.is_empty();
-
         if wake_reader {
             if let Some(waker) = inner.read_waker.take() {
                 waker.wake();
             }
         }
 
+        trace!("write: return with ready");
         Poll::Ready(Ok(filled))
     }
 }
@@ -157,7 +166,7 @@ impl<T: Unpin> Drop for InnerVecDequeGuard<'_, T> {
             waker.wake();
         }
 
-        println!("InnerVecDequeGuard: wakers triggered on Drop");
+        trace!("InnerVecDequeGuard: wakers triggered on Drop");
     }
 }
 
@@ -171,7 +180,9 @@ impl<'a, T: Unpin> Future for InnerVecDequeAcquire<'a, T> {
     type Output = InnerVecDequeGuard<'a, T>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        trace!("InnerVecDequeAcquire: before lock");
         let inner_guard = ready!(Pin::new(&mut self.inner_acquire).poll(cx));
+        trace!("InnerVecDequeAcquire: after lock");
         Poll::Ready(InnerVecDequeGuard { inner_guard })
     }
 }

@@ -1,5 +1,6 @@
 use super::*;
 use crate::buf::{VecDequeBufferReader, VecDequeBufferWriter};
+use crate::log::*;
 use crate::match_channels;
 use crate::sample::Sample;
 use crate::samples_filter::NormalizeChannelsExt;
@@ -53,11 +54,13 @@ where
             F => [to_channels] => {
                 use sample::{signal, Signal};
 
+                trace!("Resampler: before locks");
                 let mut from_buf = this.from_buf.lock().await;
                 let mut to_buf = this.to_buf.lock().await;
+                trace!("Resampler: locks taken");
 
-                // let from_buf_size_before = from_buf.len();
-                // let to_buf_size_before = to_buf.len();
+                let from_buf_size_before = from_buf.len();
+                let to_buf_size_before = to_buf.len();
 
                 if from_buf.len() > 0 {
                     let mut from_signal =
@@ -79,13 +82,14 @@ where
                     );
                 }
 
-                // let from_buf_size_after = from_buf.len();
-                // let to_buf_size_after = to_buf.len();
+                let from_buf_size_after = from_buf.len();
+                let to_buf_size_after = to_buf.len();
 
                 drop(to_buf);
                 drop(from_buf);
+                trace!("Resampler: after locks");
 
-                // println!("resampler done: {} -> {}  =>  {} -> {}", from_buf_size_before, to_buf_size_before, from_buf_size_after, to_buf_size_after);
+                trace!("Resampler: {} -> {}  =>  {} -> {}", from_buf_size_before, to_buf_size_before, from_buf_size_after, to_buf_size_after);
             }
         }
 

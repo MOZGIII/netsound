@@ -18,6 +18,7 @@ mod codec;
 mod format;
 mod formats;
 mod io;
+mod log;
 mod match_channels;
 mod net;
 mod sample;
@@ -25,8 +26,14 @@ mod samples_filter;
 mod transcoder;
 
 use audio::Backend;
+use log::*;
 
 fn errmain() -> Result<(), Error> {
+    let mut logger_cfg = slog_env_cfg::config_from_env()?;
+    logger_cfg.envlogger_override_default_filter = Some("trace".to_string());
+    let logger_root = slog::Logger::root(logger_cfg.build(), o![]);
+    let _logger_guard = slog_scope::set_global_logger(logger_root);
+
     let bind_addr = env::args()
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:8080".to_string());
@@ -35,14 +42,14 @@ fn errmain() -> Result<(), Error> {
     let send_addr: SocketAddr = send_addr.parse()?;
 
     let socket = block_on(UdpSocket::bind(&bind_addr))?;
-    println!("Listening on: {}", socket.local_addr()?);
-    println!("Sending to: {}", &send_addr);
+    slog_info!(logger(), "Listening on: {}", socket.local_addr()?);
+    info!("Sending to: {}", &send_addr);
 
     let codec_to_use = CodecToUse::from_env()?;
-    println!("Using codec: {:?}", codec_to_use);
+    info!("Using codec: {:?}", codec_to_use);
 
     let backend_to_use = audio_backends::AudioBackendToUse::from_env()?;
-    println!("Using audio backend: {:?}", backend_to_use);
+    info!("Using audio backend: {:?}", backend_to_use);
 
     let audio_backend_build_params = audio_backends::BuildParams {
         request_capture_formats: formats::input(),

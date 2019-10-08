@@ -1,5 +1,6 @@
 use crate::codec::{Decoder, Encoder};
 use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::log::*;
 use crate::sample::Sample;
 use crate::transcoder::Transcode;
 use crate::UdpSocket;
@@ -116,7 +117,7 @@ where
             .await
             .into_inner();
 
-        println!("net loop finished");
+        debug!("net loop finished");
 
         val
     }

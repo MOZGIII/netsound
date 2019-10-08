@@ -1,5 +1,6 @@
 use crate::codec::{Decoder, DecodingError};
 use crate::io::AsyncWriteItems;
+use crate::log::*;
 use crate::sample::Sample;
 use crate::transcoder::Transcode;
 use std::marker::PhantomData;
@@ -46,41 +47,44 @@ where
     ) -> Result<futures::Never, crate::Error> {
         let mut recv_buf = [0u8; SIZE];
         loop {
-            println!("Before recv");
+            trace!("Recv loop begin");
+
+            trace!("Recv: before recv");
             let num_recv = socket.recv(&mut recv_buf).await?;
-            println!("Read a packet of {} bytes", num_recv);
+            trace!("Recv: after recv, read a packet of {} bytes", num_recv);
             self.stats.packets_read += 1;
             self.stats.bytes_read += num_recv;
 
             if num_recv > 0 {
+                trace!("Recv: before decode");
                 match self
                     .decoder
                     .decode(&recv_buf[..num_recv], &mut self.playback_data_writer)
                     .await
                 {
                     Ok(num_samples) => {
-                        // println!(
-                        //     "Successfully decoded the packet into {} samples",
-                        //     num_samples
-                        // )
+                        trace!("Recv: after decode, samples decoded: {}", num_samples);
                         self.stats.samples_decoded += num_samples;
                         self.stats.frames_decoded += 1;
+
+                        trace!("Recv: before transcode");
                         self.playback_transcoder.transcode().await?;
+                        trace!("Recv: after transcode");
                     }
                     Err(DecodingError::EmptyPacket) => {
                         self.stats.empty_packets_decoding_errors += 1;
                         // noop
                     }
                     Err(err) => {
-                        println!("Decoding failed: {}", &err);
+                        error!("Decoding failed: {}", &err);
                         return Err(err)?;
                     }
                 };
             } else {
-                // println!("Skipped processing of an empty incoming packet");
+                warn!("Recv: skipped processing of an empty incoming packet");
                 self.stats.empty_packets_read += 1;
             }
-            println!("network recv: {:?}", self.stats);
+            debug!("network recv: {:?}", self.stats);
         }
     }
 }

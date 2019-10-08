@@ -2,6 +2,7 @@ use super::{choose_format::choose_format, *};
 use crate::audio;
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::log::*;
 use std::marker::PhantomData;
 
 use cpal::traits::*;
@@ -29,7 +30,7 @@ where
         crate::Error,
     > {
         let cpal_host = cpal::default_host();
-        println!("Cpal Host: {:?}", &cpal_host.id());
+        info!("Cpal Host: {:?}", &cpal_host.id());
 
         let cpal_event_loop = cpal_host.event_loop();
 
@@ -106,12 +107,12 @@ where
         let cpal_capture_format = format::to_cpal_format(self.continuation.capture_format);
         let cpal_playback_format = format::to_cpal_format(self.continuation.playback_format);
 
-        print_config(
+        log_config(
             "Playback",
             &self.continuation.cpal_output_device.name()?,
             &cpal_playback_format,
         );
-        print_config(
+        log_config(
             "Capture",
             &self.continuation.cpal_input_device.name()?,
             &cpal_capture_format,
@@ -143,10 +144,10 @@ where
     }
 }
 
-fn print_config(name: &'static str, device_name: &str, format: &cpal::Format) {
-    println!("{} device: {}", name, device_name);
-    println!("{} format: {:?}", name, format);
-    println!(
+fn log_config(name: &'static str, device_name: &str, format: &cpal::Format) {
+    info!("{} device: {}", name, device_name);
+    info!("{} format: {:?}", name, format);
+    info!(
         "{} endianness: {}",
         name,
         if cfg!(target_endian = "little") {
@@ -156,5 +157,5 @@ fn print_config(name: &'static str, device_name: &str, format: &cpal::Format) {
         }
     );
     // Always interleaved.
-    println!("{} operation mode: interleaved", name);
+    info!("{} operation mode: interleaved", name);
 }

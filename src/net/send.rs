@@ -1,5 +1,6 @@
 use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
+use crate::log::*;
 use crate::sample::Sample;
 use crate::transcoder::Transcode;
 use std::marker::PhantomData;
@@ -47,26 +48,34 @@ where
     ) -> Result<futures::Never, crate::Error> {
         let mut send_buf = [0u8; SIZE];
         loop {
+            debug!("Send loop begin");
+
+            debug!("Send: before transcode");
             self.capture_transcoder.transcode().await?;
+            debug!("Send: after transcode");
+
+            debug!("Send: before encode");
             match self
                 .encoder
                 .encode(&mut self.capture_data_reader, &mut send_buf)
                 .await
             {
                 Ok(bytes_to_send) => {
+                    trace!("Send: after encode, bytes to send: {}", bytes_to_send);
                     self.stats.frames_encoded += 1;
                     self.stats.bytes_encoded += bytes_to_send;
 
-                    println!("Before send_to");
+                    trace!("Send: before send_to");
                     let bytes_sent = socket
                         .send_to(&send_buf[..bytes_to_send], &peer_addr)
                         .await?;
+                    trace!("Send: after send_to");
                     self.stats.packets_sent += 1;
                     self.stats.bytes_sent += bytes_sent;
 
                     if bytes_sent != bytes_to_send {
-                        println!(
-                            "sent {} bytes while expecting to send {} bytes ({} buffer size)",
+                        warn!(
+                            "Send: sent {} bytes while expecting to send {} bytes ({} buffer size)",
                             bytes_sent,
                             bytes_to_send,
                             send_buf.len(),
@@ -74,20 +83,17 @@ where
                         self.stats.bytes_sent_mismatches += 1;
                     }
 
-                    // println!(
-                    //     "Sent a non-empty packet, capture buffer len: {}",
-                    //     capture_data.len()
-                    // );
+                    trace!("Send: sent a non-empty packet");
                 }
                 Err(EncodingError::NotEnoughData) => {
                     self.stats.not_enough_data_at_encoding_errors += 1;
                 }
                 Err(err) => {
-                    println!("Encoding failed: {}", &err);
+                    error!("Encoding failed: {}", &err);
                     return Err(err)?;
                 }
             };
-            println!("network send: {:?}", self.stats);
+            debug!("network send: {:?}", self.stats);
         }
     }
 }
