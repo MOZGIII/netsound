@@ -2,7 +2,7 @@ use crate::codec::{Decoder, Encoder};
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::*;
 use crate::sample::Sample;
-use crate::transcoder::Transcode;
+use crate::transcode::Transcode;
 use crate::UdpSocket;
 use std::net::SocketAddr;
 

@@ -23,7 +23,7 @@ mod match_channels;
 mod net;
 mod sample;
 mod samples_filter;
-mod transcoder;
+mod transcode;
 
 use audio::Backend;
 use log::*;
@@ -65,7 +65,7 @@ fn errmain() -> Result<(), Error> {
         let (audio_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
         let (trascoder_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
         (
-            transcoder::resampler::Resampler::new(
+            transcode::resampler::Resampler::new(
                 channels,
                 std::cmp::min(2, channels),
                 format.sample_rate.into(),
@@ -83,7 +83,7 @@ fn errmain() -> Result<(), Error> {
         let (net_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
         let (trascoder_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
         (
-            transcoder::resampler::Resampler::new(
+            transcode::resampler::Resampler::new(
                 std::cmp::min(2, channels),
                 channels,
                 48000.0,

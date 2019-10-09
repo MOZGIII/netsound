@@ -2,7 +2,7 @@ use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
 use crate::log::*;
 use crate::sample::Sample;
-use crate::transcoder::Transcode;
+use crate::transcode::Transcode;
 use std::marker::PhantomData;
 use std::net::SocketAddr;
 use tokio::net::udp::split::UdpSocketSendHalf;
