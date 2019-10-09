@@ -48,13 +48,13 @@ where
     ) -> Result<futures::Never, crate::Error> {
         let mut send_buf = [0u8; SIZE];
         loop {
-            debug!("Send loop begin");
+            trace!("Send loop begin");
 
-            debug!("Send: before transcode");
+            trace!("Send: before transcode");
             self.capture_transcoder.transcode().await?;
-            debug!("Send: after transcode");
+            trace!("Send: after transcode");
 
-            debug!("Send: before encode");
+            trace!("Send: before encode");
             match self
                 .encoder
                 .encode(&mut self.capture_data_reader, &mut send_buf)
