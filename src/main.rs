@@ -17,6 +17,7 @@ mod buf;
 mod codec;
 mod format;
 mod formats;
+mod future;
 mod io;
 mod log;
 mod match_channels;

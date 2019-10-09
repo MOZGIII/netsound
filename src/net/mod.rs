@@ -1,4 +1,5 @@
 use crate::codec::{Decoder, Encoder};
+use crate::future::select_first;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::*;
 use crate::sample::Sample;
@@ -89,9 +90,7 @@ where
         let send_future = send_service.send_loop(socket_send_half, peer_addr).boxed();
         let recv_future = recv_service.recv_loop(socket_recv_half).boxed();
 
-        let (val, _) = futures::future::select(recv_future, send_future)
-            .await
-            .into_inner();
+        let val = select_first(recv_future, send_future).await;
 
         debug!("net loop finished");
 
