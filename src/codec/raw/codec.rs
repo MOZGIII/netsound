@@ -13,13 +13,11 @@ where
     // fit all the samples we read to the output.
     let samples_to_read = output.len() / 4;
     assert_eq!(samples_to_read * 4, output.len());
-    dbg!(samples_to_read);
 
     let mut samples = Vec::with_capacity(samples_to_read);
     samples.resize(samples_to_read, 0f32);
 
     let samples_read = input.read_items(&mut samples).await?;
-    dbg!(samples_read);
 
     for (mut chunk, &sample) in output.chunks_exact_mut(4).zip(&samples[..samples_read]) {
         E::write_f32(&mut chunk, sample);
