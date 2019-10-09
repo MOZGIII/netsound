@@ -42,7 +42,7 @@ where
         let playback_data_reader = &mut self.playback_data_reader;
 
         self.cpal_event_loop.run(move |stream_id, stream_result| {
-            warn!("cpal: at event loop");
+            trace!("cpal: at event loop");
             let stream_data = match stream_result {
                 Ok(data) => data,
                 Err(err) => {
