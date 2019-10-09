@@ -111,10 +111,11 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
                 }
             }
         }
+        let len = vd.len();
 
         inner.wake_writer_if_needed();
 
-        trace!("read: return with ready {}", filled);
+        trace!("read: return with ready: {} filled, {} len", filled, len);
         Poll::Ready(Ok(filled))
     }
 }
@@ -153,10 +154,11 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
             vd.push_back(*item);
             filled += 1;
         }
+        let len = vd.len();
 
         inner.wake_reader_if_needed();
 
-        trace!("write: return with ready {}", filled);
+        trace!("write: return with ready: filled {}, len {}", filled, len);
         Poll::Ready(Ok(filled))
     }
 }
@@ -183,7 +185,10 @@ impl<T: Unpin> Drop for InnerVecDequeGuard<'_, T> {
     fn drop(&mut self) {
         self.inner_guard.wake_writer_if_needed();
         self.inner_guard.wake_reader_if_needed();
-        trace!("InnerVecDequeGuard: wakers triggered on Drop");
+        trace!(
+            "InnerVecDequeGuard: wakers triggered on Drop, len {}",
+            self.inner_guard.vd.len()
+        );
     }
 }
 
