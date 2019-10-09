@@ -114,7 +114,7 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
 
         inner.wake_writer_if_needed();
 
-        trace!("read: return with ready");
+        trace!("read: return with ready {}", filled);
         Poll::Ready(Ok(filled))
     }
 }
@@ -156,7 +156,7 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
 
         inner.wake_reader_if_needed();
 
-        trace!("write: return with ready");
+        trace!("write: return with ready {}", filled);
         Poll::Ready(Ok(filled))
     }
 }
