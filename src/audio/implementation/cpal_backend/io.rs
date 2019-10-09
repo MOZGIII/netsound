@@ -7,8 +7,8 @@ where
     S: CompatibleSample + 'a,
     W: AsyncWriteItems<S> + Unpin,
 {
-    block_on(to.write_items(S::unwrap_cpal_input_buffer(from)))
-        .expect("failed to write to shared buf");
+    let from = S::unwrap_cpal_input_buffer(from);
+    block_on(to.write_items(from)).expect("failed to write to shared buf");
 }
 
 pub fn play<'a, S, R>(from: &mut R, to: &'a mut cpal::UnknownTypeOutputBuffer<'a>)
