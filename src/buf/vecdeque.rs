@@ -42,6 +42,24 @@ pub fn vec_deque_buffer<T>(vd: VecDeque<T>) -> (VecDequeBufferWriter<T>, VecDequ
     (writer, reader)
 }
 
+impl<T> Inner<T> {
+    fn wake_reader_if_needed(&mut self) {
+        let should_wake = !self.vd.is_empty();
+        if should_wake {
+            trace!("waking reader");
+            self.read_waker.wake();
+        }
+    }
+
+    fn wake_writer_if_needed(&mut self) {
+        let should_wake = !is_full(&self.vd);
+        if should_wake {
+            trace!("waking writer");
+            self.write_waker.wake();
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct VecDequeBufferReader<T> {
     inner: BiLock<Inner<T>>,
@@ -85,10 +103,7 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
             }
         }
 
-        let wake_writer = !is_full(vd);
-        if wake_writer {
-            inner.write_waker.wake();
-        }
+        inner.wake_writer_if_needed();
 
         trace!("read: return with ready");
         Poll::Ready(Ok(filled))
@@ -121,10 +136,7 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
             filled += 1;
         }
 
-        let wake_reader = !vd.is_empty();
-        if wake_reader {
-            inner.read_waker.wake();
-        }
+        inner.wake_reader_if_needed();
 
         trace!("write: return with ready");
         Poll::Ready(Ok(filled))
@@ -151,16 +163,8 @@ impl<T: Unpin> DerefMut for InnerVecDequeGuard<'_, T> {
 impl<T: Unpin> Drop for InnerVecDequeGuard<'_, T> {
     #[inline]
     fn drop(&mut self) {
-        // On lock drop, since we don't know what happened, we have to notify
-        // all our wakers again, assuminbg they can now progress.
-
-        if let Some(waker) = self.inner_guard.read_waker.take() {
-            waker.wake();
-        }
-        if let Some(waker) = self.inner_guard.write_waker.take() {
-            waker.wake();
-        }
-
+        self.inner_guard.wake_writer_if_needed();
+        self.inner_guard.wake_reader_if_needed();
         trace!("InnerVecDequeGuard: wakers triggered on Drop");
     }
 }
