@@ -145,14 +145,12 @@ fn errmain() -> Result<(), Error> {
         send_service: net::SendService {
             capture_sample: PhantomData,
             capture_data_reader,
-            capture_transcoder,
             encoder: &mut *encoder,
             stats: net::SendStats::default(),
         },
         recv_service: net::RecvService {
             playback_sample: PhantomData,
             playback_data_writer,
-            playback_transcoder,
             decoder: &mut *decoder,
             stats: net::RecvStats::default(),
         },

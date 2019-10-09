@@ -2,7 +2,6 @@ use crate::codec::{Decoder, Encoder};
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::*;
 use crate::sample::Sample;
-use crate::transcode::Transcode;
 use crate::UdpSocket;
 use std::net::SocketAddr;
 
@@ -18,8 +17,6 @@ pub struct NetService<
     TPlaybackSample,
     TCaptureDataReader,
     TPlaybackDataWriter,
-    TCaptureTranscoder,
-    TPlaybackTranscoder,
     TEncoder,
     TDecoder,
 > where
@@ -29,38 +26,24 @@ pub struct NetService<
     TCaptureDataReader: AsyncReadItems<TCaptureSample> + Unpin,
     TPlaybackDataWriter: AsyncWriteItems<TPlaybackSample> + Unpin,
 
-    TCaptureTranscoder: Transcode + Unpin,
-    TPlaybackTranscoder: Transcode + Unpin,
-
     TEncoder: Encoder<TCaptureSample, TCaptureDataReader> + ?Sized,
     TDecoder: Decoder<TPlaybackSample, TPlaybackDataWriter> + ?Sized,
 {
-    pub send_service:
-        SendService<'a, TCaptureSample, TCaptureDataReader, TCaptureTranscoder, TEncoder>,
-    pub recv_service:
-        RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TPlaybackTranscoder, TDecoder>,
+    pub send_service: SendService<'a, TCaptureSample, TCaptureDataReader, TEncoder>,
+    pub recv_service: RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TDecoder>,
 }
 
 #[allow(dead_code)]
-pub type DynNetService<
-    'a,
-    TCaptureSample,
-    TPlaybackSample,
-    TCaptureData,
-    TPlaybackData,
-    TCaptureTranscoder,
-    TPlaybackTranscoder,
-> = NetService<
-    'a,
-    TCaptureSample,
-    TPlaybackSample,
-    TCaptureData,
-    TPlaybackData,
-    TCaptureTranscoder,
-    TPlaybackTranscoder,
-    dyn Encoder<TCaptureSample, TCaptureData> + Send + 'a,
-    dyn Decoder<TPlaybackSample, TPlaybackData> + Send + 'a,
->;
+pub type DynNetService<'a, TCaptureSample, TPlaybackSample, TCaptureData, TPlaybackData> =
+    NetService<
+        'a,
+        TCaptureSample,
+        TPlaybackSample,
+        TCaptureData,
+        TPlaybackData,
+        dyn Encoder<TCaptureSample, TCaptureData> + Send + 'a,
+        dyn Decoder<TPlaybackSample, TPlaybackData> + Send + 'a,
+    >;
 
 const SIZE: usize = 1024 * 4 * 2;
 
@@ -70,8 +53,6 @@ impl<
         TPlaybackSample,
         TCaptureDataReader,
         TPlaybackDataWriter,
-        TCaptureTranscoder,
-        TPlaybackTranscoder,
         TEncoder,
         TDecoder,
     >
@@ -81,8 +62,6 @@ impl<
         TPlaybackSample,
         TCaptureDataReader,
         TPlaybackDataWriter,
-        TCaptureTranscoder,
-        TPlaybackTranscoder,
         TEncoder,
         TDecoder,
     >
@@ -92,9 +71,6 @@ where
 
     TCaptureDataReader: AsyncReadItems<TCaptureSample> + Unpin + Send,
     TPlaybackDataWriter: AsyncWriteItems<TPlaybackSample> + Unpin + Send,
-
-    TCaptureTranscoder: Transcode + Unpin + Send,
-    TPlaybackTranscoder: Transcode + Unpin + Send,
 
     TEncoder: Encoder<TCaptureSample, TCaptureDataReader> + Send + ?Sized,
     TDecoder: Decoder<TPlaybackSample, TPlaybackDataWriter> + Send + ?Sized,

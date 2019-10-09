@@ -2,7 +2,6 @@ use crate::codec::{Decoder, DecodingError};
 use crate::io::AsyncWriteItems;
 use crate::log::*;
 use crate::sample::Sample;
-use crate::transcode::Transcode;
 use std::marker::PhantomData;
 use tokio::net::udp::split::UdpSocketRecvHalf;
 
@@ -19,26 +18,23 @@ pub struct RecvStats {
     pub empty_packets_decoding_errors: usize,
 }
 
-pub struct RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TPlaybackTranscoder, TDecoder>
+pub struct RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TDecoder>
 where
     TPlaybackSample: Sample,
     TPlaybackDataWriter: AsyncWriteItems<TPlaybackSample>,
-    TPlaybackTranscoder: Transcode,
     TDecoder: Decoder<TPlaybackSample, TPlaybackDataWriter> + ?Sized,
 {
     pub playback_sample: PhantomData<TPlaybackSample>,
     pub playback_data_writer: TPlaybackDataWriter,
-    pub playback_transcoder: TPlaybackTranscoder,
     pub decoder: &'a mut TDecoder,
     pub stats: RecvStats,
 }
 
-impl<'a, TPlaybackSample, TPlaybackDataWriter, TPlaybackTranscoder, TDecoder>
-    RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TPlaybackTranscoder, TDecoder>
+impl<'a, TPlaybackSample, TPlaybackDataWriter, TDecoder>
+    RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TDecoder>
 where
     TPlaybackSample: Sample,
     TPlaybackDataWriter: AsyncWriteItems<TPlaybackSample> + Unpin,
-    TPlaybackTranscoder: Transcode,
     TDecoder: Decoder<TPlaybackSample, TPlaybackDataWriter> + ?Sized,
 {
     pub async fn recv_loop(
@@ -66,10 +62,6 @@ where
                         trace!("Recv: after decode, samples decoded: {}", num_samples);
                         self.stats.samples_decoded += num_samples;
                         self.stats.frames_decoded += 1;
-
-                        trace!("Recv: before transcode");
-                        self.playback_transcoder.transcode().await?;
-                        trace!("Recv: after transcode");
                     }
                     Err(DecodingError::EmptyPacket) => {
                         self.stats.empty_packets_decoding_errors += 1;

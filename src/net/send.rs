@@ -2,7 +2,6 @@ use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
 use crate::log::*;
 use crate::sample::Sample;
-use crate::transcode::Transcode;
 use std::marker::PhantomData;
 use std::net::SocketAddr;
 use tokio::net::udp::split::UdpSocketSendHalf;
@@ -19,26 +18,23 @@ pub struct SendStats {
     pub bytes_sent_mismatches: usize,
 }
 
-pub struct SendService<'a, TCaptureSample, TCaptureDataReader, TCaptureTranscoder, TEncoder>
+pub struct SendService<'a, TCaptureSample, TCaptureDataReader, TEncoder>
 where
     TCaptureSample: Sample,
     TCaptureDataReader: AsyncReadItems<TCaptureSample>,
-    TCaptureTranscoder: Transcode,
     TEncoder: Encoder<TCaptureSample, TCaptureDataReader> + ?Sized,
 {
     pub capture_sample: PhantomData<TCaptureSample>,
     pub capture_data_reader: TCaptureDataReader,
-    pub capture_transcoder: TCaptureTranscoder,
     pub encoder: &'a mut TEncoder,
     pub stats: SendStats,
 }
 
-impl<'a, TCaptureSample, TCaptureDataReader, TCaptureTranscoder, TEncoder>
-    SendService<'a, TCaptureSample, TCaptureDataReader, TCaptureTranscoder, TEncoder>
+impl<'a, TCaptureSample, TCaptureDataReader, TEncoder>
+    SendService<'a, TCaptureSample, TCaptureDataReader, TEncoder>
 where
     TCaptureSample: Sample,
     TCaptureDataReader: AsyncReadItems<TCaptureSample>,
-    TCaptureTranscoder: Transcode,
     TEncoder: Encoder<TCaptureSample, TCaptureDataReader> + ?Sized,
 {
     pub async fn send_loop(
@@ -49,10 +45,6 @@ where
         let mut send_buf = [0u8; SIZE];
         loop {
             trace!("Send loop begin");
-
-            trace!("Send: before transcode");
-            self.capture_transcoder.transcode().await?;
-            trace!("Send: after transcode");
 
             trace!("Send: before encode");
             match self
