@@ -50,11 +50,9 @@ where
                 loop {
                     // Play what's in playback buffer.
                     let samples_read = block_on(async {
-                        playback_data_reader
-                            .read_items(&mut playback_samples)
-                            .await
-                            .expect("Unable to read playback data")
-                    });
+                        playback_data_reader.read_items(&mut playback_samples).await
+                    })
+                    .expect("Unable to read playback data");
 
                     let write_buff = unsafe {
                         std::slice::from_raw_parts(
@@ -88,12 +86,9 @@ where
                         }
                     }
 
-                    let _ = block_on(async {
-                        capture_data_writer
-                            .write_items(&capture_samples)
-                            .await
-                            .expect("Unable to write captured data")
-                    });
+                    let _ =
+                        block_on(async { capture_data_writer.write_items(&capture_samples).await })
+                            .expect("Unable to write captured data");
                 }
             });
 
