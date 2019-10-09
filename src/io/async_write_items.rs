@@ -1,3 +1,4 @@
+use super::WaitMode;
 use std::io::Result;
 use std::ops::{Deref, DerefMut};
 use std::pin::Pin;
@@ -8,6 +9,7 @@ pub trait AsyncWriteItems<T: Unpin> {
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         items: &[T],
+        wait_mode: WaitMode,
     ) -> Poll<Result<usize>>;
 }
 
@@ -17,9 +19,10 @@ macro_rules! deref_async_write_items {
             mut self: Pin<&mut Self>,
             cx: &mut Context<'_>,
             items: &[$T],
+            wait_mode: WaitMode,
         ) -> Poll<Result<usize>>
         {
-            Pin::new(&mut **self).poll_write_items(cx, items)
+            Pin::new(&mut **self).poll_write_items(cx, items, wait_mode)
         }
     }
 }
@@ -41,7 +44,10 @@ where
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         items: &[T],
+        wait_mode: WaitMode,
     ) -> Poll<Result<usize>> {
-        self.get_mut().as_mut().poll_write_items(cx, items)
+        self.get_mut()
+            .as_mut()
+            .poll_write_items(cx, items, wait_mode)
     }
 }

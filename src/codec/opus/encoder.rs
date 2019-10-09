@@ -1,5 +1,5 @@
 use super::Error;
-use crate::io::{AsyncReadItems, AsyncReadItemsExt};
+use crate::io::{AsyncReadItems, AsyncReadItemsExt, WaitMode};
 use async_trait::async_trait;
 use audiopus::coder::Encoder as OpusEncoder;
 
@@ -21,7 +21,9 @@ impl Encoder {
     where
         T: AsyncReadItems<f32> + Unpin,
     {
-        input.read_exact_items(&mut self.buf).await?;
+        input
+            .read_exact_items(&mut self.buf, WaitMode::WaitForReady)
+            .await?;
         let bytes_written = self.opus.encode_float(&self.buf, output)?;
         Ok(bytes_written)
     }

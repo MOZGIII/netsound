@@ -1,4 +1,4 @@
-use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt};
+use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
 use byteorder::ByteOrder;
 use std::io::Result;
 
@@ -17,7 +17,9 @@ where
     let mut samples = Vec::with_capacity(samples_to_read);
     samples.resize(samples_to_read, 0f32);
 
-    let samples_read = input.read_items(&mut samples).await?;
+    let samples_read = input
+        .read_items(&mut samples, WaitMode::WaitForReady)
+        .await?;
 
     for (mut chunk, &sample) in output.chunks_exact_mut(4).zip(&samples[..samples_read]) {
         E::write_f32(&mut chunk, sample);
@@ -45,7 +47,7 @@ where
         *sample_slot = E::read_f32(&chunk);
     }
 
-    output.write_items(&samples).await
+    output.write_items(&samples, WaitMode::WaitForReady).await
 }
 
 // TODO: restore tests, see git history.

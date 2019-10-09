@@ -10,29 +10,33 @@ mod read_exact_items;
 pub use read_exact_items::*;
 
 pub trait AsyncWriteItemsExt<T: Unpin>: AsyncWriteItems<T> {
-    fn write_items<'a>(&'a mut self, buf: &'a [T]) -> WriteItems<'a, T, Self>
+    fn write_items<'a>(&'a mut self, buf: &'a [T], wait_mode: WaitMode) -> WriteItems<'a, T, Self>
     where
         Self: Unpin,
     {
-        WriteItems::new(self, buf)
+        WriteItems::new(self, buf, wait_mode)
     }
 }
 
 impl<T: Unpin, W: AsyncWriteItems<T> + ?Sized> AsyncWriteItemsExt<T> for W {}
 
 pub trait AsyncReadItemsExt<T: Unpin>: AsyncReadItems<T> {
-    fn read_items<'a>(&'a mut self, buf: &'a mut [T]) -> ReadItems<'a, T, Self>
+    fn read_items<'a>(&'a mut self, buf: &'a mut [T], wait_mode: WaitMode) -> ReadItems<'a, T, Self>
     where
         Self: Unpin,
     {
-        ReadItems::new(self, buf)
+        ReadItems::new(self, buf, wait_mode)
     }
 
-    fn read_exact_items<'a>(&'a mut self, buf: &'a mut [T]) -> ReadExactItems<'a, T, Self>
+    fn read_exact_items<'a>(
+        &'a mut self,
+        buf: &'a mut [T],
+        wait_mode: WaitMode,
+    ) -> ReadExactItems<'a, T, Self>
     where
         Self: Unpin,
     {
-        ReadExactItems::new(self, buf)
+        ReadExactItems::new(self, buf, wait_mode)
     }
 }
 

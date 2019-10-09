@@ -1,6 +1,6 @@
 use super::*;
 use crate::audio;
-use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt};
+use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
 use crossbeam_utils;
 use futures::executor::block_on;
 use libpulse_binding as pulse;
@@ -49,9 +49,9 @@ where
             let playback_handle = s.spawn(move |_| {
                 loop {
                     // Play what's in playback buffer.
-                    let samples_read = block_on(async {
-                        playback_data_reader.read_items(&mut playback_samples).await
-                    })
+                    let samples_read = block_on(
+                        playback_data_reader.read_items(&mut playback_samples, WaitMode::NoWait),
+                    )
                     .expect("Unable to read playback data");
 
                     let write_buff = unsafe {
@@ -86,9 +86,10 @@ where
                         }
                     }
 
-                    let _ =
-                        block_on(async { capture_data_writer.write_items(&capture_samples).await })
-                            .expect("Unable to write captured data");
+                    let _ = block_on(
+                        capture_data_writer.write_items(&capture_samples, WaitMode::NoWait),
+                    )
+                    .expect("Unable to write captured data");
                 }
             });
 

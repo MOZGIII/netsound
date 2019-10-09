@@ -1,5 +1,5 @@
 use super::Error;
-use crate::io::{AsyncWriteItems, AsyncWriteItemsExt};
+use crate::io::{AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
 use async_trait::async_trait;
 use audiopus::coder::Decoder as OpusDecoder;
 
@@ -29,7 +29,9 @@ impl Decoder {
             self.opus.decode_float(input, buf, fec)?
         };
         let bufsize = audiosize * self.channels;
-        let size = output.write_items(&self.buf[..bufsize]).await?;
+        let size = output
+            .write_items(&self.buf[..bufsize], WaitMode::WaitForReady)
+            .await?;
         Ok(size)
     }
 }

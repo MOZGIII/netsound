@@ -1,4 +1,4 @@
-use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::io::{AsyncReadItems, AsyncWriteItems, WaitMode};
 use crate::log::*;
 use futures::lock::{BiLock, BiLockAcquire, BiLockGuard};
 use futures::ready;
@@ -79,6 +79,7 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         items: &mut [T],
+        wait_mode: WaitMode,
     ) -> Poll<Result<usize>> {
         trace!("read: before lock");
         let mut inner = ready!(self.inner.poll_lock(cx));
@@ -87,9 +88,17 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
         let vd = &mut inner.vd;
 
         if vd.is_empty() {
-            inner.read_waker.register(cx.waker());
-            trace!("read: return with pending");
-            return Poll::Pending;
+            return match wait_mode {
+                WaitMode::WaitForReady => {
+                    inner.read_waker.register(cx.waker());
+                    trace!("read: return with pending");
+                    Poll::Pending
+                }
+                WaitMode::NoWait => {
+                    trace!("read: return with ready for no wait");
+                    Poll::Ready(Ok(0))
+                }
+            };
         }
 
         let mut filled: usize = 0;
@@ -115,6 +124,7 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         items: &[T],
+        wait_mode: WaitMode,
     ) -> Poll<Result<usize>> {
         trace!("write: before lock");
         let mut inner = ready!(self.inner.poll_lock(cx));
@@ -122,9 +132,17 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
         let vd = &mut inner.vd;
 
         if is_full(&vd) {
-            inner.write_waker.register(cx.waker());
-            trace!("write: return with pending");
-            return Poll::Pending;
+            return match wait_mode {
+                WaitMode::WaitForReady => {
+                    inner.write_waker.register(cx.waker());
+                    trace!("write: return with pending");
+                    return Poll::Pending;
+                }
+                WaitMode::NoWait => {
+                    trace!("write: return with ready for no wait");
+                    Poll::Ready(Ok(0))
+                }
+            };
         }
 
         let free_slots = vd.capacity() - vd.len();
