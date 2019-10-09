@@ -2,22 +2,23 @@ use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::*;
 use futures::lock::{BiLock, BiLockAcquire, BiLockGuard};
 use futures::ready;
+use futures::task::AtomicWaker;
 use std::collections::VecDeque;
 use std::future::Future;
 use std::io::Result;
 use std::ops::{Deref, DerefMut};
 use std::pin::Pin;
-use std::task::{Context, Poll, Waker};
+use std::task::{Context, Poll};
 
 #[derive(Debug)]
 struct Inner<T> {
     vd: VecDeque<T>,
 
     // Waits on read on buffer becoming non-empty.
-    read_waker: Option<Waker>,
+    read_waker: AtomicWaker,
 
     // Waits on write for buffer becoming non-full.
-    write_waker: Option<Waker>,
+    write_waker: AtomicWaker,
 }
 
 pub fn vec_deque_buffer_with_capacity<T>(
@@ -29,8 +30,8 @@ pub fn vec_deque_buffer_with_capacity<T>(
 pub fn vec_deque_buffer<T>(vd: VecDeque<T>) -> (VecDequeBufferWriter<T>, VecDequeBufferReader<T>) {
     let (reader_inner, writer_inner) = BiLock::new(Inner {
         vd,
-        read_waker: None,
-        write_waker: None,
+        read_waker: AtomicWaker::new(),
+        write_waker: AtomicWaker::new(),
     });
     let writer = VecDequeBufferWriter {
         inner: writer_inner,
@@ -68,8 +69,7 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
         let vd = &mut inner.vd;
 
         if vd.is_empty() {
-            assert!(inner.read_waker.is_none());
-            inner.read_waker = Some(cx.waker().clone());
+            inner.read_waker.register(cx.waker());
             trace!("read: return with pending");
             return Poll::Pending;
         }
@@ -87,9 +87,7 @@ impl<T: Unpin> AsyncReadItems<T> for VecDequeBufferReader<T> {
 
         let wake_writer = !is_full(vd);
         if wake_writer {
-            if let Some(waker) = inner.write_waker.take() {
-                waker.wake();
-            }
+            inner.write_waker.wake();
         }
 
         trace!("read: return with ready");
@@ -109,8 +107,7 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
         let vd = &mut inner.vd;
 
         if is_full(&vd) {
-            assert!(inner.write_waker.is_none());
-            inner.write_waker = Some(cx.waker().clone());
+            inner.write_waker.register(cx.waker());
             trace!("write: return with pending");
             return Poll::Pending;
         }
@@ -126,9 +123,7 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
 
         let wake_reader = !vd.is_empty();
         if wake_reader {
-            if let Some(waker) = inner.read_waker.take() {
-                waker.wake();
-            }
+            inner.read_waker.wake();
         }
 
         trace!("write: return with ready");
