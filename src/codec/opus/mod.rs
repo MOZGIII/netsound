@@ -40,6 +40,19 @@ pub enum SupportedFrameSizeMS {
     F60,
 }
 
+impl SupportedFrameSizeMS {
+    pub fn to_u32(&self) -> u32 {
+        match self {
+            SupportedFrameSizeMS::F2p5 => unimplemented!(),
+            SupportedFrameSizeMS::F5 => 5,
+            SupportedFrameSizeMS::F10 => 10,
+            SupportedFrameSizeMS::F20 => 20,
+            SupportedFrameSizeMS::F40 => 40,
+            SupportedFrameSizeMS::F60 => 60,
+        }
+    }
+}
+
 #[allow(dead_code)]
 pub enum SupportedSampleRate {
     SR8,
@@ -51,14 +64,13 @@ pub enum SupportedSampleRate {
 
 #[allow(unused_variables)]
 pub fn buf_size(
-    sample_rate_khz: u32,
+    sample_rate_hz: u32,
     channels: u16,
     frame_size_ms: SupportedFrameSizeMS,
     fec: bool,
 ) -> usize {
-    // TODO: use smaller buffer size when possible.
     // See https://tools.ietf.org/html/rfc6716#section-2
-    MAX_FRAME_SIZE_PER_CHANNEL as usize * channels as usize
+    frame_size_per_channel(sample_rate_hz / 1000, frame_size_ms.to_u32()) * usize::from(channels)
 }
 
 /// Takes Sample Rate in kHz and Frame Size in ms and returns frame size per
