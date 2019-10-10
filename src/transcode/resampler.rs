@@ -79,6 +79,9 @@ where
                         this.to_hz,
                     );
 
+                    // TODO: this extend may cause an unexpected `to_buf`
+                    // capacity growth. We should provide a better API,
+                    // involving waiting for write readiness.
                     to_buf.extend(
                         converter
                             .until_exhausted()
