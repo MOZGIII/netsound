@@ -50,6 +50,9 @@ where
         let to_channels = self.to_channels;
         let this = &mut *self;
 
+        // FIXME: reimplement resampler to properly wait for data.
+        tokio::timer::delay_for(std::time::Duration::from_millis(1)).await;
+
         match_channels! {
             F => [to_channels] => {
                 use sample::{signal, Signal};

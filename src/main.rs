@@ -25,6 +25,7 @@ mod net;
 mod sample;
 mod samples_filter;
 mod transcode;
+mod transcode_service;
 
 use audio::Backend;
 use log::*;
@@ -142,6 +143,11 @@ fn errmain() -> Result<(), Error> {
     let audio_backend = continuation(capture_data_writer, playback_data_reader)?;
     run_audio_backend(audio_backend)?;
 
+    let mut transcode_service = transcode_service::TranscodeService {
+        capture_transcoder,
+        playback_transcoder,
+    };
+
     let mut net_service = net::NetService {
         send_service: net::SendService {
             capture_sample: PhantomData,
@@ -157,8 +163,13 @@ fn errmain() -> Result<(), Error> {
         },
     };
 
+    use future::select_first;
+    use futures::FutureExt;
     let rt = Runtime::new()?;
-    rt.block_on(net_service.net_loop(socket, send_addr))?;
+    rt.block_on(select_first(
+        net_service.net_loop(socket, send_addr).boxed(),
+        transcode_service.transcode_loop().boxed(),
+    ))?;
 
     Ok(())
 }
