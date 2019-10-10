@@ -1,11 +1,12 @@
 use super::*;
 use crate::buf::{VecDequeBufferReader, VecDequeBufferWriter};
+use crate::io::{AsyncReadItemsExt, WaitMode};
 use crate::log::*;
 use crate::match_channels;
 use crate::sample::Sample;
 use crate::samples_filter::NormalizeChannelsExt;
 use async_trait::async_trait;
-use sample::{interpolate, Duplex};
+use sample::{interpolate, signal, Duplex, Frame, Signal};
 
 #[derive(Debug)]
 pub struct Resampler<S: Sample> {
@@ -52,39 +53,37 @@ where
 
         match_channels! {
             F => [to_channels] => {
+                let mut first_frame_data = F::<S>::equilibrium();
                 loop {
-                    // FIXME: reimplement resampler to properly wait for data.
-                    tokio::timer::delay_for(std::time::Duration::from_millis(1)).await;
-
-                    use sample::{signal, Signal};
+                    trace!("Resampler: before read_exact_items");
+                    this.from_buf.read_exact_items(&mut first_frame_data, WaitMode::WaitForReady).await?;
+                    trace!("Resampler: after read_exact_items");
 
                     trace!("Resampler: before locks");
                     let mut from_buf = this.from_buf.lock().await;
                     let mut to_buf = this.to_buf.lock().await;
                     trace!("Resampler: locks taken");
 
-                    let from_buf_size_before = from_buf.len();
+                    let from_buf_size_before = from_buf.len() + first_frame_data.len();
                     let to_buf_size_before = to_buf.len();
 
-                    if from_buf.len() > 0 {
-                        let mut from_signal =
-                            signal::from_interleaved_samples_iter::<_, F<S>>(from_buf.drain(..).normalize_channels(this.from_channels, to_channels));
+                    let iter = first_frame_data.iter().cloned();
+                    let iter = iter.chain(from_buf.drain(..));
+                    let iter = iter.normalize_channels(this.from_channels, to_channels);
+                    let mut from_signal = signal::from_interleaved_samples_iter::<_, F<S>>(iter);
+                    let interpolator = interpolate::Linear::from_source(&mut from_signal);
+                    let converter = interpolate::Converter::from_hz_to_hz(
+                        from_signal,
+                        interpolator,
+                        this.from_hz,
+                        this.to_hz,
+                    );
 
-                        let interpolator = interpolate::Linear::from_source(&mut from_signal);
-                        let converter = interpolate::Converter::from_hz_to_hz(
-                            from_signal,
-                            interpolator,
-                            this.from_hz,
-                            this.to_hz,
-                        );
-
-                        use sample::Frame;
-                        to_buf.extend(
-                            converter
-                                .until_exhausted()
-                                .flat_map(|frame| frame.channels()),
-                        );
-                    }
+                    to_buf.extend(
+                        converter
+                            .until_exhausted()
+                            .flat_map(|frame| frame.channels()),
+                    );
 
                     let from_buf_size_after = from_buf.len();
                     let to_buf_size_after = to_buf.len();
