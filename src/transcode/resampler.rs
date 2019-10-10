@@ -44,58 +44,58 @@ impl<S> Transcode for Resampler<S>
 where
     S: Sample + Duplex<f64> + Unpin,
 {
-    type Ok = ();
+    type Ok = futures::Never;
 
-    async fn transcode(&mut self) -> Result<Self::Ok, crate::Error> {
+    async fn transcode_loop(&mut self) -> Result<Self::Ok, crate::Error> {
         let to_channels = self.to_channels;
         let this = &mut *self;
 
-        // FIXME: reimplement resampler to properly wait for data.
-        tokio::timer::delay_for(std::time::Duration::from_millis(1)).await;
-
         match_channels! {
             F => [to_channels] => {
-                use sample::{signal, Signal};
+                loop {
+                    // FIXME: reimplement resampler to properly wait for data.
+                    tokio::timer::delay_for(std::time::Duration::from_millis(1)).await;
 
-                trace!("Resampler: before locks");
-                let mut from_buf = this.from_buf.lock().await;
-                let mut to_buf = this.to_buf.lock().await;
-                trace!("Resampler: locks taken");
+                    use sample::{signal, Signal};
 
-                let from_buf_size_before = from_buf.len();
-                let to_buf_size_before = to_buf.len();
+                    trace!("Resampler: before locks");
+                    let mut from_buf = this.from_buf.lock().await;
+                    let mut to_buf = this.to_buf.lock().await;
+                    trace!("Resampler: locks taken");
 
-                if from_buf.len() > 0 {
-                    let mut from_signal =
-                        signal::from_interleaved_samples_iter::<_, F<S>>(from_buf.drain(..).normalize_channels(this.from_channels, to_channels));
+                    let from_buf_size_before = from_buf.len();
+                    let to_buf_size_before = to_buf.len();
 
-                    let interpolator = interpolate::Linear::from_source(&mut from_signal);
-                    let converter = interpolate::Converter::from_hz_to_hz(
-                        from_signal,
-                        interpolator,
-                        this.from_hz,
-                        this.to_hz,
-                    );
+                    if from_buf.len() > 0 {
+                        let mut from_signal =
+                            signal::from_interleaved_samples_iter::<_, F<S>>(from_buf.drain(..).normalize_channels(this.from_channels, to_channels));
 
-                    use sample::Frame;
-                    to_buf.extend(
-                        converter
-                            .until_exhausted()
-                            .flat_map(|frame| frame.channels()),
-                    );
+                        let interpolator = interpolate::Linear::from_source(&mut from_signal);
+                        let converter = interpolate::Converter::from_hz_to_hz(
+                            from_signal,
+                            interpolator,
+                            this.from_hz,
+                            this.to_hz,
+                        );
+
+                        use sample::Frame;
+                        to_buf.extend(
+                            converter
+                                .until_exhausted()
+                                .flat_map(|frame| frame.channels()),
+                        );
+                    }
+
+                    let from_buf_size_after = from_buf.len();
+                    let to_buf_size_after = to_buf.len();
+
+                    drop(to_buf);
+                    drop(from_buf);
+                    trace!("Resampler: after locks");
+
+                    trace!("Resampler: {} -> {}  =>  {} -> {}", from_buf_size_before, to_buf_size_before, from_buf_size_after, to_buf_size_after);
                 }
-
-                let from_buf_size_after = from_buf.len();
-                let to_buf_size_after = to_buf.len();
-
-                drop(to_buf);
-                drop(from_buf);
-                trace!("Resampler: after locks");
-
-                trace!("Resampler: {} -> {}  =>  {} -> {}", from_buf_size_before, to_buf_size_before, from_buf_size_after, to_buf_size_after);
             }
         }
-
-        Ok(())
     }
 }

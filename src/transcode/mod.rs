@@ -7,5 +7,5 @@ pub mod resampler;
 pub trait Transcode {
     type Ok;
 
-    async fn transcode(&mut self) -> Result<Self::Ok, crate::Error>;
+    async fn transcode_loop(&mut self) -> Result<Self::Ok, crate::Error>;
 }

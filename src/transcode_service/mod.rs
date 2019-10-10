@@ -12,13 +12,11 @@ where
     TCaptureTranscoder: Transcode<Ok = T> + Send + Unpin,
     TPlaybackTranscoder: Transcode<Ok = T> + Send + Unpin,
 {
-    pub async fn transcode_loop(&mut self) -> Result<futures::Never, crate::Error> {
-        loop {
-            let _ = select_first(
-                self.capture_transcoder.transcode(),
-                self.playback_transcoder.transcode(),
-            )
-            .await?;
-        }
+    pub async fn transcode_loop(&mut self) -> Result<T, crate::Error> {
+        select_first(
+            self.capture_transcoder.transcode_loop(),
+            self.playback_transcoder.transcode_loop(),
+        )
+        .await
     }
 }
