@@ -22,22 +22,9 @@ slog-scope-futures = "0.1"
 slog_derive = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 erased-serde = "0.3"
-
-[dependencies.libpulse-binding]
-git = "https://github.com/MOZGIII/pulse-binding-rust.git"
-rev = "251032e29fa5ce287a814774d29378932afc0ab0"
-default-features = false
-optional = true
-
-[dependencies.libpulse-simple-binding]
-git = "https://github.com/MOZGIII/pulse-binding-rust.git"
-rev = "251032e29fa5ce287a814774d29378932afc0ab0"
-default-features = false
-optional = true
-
-[dependencies.crossbeam-utils]
-version = "0.6"
-optional = true
+libpulse-binding = { git = "https://github.com/MOZGIII/pulse-binding-rust.git", rev = "251032e29fa5ce287a814774d29378932afc0ab0", default-features = false, optional = true }
+libpulse-simple-binding = { git = "https://github.com/MOZGIII/pulse-binding-rust.git", rev = "251032e29fa5ce287a814774d29378932afc0ab0", default-features = false, optional = true }
+crossbeam-utils = { version = "0.6", optional = true }
 
 [dev-dependencies]
 futures-test-preview = "0.3.0-alpha.19"
