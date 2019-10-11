@@ -1,7 +1,7 @@
 use super::*;
 use crate::audio;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::*;
+use crate::log::no_scopes::*;
 use crate::sample::Sample;
 use cpal::traits::*;
 use std::marker::PhantomData;
@@ -45,11 +45,11 @@ where
         let logger = &mut self.logger;
 
         self.cpal_event_loop.run(move |stream_id, stream_result| {
-            slog_trace!(logger, "cpal: at event loop");
+            trace!(logger, "cpal: at event loop");
             let stream_data = match stream_result {
                 Ok(data) => data,
                 Err(err) => {
-                    slog_crit!(
+                    crit!(
                         logger,
                         "an error occurred on stream {:?}: {}",
                         stream_id,
@@ -62,16 +62,16 @@ where
                 cpal::StreamData::Input {
                     buffer: mut input_buf,
                 } => {
-                    slog_trace!(logger, "cpal: before capture");
+                    trace!(logger, "cpal: before capture");
                     io::capture(&mut input_buf, capture_data_writer);
-                    slog_trace!(logger, "cpal: after capture");
+                    trace!(logger, "cpal: after capture");
                 }
                 cpal::StreamData::Output {
                     buffer: mut output_buf,
                 } => {
-                    slog_trace!(logger, "cpal: before play");
+                    trace!(logger, "cpal: before play");
                     io::play(playback_data_reader, &mut output_buf);
-                    slog_trace!(logger, "cpal: after play");
+                    trace!(logger, "cpal: after play");
                 }
             };
         });

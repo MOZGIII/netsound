@@ -1,6 +1,6 @@
 use super::Backend;
 use crate::format::Format;
-use crate::log::*;
+use crate::log::no_scopes::*;
 use crate::sample::Sample;
 use crate::Error;
 

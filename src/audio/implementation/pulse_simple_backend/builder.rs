@@ -2,7 +2,7 @@ use super::*;
 use crate::audio;
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::*;
+use crate::log::no_scopes::*;
 use libpulse_binding as pulse;
 use std::marker::PhantomData;
 
