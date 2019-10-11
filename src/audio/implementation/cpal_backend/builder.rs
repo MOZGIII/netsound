@@ -22,6 +22,7 @@ where
         self,
         request_capture_formats: &'a [Format<TCaptureSample>],
         request_playback_formats: &'a [Format<TPlaybackSample>],
+        logger: Logger,
     ) -> Result<
         (
             audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
@@ -30,7 +31,7 @@ where
         crate::Error,
     > {
         let cpal_host = cpal::default_host();
-        info!("Cpal Host: {:?}", &cpal_host.id());
+        info!(logger, "Cpal Host: {:?}", &cpal_host.id());
 
         let cpal_event_loop = cpal_host.event_loop();
 
@@ -57,6 +58,7 @@ where
             cpal_output_device,
             capture_format,
             playback_format,
+            logger,
         };
 
         Ok((negotiated_formats, continuation))
@@ -75,6 +77,8 @@ where
 
     capture_format: Format<TCaptureSample>,
     playback_format: Format<TPlaybackSample>,
+
+    logger: Logger,
 }
 
 pub struct BackendBuilder<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
@@ -106,13 +110,16 @@ where
     fn build(self) -> Result<Self::Backend, crate::Error> {
         let cpal_capture_format = format::to_cpal_format(self.continuation.capture_format);
         let cpal_playback_format = format::to_cpal_format(self.continuation.playback_format);
+        let mut logger = self.continuation.logger;
 
         log_config(
+            &mut logger,
             "Playback",
             &self.continuation.cpal_output_device.name()?,
             &cpal_playback_format,
         );
         log_config(
+            &mut logger,
             "Capture",
             &self.continuation.cpal_input_device.name()?,
             &cpal_capture_format,
@@ -139,15 +146,18 @@ where
             playback_stream_id,
 
             cpal_event_loop,
+
+            logger,
         };
         Ok(backend)
     }
 }
 
-fn log_config(name: &'static str, device_name: &str, format: &cpal::Format) {
-    info!("{} device: {}", name, device_name);
-    info!("{} format: {:?}", name, format);
-    info!(
+fn log_config(logger: &mut Logger, name: &'static str, device_name: &str, format: &cpal::Format) {
+    slog_info!(logger, "{} device: {}", name, device_name);
+    slog_info!(logger, "{} format: {:?}", name, format);
+    slog_info!(
+        logger,
         "{} endianness: {}",
         name,
         if cfg!(target_endian = "little") {
@@ -157,5 +167,5 @@ fn log_config(name: &'static str, device_name: &str, format: &cpal::Format) {
         }
     );
     // Always interleaved.
-    info!("{} operation mode: interleaved", name);
+    slog_info!(logger, "{} operation mode: interleaved", name);
 }

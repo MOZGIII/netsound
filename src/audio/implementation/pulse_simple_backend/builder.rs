@@ -2,6 +2,7 @@ use super::*;
 use crate::audio;
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::log::*;
 use libpulse_binding as pulse;
 use std::marker::PhantomData;
 
@@ -21,6 +22,7 @@ where
         self,
         _request_capture_formats: &'a [Format<TCaptureSample>],
         _request_playback_formats: &'a [Format<TPlaybackSample>],
+        logger: Logger,
     ) -> Result<
         (
             audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
@@ -38,6 +40,7 @@ where
         let continuation = FormatNegotiatonContinuation {
             capture_format,
             playback_format,
+            logger,
         };
         Ok((negotiated_formats, continuation))
     }
@@ -50,6 +53,7 @@ where
 {
     capture_format: Format<TCaptureSample>,
     playback_format: Format<TPlaybackSample>,
+    logger: Logger,
 }
 
 pub struct BackendBuilder<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
@@ -95,6 +99,8 @@ where
 
             pa_record,
             pa_playback,
+
+            logger: self.continuation.logger,
         };
         Ok(backend)
     }

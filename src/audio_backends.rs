@@ -1,6 +1,7 @@
 use crate::audio::{self, BackendBuilder, FormatNegotiator};
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
+use crate::log::*;
 use crate::sample::Sample;
 
 #[derive(Debug)]
@@ -29,6 +30,7 @@ where
 {
     pub request_capture_formats: &'a [Format<TCaptureSample>],
     pub request_playback_formats: &'a [Format<TPlaybackSample>],
+    pub logger: Logger,
 }
 
 pub fn negotiate_formats<'a, TCaptureDataWriter, TPlaybackDataReader>(
@@ -81,6 +83,7 @@ where
     let (negotiated_formats, continuation) = format_negotiator.negotiate_formats(
         build_params.request_capture_formats,
         build_params.request_playback_formats,
+        build_params.logger,
     )?;
 
     let continuation_adapter = move |capture_data_writer, playback_data_reader| {
@@ -130,6 +133,7 @@ where
     let (negotiated_formats, continuation) = format_negotiator.negotiate_formats(
         build_params.request_capture_formats,
         build_params.request_playback_formats,
+        build_params.logger,
     )?;
 
     let continuation_adapter = move |capture_data_writer, playback_data_reader| {

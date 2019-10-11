@@ -1,5 +1,6 @@
 use super::Backend;
 use crate::format::Format;
+use crate::log::*;
 use crate::sample::Sample;
 use crate::Error;
 
@@ -14,6 +15,7 @@ where
         self,
         request_capture_formats: &'a [Format<TCaptureSample>],
         request_playback_formats: &'a [Format<TPlaybackSample>],
+        logger: Logger,
     ) -> Result<
         (
             NegotiatedFormats<TCaptureSample, TPlaybackSample>,

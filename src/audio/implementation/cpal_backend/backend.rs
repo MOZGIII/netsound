@@ -26,6 +26,8 @@ where
     pub(super) playback_stream_id: cpal::StreamId,
 
     pub(super) cpal_event_loop: cpal::EventLoop,
+
+    pub(super) logger: Logger,
 }
 
 impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader> audio::Backend
@@ -40,13 +42,19 @@ where
     fn run(&mut self) {
         let capture_data_writer = &mut self.capture_data_writer;
         let playback_data_reader = &mut self.playback_data_reader;
+        let logger = &mut self.logger;
 
         self.cpal_event_loop.run(move |stream_id, stream_result| {
-            trace!("cpal: at event loop");
+            slog_trace!(logger, "cpal: at event loop");
             let stream_data = match stream_result {
                 Ok(data) => data,
                 Err(err) => {
-                    crit!("an error occurred on stream {:?}: {}", stream_id, err);
+                    slog_crit!(
+                        logger,
+                        "an error occurred on stream {:?}: {}",
+                        stream_id,
+                        err
+                    );
                     return;
                 }
             };
@@ -54,16 +62,16 @@ where
                 cpal::StreamData::Input {
                     buffer: mut input_buf,
                 } => {
-                    trace!("cpal: before capture");
+                    slog_trace!(logger, "cpal: before capture");
                     io::capture(&mut input_buf, capture_data_writer);
-                    trace!("cpal: after capture");
+                    slog_trace!(logger, "cpal: after capture");
                 }
                 cpal::StreamData::Output {
                     buffer: mut output_buf,
                 } => {
-                    trace!("cpal: before play");
+                    slog_trace!(logger, "cpal: before play");
                     io::play(playback_data_reader, &mut output_buf);
-                    trace!("cpal: after play");
+                    slog_trace!(logger, "cpal: after play");
                 }
             };
         });

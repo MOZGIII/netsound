@@ -56,6 +56,7 @@ fn errmain() -> Result<(), Error> {
     let audio_backend_build_params = audio_backends::BuildParams {
         request_capture_formats: formats::input(),
         request_playback_formats: formats::output(),
+        logger: logger().new(o!("logger" => "audio")),
     };
     let (negotiated_formats, continuation) =
         audio_backends::negotiate_formats(backend_to_use, audio_backend_build_params)?;

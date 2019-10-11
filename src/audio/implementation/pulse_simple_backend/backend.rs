@@ -1,6 +1,7 @@
 use super::*;
 use crate::audio;
 use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
+use crate::log::*;
 use crossbeam_utils;
 use futures::executor::block_on;
 use libpulse_binding as pulse;
@@ -26,6 +27,8 @@ where
 
     pub(super) pa_record: Simple,
     pub(super) pa_playback: Simple,
+
+    pub(super) logger: Logger,
 }
 
 impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader> audio::Backend
@@ -42,6 +45,7 @@ where
         let playback_data_reader = &mut self.playback_data_reader;
         let pa_record = &mut self.pa_record;
         let pa_playback = &mut self.pa_playback;
+        let _logger = &mut self.logger;
 
         thread::scope(|s| {
             let mut playback_samples = [TPlaybackSample::equilibrium(); 128];
