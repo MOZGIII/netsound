@@ -2,12 +2,13 @@ use crate::codec::{Decoder, DecodingError};
 use crate::io::AsyncWriteItems;
 use crate::log::*;
 use crate::sample::Sample;
+use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 use tokio::net::udp::split::UdpSocketRecvHalf;
 
 use super::*;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, KV)]
 pub struct RecvStats {
     pub data_arrived_but_was_dropped_due_to_lock_conention: usize,
     pub packets_read: usize,
@@ -76,7 +77,7 @@ where
                 warn!("Recv: skipped processing of an empty incoming packet");
                 self.stats.empty_packets_read += 1;
             }
-            debug!("network recv: {:?}", self.stats);
+            debug!("network recv"; &self.stats);
         }
     }
 }

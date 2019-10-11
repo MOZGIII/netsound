@@ -2,13 +2,14 @@ use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
 use crate::log::*;
 use crate::sample::Sample;
+use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 use std::net::SocketAddr;
 use tokio::net::udp::split::UdpSocketSendHalf;
 
 use super::*;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, KV)]
 pub struct SendStats {
     pub frames_encoded: usize,
     pub bytes_encoded: usize,
@@ -85,7 +86,7 @@ where
                     return Err(err)?;
                 }
             };
-            debug!("network send: {:?}", self.stats);
+            debug!("network send"; &self.stats);
         }
     }
 }
