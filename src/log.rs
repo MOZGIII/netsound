@@ -3,6 +3,8 @@ mod base {
     pub use slog::o;
     pub use slog_env_cfg::Logger;
 
+    pub use slog_derive::{SerdeValue, KV};
+
     pub use slog::{slog_crit, slog_debug, slog_error, slog_info, slog_trace, slog_warn};
 }
 
