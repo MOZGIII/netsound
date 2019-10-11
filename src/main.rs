@@ -167,8 +167,14 @@ fn errmain() -> Result<(), Error> {
     use futures::FutureExt;
     let rt = Runtime::new()?;
     rt.block_on(select_first(
-        net_service.net_loop(socket, send_addr).boxed(),
-        transcode_service.transcode_loop().boxed(),
+        net_service
+            .net_loop(socket, send_addr)
+            .with_logger(logger().new(o!("logger" => "net")))
+            .boxed(),
+        transcode_service
+            .transcode_loop()
+            .with_logger(logger().new(o!("logger" => "transcode")))
+            .boxed(),
     ))?;
 
     Ok(())

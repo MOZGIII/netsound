@@ -87,8 +87,14 @@ where
         let (socket_recv_half, socket_send_half) = socket.split();
 
         use futures::FutureExt;
-        let send_future = send_service.send_loop(socket_send_half, peer_addr).boxed();
-        let recv_future = recv_service.recv_loop(socket_recv_half).boxed();
+        let send_future = send_service
+            .send_loop(socket_send_half, peer_addr)
+            .with_logger(logger().new(o!("logger" => "net::send")))
+            .boxed();
+        let recv_future = recv_service
+            .recv_loop(socket_recv_half)
+            .with_logger(logger().new(o!("logger" => "net::recv")))
+            .boxed();
 
         let val = select_first(recv_future, send_future).await;
 

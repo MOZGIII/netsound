@@ -17,6 +17,7 @@ async-trait = "0.1"
 slog = "2.5"
 slog-env-cfg = "0.5"
 slog-scope = "4.1"
+slog-scope-futures = "0.1"
 
 [dependencies.libpulse-binding]
 git = "https://github.com/MOZGIII/pulse-binding-rust.git"
