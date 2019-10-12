@@ -32,3 +32,6 @@ futures-test-preview = "0.3.0-alpha.19"
 [features]
 pulse_simple_backend = ["libpulse-binding", "libpulse-simple-binding", "crossbeam-utils"]
 trace = ["slog/max_level_trace"]
+
+[patch.crates-io]
+audiopus_sys = { git = "https://github.com/MOZGIII/audiopus_sys.git", branch = "bindgen-version" }
