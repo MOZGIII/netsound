@@ -210,14 +210,14 @@ impl<'a, T: Unpin> Future for InnerVecDequeAcquire<'a, T> {
 }
 
 impl<T> VecDequeBufferReader<T> {
-    pub fn lock<'a>(&'a mut self) -> InnerVecDequeAcquire<'a, T> {
+    pub fn lock(&mut self) -> InnerVecDequeAcquire<'_, T> {
         let inner_acquire = self.inner.lock();
         InnerVecDequeAcquire { inner_acquire }
     }
 }
 
 impl<T> VecDequeBufferWriter<T> {
-    pub fn lock<'a>(&'a mut self) -> InnerVecDequeAcquire<'a, T> {
+    pub fn lock(&mut self) -> InnerVecDequeAcquire<'_, T> {
         let inner_acquire = self.inner.lock();
         InnerVecDequeAcquire { inner_acquire }
     }

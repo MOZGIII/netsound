@@ -1,5 +1,6 @@
 use super::*;
 use crate::sample::Sample;
+use std::cmp::Ordering;
 
 pub enum NormalizeChannels<I>
 where
@@ -16,12 +17,14 @@ where
     I::Item: Sample,
 {
     pub fn new(source_iter: I, source_channels: usize, target_channels: usize) -> Self {
-        if source_channels > target_channels {
-            Self::Reduce(source_iter.cut_extra_channels(source_channels, target_channels))
-        } else if source_channels < target_channels {
-            Self::Expand(source_iter.add_silent_channels(source_channels, target_channels))
-        } else {
-            Self::Noop(source_iter)
+        match source_channels.cmp(&target_channels) {
+            Ordering::Greater => {
+                Self::Reduce(source_iter.cut_extra_channels(source_channels, target_channels))
+            }
+            Ordering::Less => {
+                Self::Expand(source_iter.add_silent_channels(source_channels, target_channels))
+            }
+            Ordering::Equal => Self::Noop(source_iter),
         }
     }
 }

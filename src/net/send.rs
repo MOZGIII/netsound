@@ -83,7 +83,7 @@ where
                 }
                 Err(err) => {
                     error!("Encoding failed: {}", &err);
-                    return Err(err)?;
+                    return Err(err.into());
                 }
             };
             debug!("network send"; &self.stats);

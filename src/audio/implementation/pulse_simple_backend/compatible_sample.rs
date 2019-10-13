@@ -32,7 +32,7 @@ pub mod format {
         if S::pulse_sample_format() != spec.format {
             sample_formats_do_not_match();
         }
-        Format::<S>::new(spec.channels.into(), spec.rate.into())
+        Format::<S>::new(spec.channels.into(), spec.rate)
     }
 
     #[allow(dead_code)]

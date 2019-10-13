@@ -70,7 +70,7 @@ where
                     }
                     Err(err) => {
                         error!("Decoding failed: {}", &err);
-                        return Err(err)?;
+                        return Err(err.into());
                     }
                 };
             } else {

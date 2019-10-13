@@ -1,6 +1,6 @@
 use super::format::Format;
 
-static FORMATS: &'static [Format<f32>] = &[
+static FORMATS: &[Format<f32>] = &[
     Format::new(2, 48000),
     Format::new(1, 48000),
     Format::new(2, 24000),

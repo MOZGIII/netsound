@@ -47,6 +47,9 @@ where
 {
     type Ok = futures::Never;
 
+    // We're using macros here that unwrap the same code 32 times. Clippy seems
+    // to interpret this incorrectly. Disabling it as a palse-positive.
+    #[allow(clippy::cognitive_complexity)]
     async fn transcode_loop(&mut self) -> Result<Self::Ok, crate::Error> {
         let to_channels = self.to_channels;
         let this = &mut *self;
