@@ -2,7 +2,7 @@ use crate::sample::Sample;
 use crate::sample_type_name::sample_type_name;
 use std::marker::PhantomData;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Format<S: Sample> {
     pub channels: u16,
     pub sample_rate: u32,
