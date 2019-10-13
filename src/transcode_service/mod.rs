@@ -1,4 +1,5 @@
 use crate::future::select_first;
+use crate::log::*;
 use crate::transcode::Transcode;
 
 pub struct TranscodeService<TCaptureTranscoder, TPlaybackTranscoder> {
@@ -14,8 +15,12 @@ where
 {
     pub async fn transcode_loop(&mut self) -> Result<T, crate::Error> {
         select_first(
-            self.capture_transcoder.transcode_loop(),
-            self.playback_transcoder.transcode_loop(),
+            self.capture_transcoder
+                .transcode_loop()
+                .with_logger(logger().new(o!("logger" => "transcode::capture"))),
+            self.playback_transcoder
+                .transcode_loop()
+                .with_logger(logger().new(o!("logger" => "transcode::playback"))),
         )
         .await
     }
