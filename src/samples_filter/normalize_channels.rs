@@ -1,4 +1,5 @@
 use super::*;
+use crate::log::*;
 use crate::sample::Sample;
 use std::cmp::Ordering;
 
@@ -19,12 +20,29 @@ where
     pub fn new(source_iter: I, source_channels: usize, target_channels: usize) -> Self {
         match source_channels.cmp(&target_channels) {
             Ordering::Greater => {
+                trace!(
+                    "reducing channels normization: {} => {}",
+                    source_channels,
+                    target_channels
+                );
                 Self::Reduce(source_iter.cut_extra_channels(source_channels, target_channels))
             }
             Ordering::Less => {
+                trace!(
+                    "expanding channels normization: {} => {}",
+                    source_channels,
+                    target_channels
+                );
                 Self::Expand(source_iter.add_silent_channels(source_channels, target_channels))
             }
-            Ordering::Equal => Self::Noop(source_iter),
+            Ordering::Equal => {
+                trace!(
+                    "noop channels normization: {} => {}",
+                    source_channels,
+                    target_channels
+                );
+                Self::Noop(source_iter)
+            }
         }
     }
 }
