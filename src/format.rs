@@ -1,7 +1,7 @@
 use crate::sample::Sample;
 use std::marker::PhantomData;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct Format<S: Sample> {
     pub channels: u16,
     pub sample_rate: u32,
@@ -15,5 +15,25 @@ impl<S: Sample> Format<S> {
             sample_rate,
             sample_type: PhantomData,
         }
+    }
+}
+
+impl<S: Sample> std::fmt::Debug for Format<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Format")
+            .field("channels", &self.channels)
+            .field("sample_rate", &self.sample_rate)
+            .field("sample_type", &self.sample_type)
+            .finish()
+    }
+}
+
+impl<S: Sample> std::fmt::Display for Format<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}/{}/{:?}",
+            &self.channels, &self.sample_rate, &self.sample_type
+        )
     }
 }
