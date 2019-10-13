@@ -22,7 +22,7 @@ where
         self,
         request_capture_formats: &'a [Format<TCaptureSample>],
         request_playback_formats: &'a [Format<TPlaybackSample>],
-        logger: Logger,
+        mut logger: Logger,
     ) -> Result<
         (
             audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
@@ -39,10 +39,12 @@ where
         let cpal_output_device = default::output_device(&cpal_host)?;
 
         let capture_format = choose_format(
+            &mut logger,
             cpal_input_device.supported_input_formats()?,
             request_capture_formats,
         )?;
         let playback_format = choose_format(
+            &mut logger,
             cpal_output_device.supported_output_formats()?,
             request_playback_formats,
         )?;

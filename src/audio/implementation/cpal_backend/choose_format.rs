@@ -1,7 +1,9 @@
 use super::{format, CompatibleSample};
 use crate::format::Format;
+use crate::log::no_scopes::*;
 
 pub fn choose_format<S: CompatibleSample, I: Iterator<Item = cpal::SupportedFormat>>(
+    logger: &mut Logger,
     iter: I,
     requested_formats: &[Format<S>],
 ) -> Result<Format<S>, super::errors::Error> {
@@ -10,7 +12,13 @@ pub fn choose_format<S: CompatibleSample, I: Iterator<Item = cpal::SupportedForm
 
     // Try to use format from the preferred formats list.
     for requested_format in requested_formats {
+        trace!(logger, "Trying requested format {:?}", requested_format);
         for supported_format in &supported_formats {
+            trace!(
+                logger,
+                "Matching with supported format {:?}",
+                supported_format
+            );
             if supported_format.data_type != cpal_sample_format {
                 continue;
             }
@@ -23,6 +31,12 @@ pub fn choose_format<S: CompatibleSample, I: Iterator<Item = cpal::SupportedForm
                 continue;
             }
 
+            trace!(
+                logger,
+                "Matched requested format {:?} with supported format {:?}",
+                requested_format,
+                supported_format
+            );
             return Ok(*requested_format);
         }
     }
