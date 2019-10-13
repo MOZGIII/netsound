@@ -81,7 +81,7 @@ fn errmain() -> Result<(), Error> {
 
         if audio_format == net_format {
             info!(
-                "capture trascoder is noop: {} => {}",
+                "capture transcoder is noop: {} => {}",
                 audio_format, net_format,
             );
 
@@ -103,7 +103,7 @@ fn errmain() -> Result<(), Error> {
             let net_channels = net_format.channels.try_into()?;
 
             let (audio_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
-            let (trascoder_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
+            let (transcoder_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
 
             (
                 Box::new(transcode::resampler::Resampler::new(
@@ -112,7 +112,7 @@ fn errmain() -> Result<(), Error> {
                     audio_sample_rate,
                     net_sample_rate,
                     transcoder_reader,
-                    trascoder_writer,
+                    transcoder_writer,
                 )) as DynTranscoder,
                 audio_writer,
                 net_reader,
@@ -125,7 +125,7 @@ fn errmain() -> Result<(), Error> {
 
         if net_format == audio_format {
             info!(
-                "playback trascoder is noop: {} => {}",
+                "playback transcoder is noop: {} => {}",
                 net_format, audio_format,
             );
 
@@ -147,7 +147,7 @@ fn errmain() -> Result<(), Error> {
             let audio_sample_rate = audio_format.sample_rate.into();
 
             let (net_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
-            let (trascoder_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
+            let (transcoder_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
 
             (
                 Box::new(transcode::resampler::Resampler::new(
@@ -156,7 +156,7 @@ fn errmain() -> Result<(), Error> {
                     net_sample_rate,
                     audio_sample_rate,
                     transcoder_reader,
-                    trascoder_writer,
+                    transcoder_writer,
                 )) as DynTranscoder,
                 net_writer,
                 audio_reader,
