@@ -82,8 +82,9 @@ fn errmain() -> Result<(), Error> {
         if audio_format == net_format {
             info!(
                 "capture trascoder is noop: {} => {}",
-                audio_format, net_format
+                audio_format, net_format,
             );
+
             let (audio_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
             (
                 Box::new(transcode::noop::Noop) as DynTranscoder,
@@ -91,15 +92,15 @@ fn errmain() -> Result<(), Error> {
                 net_reader,
             )
         } else {
+            info!(
+                "capture resampler config: {} => {}",
+                audio_format, net_format,
+            );
+
             let audio_sample_rate = audio_format.sample_rate.into();
             let audio_channels = audio_format.channels.try_into()?;
             let net_sample_rate = net_format.sample_rate.into();
             let net_channels = net_format.channels.try_into()?;
-
-            info!(
-                "capture resampler config: {} @ {} => {} @ {}",
-                audio_channels, audio_sample_rate, net_channels, net_sample_rate,
-            );
 
             let (audio_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
             let (trascoder_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
@@ -125,8 +126,9 @@ fn errmain() -> Result<(), Error> {
         if net_format == audio_format {
             info!(
                 "playback trascoder is noop: {} => {}",
-                net_format, audio_format
+                net_format, audio_format,
             );
+
             let (net_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
             (
                 Box::new(transcode::noop::Noop) as DynTranscoder,
@@ -134,15 +136,15 @@ fn errmain() -> Result<(), Error> {
                 audio_reader,
             )
         } else {
+            info!(
+                "playback resampler config: {} => {}",
+                net_format, audio_format,
+            );
+
             let net_channels = net_format.channels.try_into()?;
             let audio_channels = audio_format.channels.try_into()?;
             let net_sample_rate = net_format.sample_rate.into();
             let audio_sample_rate = audio_format.sample_rate.into();
-
-            info!(
-                "playback resampler config: {} @ {} => {} @ {}",
-                net_channels, net_sample_rate, audio_channels, audio_sample_rate,
-            );
 
             let (net_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
             let (trascoder_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
