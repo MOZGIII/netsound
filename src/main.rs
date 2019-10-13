@@ -64,18 +64,39 @@ fn errmain() -> Result<(), Error> {
     let (negotiated_formats, continuation) =
         audio_backends::negotiate_formats(backend_to_use, audio_backend_build_params)?;
 
+    let net_capture_format = format::Format::new(
+        std::cmp::min(2, negotiated_formats.capture_format.channels),
+        48000,
+    );
+    let net_playback_format = format::Format::new(
+        std::cmp::min(2, negotiated_formats.playback_format.channels),
+        48000,
+    );
+
     use std::convert::TryInto;
     let (capture_transcoder, capture_data_writer, capture_data_reader) = {
-        let format = negotiated_formats.capture_format;
-        let channels = format.channels.try_into()?;
+        let audio_format = &negotiated_formats.capture_format;
+        let net_format = &net_capture_format;
+
+        let audio_sample_rate = audio_format.sample_rate.into();
+        let audio_channels = audio_format.channels.try_into()?;
+        let net_sample_rate = net_format.sample_rate.into();
+        let net_channels = net_format.channels.try_into()?;
+
+        info!(
+            "capture resampler config: {} @ {} => {} @ {}",
+            audio_channels, audio_sample_rate, net_channels, net_sample_rate,
+        );
+
         let (audio_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
         let (trascoder_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
+
         (
             transcode::resampler::Resampler::new(
-                channels,
-                std::cmp::min(2, channels),
-                format.sample_rate.into(),
-                48000.0,
+                audio_channels,
+                net_channels,
+                audio_sample_rate,
+                net_sample_rate,
                 transcoder_reader,
                 trascoder_writer,
             ),
@@ -84,16 +105,28 @@ fn errmain() -> Result<(), Error> {
         )
     };
     let (playback_transcoder, playback_data_writer, playback_data_reader) = {
-        let format = negotiated_formats.capture_format;
-        let channels = format.channels.try_into()?;
+        let net_format = &net_playback_format;
+        let audio_format = &negotiated_formats.playback_format;
+
+        let net_channels = net_format.channels.try_into()?;
+        let audio_channels = audio_format.channels.try_into()?;
+        let net_sample_rate = net_format.sample_rate.into();
+        let audio_sample_rate = audio_format.sample_rate.into();
+
+        info!(
+            "playback resampler config: {} @ {} => {} @ {}",
+            net_channels, net_sample_rate, audio_channels, audio_sample_rate,
+        );
+
         let (net_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
         let (trascoder_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
+
         (
             transcode::resampler::Resampler::new(
-                std::cmp::min(2, channels),
-                channels,
-                48000.0,
-                format.sample_rate.into(),
+                net_channels,
+                audio_channels,
+                net_sample_rate,
+                audio_sample_rate,
                 transcoder_reader,
                 trascoder_writer,
             ),
@@ -102,39 +135,30 @@ fn errmain() -> Result<(), Error> {
         )
     };
 
-    let resampled_capture_format = format::Format::new(
-        std::cmp::min(2, negotiated_formats.capture_format.channels),
-        48000,
-    );
-    let resampled_playback_format = format::Format::new(
-        std::cmp::min(2, negotiated_formats.playback_format.channels),
-        48000,
-    );
-
     let mut encoder: Box<dyn codec::Encoder<f32, _> + Send>;
     let mut decoder: Box<dyn codec::Decoder<f32, _> + Send>;
 
     match codec_to_use {
         CodecToUse::Opus => {
             let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                resampled_capture_format.sample_rate,
-                resampled_capture_format.channels,
+                net_capture_format.sample_rate,
+                net_capture_format.channels,
                 codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
             let opus_decoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                resampled_playback_format.sample_rate,
-                resampled_playback_format.channels,
+                net_playback_format.sample_rate,
+                net_playback_format.channels,
                 codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
 
             encoder = Box::new(codec::opus::make_encoder(
-                resampled_capture_format,
+                net_capture_format,
                 opus_encoder_buf,
             )?);
             decoder = Box::new(codec::opus::make_decoder(
-                resampled_playback_format,
+                net_playback_format,
                 opus_decoder_buf,
             )?);
         }
