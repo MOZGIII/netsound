@@ -1,6 +1,7 @@
 #![warn(rust_2018_idioms, missing_debug_implementations)]
 #![feature(const_fn)]
 #![feature(core_intrinsics)]
+#![warn(clippy::all)]
 
 use std::env;
 use std::net::SocketAddr;
