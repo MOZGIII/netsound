@@ -1,4 +1,5 @@
 use crate::sample::Sample;
+use crate::sample_type_name::sample_type_name;
 use std::marker::PhantomData;
 
 #[derive(Clone, Copy)]
@@ -23,7 +24,7 @@ impl<S: Sample> std::fmt::Debug for Format<S> {
         f.debug_struct("Format")
             .field("channels", &self.channels)
             .field("sample_rate", &self.sample_rate)
-            .field("sample_type", &self.sample_type)
+            .field("sample_type", &sample_type_name::<S>())
             .finish()
     }
 }
@@ -33,7 +34,9 @@ impl<S: Sample> std::fmt::Display for Format<S> {
         write!(
             f,
             "{}/{}/{:?}",
-            &self.channels, &self.sample_rate, &self.sample_type
+            &self.channels,
+            &self.sample_rate,
+            sample_type_name::<S>()
         )
     }
 }

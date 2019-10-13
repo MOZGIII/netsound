@@ -1,5 +1,6 @@
 #![warn(rust_2018_idioms, missing_debug_implementations)]
 #![feature(const_fn)]
+#![feature(core_intrinsics)]
 
 use std::env;
 use std::net::SocketAddr;
@@ -23,6 +24,7 @@ mod log;
 mod match_channels;
 mod net;
 mod sample;
+mod sample_type_name;
 mod samples_filter;
 mod transcode;
 mod transcode_service;
