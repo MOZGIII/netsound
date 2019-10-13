@@ -12,9 +12,6 @@ pub struct Decoder {
     pub(super) channels: usize,
 }
 
-// TODO: switch to `opus` crate and remove this.
-unsafe impl Send for Decoder {}
-
 impl Decoder {
     pub async fn decode_float<T>(
         &mut self,
