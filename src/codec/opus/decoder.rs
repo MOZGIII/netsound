@@ -28,7 +28,7 @@ impl Decoder {
         let audiosize = {
             let buf = &mut self.buf[..];
             trace!("opus: decoding buf {}", buf.len());
-            self.opus.decode_float(input, buf, fec)?
+            self.opus.decode_float(Some(input), buf, fec)?
         };
         let bufsize = audiosize * self.channels;
         let size = output

@@ -64,7 +64,7 @@ dependencies = [
 
 [[package]]
 name = "audiopus"
-version = "0.1.3"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "audiopus_sys 0.1.5 (git+https://github.com/MOZGIII/audiopus_sys.git?branch=bindgen-version)",
@@ -677,7 +677,7 @@ name = "netsound"
 version = "0.1.0"
 dependencies = [
  "async-trait 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "audiopus 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "audiopus 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "cpal 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam-utils 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1448,7 +1448,7 @@ dependencies = [
 "checksum arrayvec 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)" = "cd9fd44efafa8690358b7408d253adf110036b88f55672a933f01d616ad9b1b9"
 "checksum async-trait 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)" = "6f1418cdc602e31e3ffeea57d8481b8c5db895e733028c2552a06d5cf36beb91"
 "checksum atty 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)" = "1803c647a3ec87095e7ae7acfca019e98de5ec9a7d01343f611cf3152ed71a90"
-"checksum audiopus 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c5313b7d803514a297d2b454a263453f3b20092153760d9da37d1de48f540800"
+"checksum audiopus 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3743519567e9135cf6f9f1a509851cb0c8e4cb9d66feb286668afb1923bec458"
 "checksum audiopus_sys 0.1.5 (git+https://github.com/MOZGIII/audiopus_sys.git?branch=bindgen-version)" = "<none>"
 "checksum autocfg 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "b671c8fb71b457dd4ae18c4ba1e59aa81793daacc361d82fcd410cef0d491875"
 "checksum backtrace 0.3.38 (registry+https://github.com/rust-lang/crates.io-index)" = "690a62be8920ccf773ee00ef0968649b0e724cda8bd5b12286302b4ae955fdf5"
