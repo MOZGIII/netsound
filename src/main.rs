@@ -97,10 +97,10 @@ fn errmain() -> Result<(), Error> {
                 audio_format, net_format,
             );
 
-            let audio_sample_rate = audio_format.sample_rate.into();
             let audio_channels = audio_format.channels.try_into()?;
-            let net_sample_rate = net_format.sample_rate.into();
             let net_channels = net_format.channels.try_into()?;
+            let audio_sample_rate = audio_format.sample_rate.into();
+            let net_sample_rate = net_format.sample_rate.into();
 
             let (audio_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
             let (transcoder_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
