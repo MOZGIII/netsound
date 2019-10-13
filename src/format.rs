@@ -33,10 +33,10 @@ impl<S: Sample> std::fmt::Display for Format<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{}/{}/{:?}",
+            "[{}; {}] @ {}",
+            sample_type_name::<S>(),
             &self.channels,
             &self.sample_rate,
-            sample_type_name::<S>()
         )
     }
 }
