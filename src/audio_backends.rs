@@ -33,21 +33,29 @@ where
     pub logger: Logger,
 }
 
-pub fn negotiate_formats<'a, TCaptureDataWriter, TPlaybackDataReader>(
-    backend_to_use: AudioBackendToUse,
-    build_params: BuildParams<'a, f32, f32>,
-) -> Result<
+type NegotiateFormatsContinuationFn<TCaptureDataWriter, TPlaybackDataReader> =
+    dyn FnOnce(
+        TCaptureDataWriter,
+        TPlaybackDataReader,
+    ) -> Result<Box<dyn audio::Backend>, crate::Error>;
+
+type NegotiateFormatsResult<
+    TCaptureSample,
+    TPlaybackSample,
+    TCaptureDataWriter,
+    TPlaybackDataReader,
+> = Result<
     (
-        audio::NegotiatedFormats<f32, f32>,
-        Box<
-            dyn FnOnce(
-                TCaptureDataWriter,
-                TPlaybackDataReader,
-            ) -> Result<Box<dyn audio::Backend>, crate::Error>,
-        >,
+        audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
+        Box<NegotiateFormatsContinuationFn<TCaptureDataWriter, TPlaybackDataReader>>,
     ),
     crate::Error,
->
+>;
+
+pub fn negotiate_formats<TCaptureDataWriter, TPlaybackDataReader>(
+    backend_to_use: AudioBackendToUse,
+    build_params: BuildParams<'_, f32, f32>,
+) -> NegotiateFormatsResult<f32, f32, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureDataWriter: AsyncWriteItems<f32> + Unpin + Send + Sync + 'static,
     TPlaybackDataReader: AsyncReadItems<f32> + Unpin + Send + Sync + 'static,
@@ -58,20 +66,9 @@ where
     }
 }
 
-fn build_cpal<'a, TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>(
-    build_params: BuildParams<'a, TCaptureSample, TPlaybackSample>,
-) -> Result<
-    (
-        audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
-        Box<
-            dyn FnOnce(
-                TCaptureDataWriter,
-                TPlaybackDataReader,
-            ) -> Result<Box<dyn audio::Backend>, crate::Error>,
-        >,
-    ),
-    crate::Error,
->
+fn build_cpal<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>(
+    build_params: BuildParams<'_, TCaptureSample, TPlaybackSample>,
+) -> NegotiateFormatsResult<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: Sample + audio::cpal_backend::CompatibleSample + Send + Sync + 'static,
     TPlaybackSample: Sample + audio::cpal_backend::CompatibleSample + Send + Sync + 'static,
@@ -102,26 +99,9 @@ where
 }
 
 #[cfg(feature = "pulse_simple_backend")]
-fn build_pulse_simple<
-    'a,
-    TCaptureSample,
-    TPlaybackSample,
-    TCaptureDataWriter,
-    TPlaybackDataReader,
->(
-    build_params: BuildParams<'a, TCaptureSample, TPlaybackSample>,
-) -> Result<
-    (
-        audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
-        Box<
-            dyn FnOnce(
-                TCaptureDataWriter,
-                TPlaybackDataReader,
-            ) -> Result<Box<dyn audio::Backend>, crate::Error>,
-        >,
-    ),
-    crate::Error,
->
+fn build_pulse_simple<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>(
+    build_params: BuildParams<'_, TCaptureSample, TPlaybackSample>,
+) -> NegotiateFormatsResult<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: Sample + audio::pulse_simple_backend::CompatibleSample + Send + Sync + 'static,
     TPlaybackSample: Sample + audio::pulse_simple_backend::CompatibleSample + Send + Sync + 'static,
@@ -152,26 +132,9 @@ where
 }
 
 #[cfg(not(feature = "pulse_simple_backend"))]
-fn build_pulse_simple<
-    'a,
-    TCaptureSample,
-    TPlaybackSample,
-    TCaptureDataWriter,
-    TPlaybackDataReader,
->(
-    _build_params: BuildParams<'a, TCaptureSample, TPlaybackSample>,
-) -> Result<
-    (
-        audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
-        Box<
-            dyn FnOnce(
-                TCaptureDataWriter,
-                TPlaybackDataReader,
-            ) -> Result<Box<dyn audio::Backend>, crate::Error>,
-        >,
-    ),
-    crate::Error,
->
+fn build_pulse_simple<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>(
+    _build_params: BuildParams<'_, TCaptureSample, TPlaybackSample>,
+) -> NegotiateFormatsResult<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: Sample + Send + Sync + 'static,
     TPlaybackSample: Sample + Send + Sync + 'static,
