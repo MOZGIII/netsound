@@ -19,7 +19,7 @@ slog-json = { version = "2.3", features = ["nested-values"] }
 slog-env-cfg = "0.5"
 slog-scope = "4.1"
 slog-scope-futures = "0.1"
-slog_derive = "0.1"
+slog_derive = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 erased-serde = "0.3"
 libpulse-binding = { git = "https://github.com/MOZGIII/pulse-binding-rust.git", rev = "251032e29fa5ce287a814774d29378932afc0ab0", default-features = false, optional = true }
