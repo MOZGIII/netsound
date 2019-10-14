@@ -2,12 +2,15 @@ use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
 use crate::log::*;
 use crate::sample::Sample;
+use failure::format_err;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 use std::net::SocketAddr;
 use tokio::net::udp::split::UdpSocketSendHalf;
 
 use super::*;
+
+mod multisend;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, KV)]
 pub struct SendStats {
@@ -59,9 +62,11 @@ where
                     self.stats.bytes_encoded += bytes_to_send;
 
                     trace!("Send: before send_to");
-                    let bytes_sent = socket
-                        .send_to(&send_buf[..bytes_to_send], &peer_addr)
-                        .await?;
+                    let bytes_sent = multisend::ensure_same_sizes(
+                        multisend::multisend(&mut socket, &send_buf[..bytes_to_send], &[peer_addr])
+                            .await?,
+                    )
+                    .ok_or_else(|| format_err!("multisend has various results"))?;
                     trace!("Send: after send_to");
                     self.stats.packets_sent += 1;
                     self.stats.bytes_sent += bytes_sent;
