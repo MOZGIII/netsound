@@ -560,36 +560,36 @@ dependencies = [
 
 [[package]]
 name = "libpulse-binding"
-version = "2.6.0"
-source = "git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0#251032e29fa5ce287a814774d29378932afc0ab0"
+version = "2.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)",
- "libpulse-sys 1.5.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)",
+ "libpulse-sys 1.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "libpulse-simple-binding"
-version = "2.6.0"
-source = "git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0#251032e29fa5ce287a814774d29378932afc0ab0"
+version = "2.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "libpulse-binding 2.6.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)",
- "libpulse-simple-sys 1.5.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)",
- "libpulse-sys 1.5.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)",
+ "libpulse-binding 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-simple-sys 1.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-sys 1.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "libpulse-simple-sys"
-version = "1.5.0"
-source = "git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0#251032e29fa5ce287a814774d29378932afc0ab0"
+version = "1.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "libpulse-sys 1.5.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)",
+ "libpulse-sys 1.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pkg-config 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "libpulse-sys"
-version = "1.5.0"
-source = "git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0#251032e29fa5ce287a814774d29378932afc0ab0"
+version = "1.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)",
  "pkg-config 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -685,8 +685,8 @@ dependencies = [
  "failure 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-preview 0.3.0-alpha.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-test-preview 0.3.0-alpha.19 (registry+https://github.com/rust-lang/crates.io-index)",
- "libpulse-binding 2.6.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)",
- "libpulse-simple-binding 2.6.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)",
+ "libpulse-binding 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-simple-binding 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "mio 0.6.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "sample 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1504,10 +1504,10 @@ dependencies = [
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 "checksum libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)" = "34fcd2c08d2f832f376f4173a231990fa5aef4e99fb569867318a227ef4c06ba"
 "checksum libloading 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f2b111a074963af1d37a139918ac6d49ad1d0d5e47f72fd55388619691a7d753"
-"checksum libpulse-binding 2.6.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)" = "<none>"
-"checksum libpulse-simple-binding 2.6.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)" = "<none>"
-"checksum libpulse-simple-sys 1.5.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)" = "<none>"
-"checksum libpulse-sys 1.5.0 (git+https://github.com/MOZGIII/pulse-binding-rust.git?rev=251032e29fa5ce287a814774d29378932afc0ab0)" = "<none>"
+"checksum libpulse-binding 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)" = "19be74fbf1edb8e7b367c4afed74590b0a677328c913f2d0b1323efc9014c883"
+"checksum libpulse-simple-binding 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)" = "84c3b4ce1121a4d9755923b981b73f7a3d98f19f4a604dc13dac6edfb44a9918"
+"checksum libpulse-simple-sys 1.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "09125d6c4b831cfc4b19e833162576c53e861a7ffe972921e62bca58fde0f9bf"
+"checksum libpulse-sys 1.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "0f0eb9328ce7e28a102ffa7769918adf0b329e31d90e2a2f9d787a841b5ac752"
 "checksum lock_api 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f8912e782533a93a167888781b836336a6ca5da6175c05944c86cf28c31104dc"
 "checksum log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)" = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
 "checksum memchr 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "88579771288728879b57485cc7d6b07d648c9f0141eb955f8ab7f9d45394468e"
