@@ -79,7 +79,7 @@ where
     pub async fn net_loop(
         &mut self,
         socket: UdpSocket,
-        peer_addr: SocketAddr,
+        peer_addrs: Vec<SocketAddr>,
     ) -> Result<futures::Never, crate::Error> {
         let send_service = &mut self.send_service;
         let recv_service = &mut self.recv_service;
@@ -88,7 +88,7 @@ where
 
         use futures::FutureExt;
         let send_future = send_service
-            .send_loop(socket_send_half, peer_addr)
+            .send_loop(socket_send_half, peer_addrs)
             .with_logger(logger().new(o!("logger" => "net::send")))
             .boxed();
         let recv_future = recv_service

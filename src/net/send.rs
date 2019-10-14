@@ -44,7 +44,7 @@ where
     pub async fn send_loop(
         &mut self,
         mut socket: UdpSocketSendHalf,
-        peer_addr: SocketAddr,
+        peer_addrs: Vec<SocketAddr>,
     ) -> Result<futures::Never, crate::Error> {
         let mut send_buf = [0u8; SIZE];
         loop {
@@ -63,8 +63,12 @@ where
 
                     trace!("Send: before send_to");
                     let bytes_sent = multisend::ensure_same_sizes(
-                        multisend::multisend(&mut socket, &send_buf[..bytes_to_send], &[peer_addr])
-                            .await?,
+                        multisend::multisend(
+                            &mut socket,
+                            &send_buf[..bytes_to_send],
+                            peer_addrs.iter(),
+                        )
+                        .await?,
                     )
                     .ok_or_else(|| format_err!("multisend has various results"))?;
                     trace!("Send: after send_to");

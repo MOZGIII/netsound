@@ -5,6 +5,7 @@
 
 use std::env;
 use std::net::SocketAddr;
+use std::str::FromStr;
 
 use failure::Error;
 
@@ -39,16 +40,27 @@ fn errmain() -> Result<(), Error> {
     let logger_root = slog::Logger::root(logger_cfg.build(), o![]);
     let _logger_guard = slog_scope::set_global_logger(logger_root);
 
-    let bind_addr = env::args()
-        .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
-    let send_addr = env::args().nth(2).unwrap_or_else(|| bind_addr.clone());
+    let mut args = env::args().skip(1);
+
+    let bind_addr = args.next().unwrap_or_else(|| "127.0.0.1:8080".to_string());
+    let send_addrs = {
+        let vec: Vec<_> = args.collect();
+        if vec.is_empty() {
+            vec![bind_addr.clone()]
+        } else {
+            vec
+        }
+    };
     let bind_addr: SocketAddr = bind_addr.parse()?;
-    let send_addr: SocketAddr = send_addr.parse()?;
+    let send_addrs = {
+        let result: Result<Vec<SocketAddr>, <SocketAddr as FromStr>::Err> =
+            send_addrs.into_iter().map(|e| e.parse()).collect();
+        result?
+    };
 
     let socket = block_on(UdpSocket::bind(&bind_addr))?;
     slog_info!(logger(), "Listening on: {}", socket.local_addr()?);
-    info!("Sending to: {}", &send_addr);
+    info!("Sending to: {:?}", &send_addrs);
 
     let codec_to_use = CodecToUse::from_env()?;
     info!("Using codec: {:?}", codec_to_use);
@@ -225,7 +237,7 @@ fn errmain() -> Result<(), Error> {
     let rt = Runtime::new()?;
     rt.block_on(select_first(
         net_service
-            .net_loop(socket, send_addr)
+            .net_loop(socket, send_addrs)
             .with_logger(logger().new(o!("logger" => "net")))
             .boxed(),
         transcode_service
