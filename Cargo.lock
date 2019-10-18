@@ -687,7 +687,6 @@ dependencies = [
  "futures-test-preview 0.3.0-alpha.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "libpulse-binding 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libpulse-simple-binding 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "mio 0.6.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "sample 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
