@@ -690,7 +690,7 @@ dependencies = [
  "sample 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "slog-env-cfg 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog-env-cfg 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog-json 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog-scope 4.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog-scope-futures 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1013,7 +1013,7 @@ dependencies = [
 
 [[package]]
 name = "slog-env-cfg"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "slog 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1556,7 +1556,7 @@ dependencies = [
 "checksum slab 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 "checksum slog 2.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "1cc9c640a4adbfbcc11ffb95efe5aa7af7309e002adab54b185507dbf2377b99"
 "checksum slog-async 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e544d16c6b230d84c866662fe55e31aacfca6ae71e6fc49ae9a311cb379bfc2f"
-"checksum slog-env-cfg 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "03fd49d7c3d4a62e5ad1732ecb8ca8993a481894506dfd0457e4e1dbe3b5bd0e"
+"checksum slog-env-cfg 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d436d73c5ddf0c9c3ba8e513ba17bd55fe8bbc36bdc1708b738329a3ca64bcc5"
 "checksum slog-envlogger 2.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "906a1a0bc43fed692df4b82a5e2fbfc3733db8dad8bb514ab27a4f23ad04f5c0"
 "checksum slog-json 2.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ddc0d2aff1f8f325ef660d9a0eb6e6dcd20b30b3f581a5897f58bf42d061c37a"
 "checksum slog-scope 4.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "53a5819e0ab73a542e42b0d8ce8bf9e0a470c8f0a370e176a18855566332a120"

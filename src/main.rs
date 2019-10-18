@@ -36,7 +36,7 @@ use log::*;
 
 fn errmain() -> Result<(), Error> {
     let mut logger_cfg = slog_env_cfg::config_from_env()?;
-    logger_cfg.envlogger_override_default_filter = Some("trace".to_string());
+    logger_cfg.env_logger_override_default_filter = Some("trace".to_string());
     let logger_root = slog::Logger::root(logger_cfg.build(), o![]);
     let _logger_guard = slog_scope::set_global_logger(logger_root);
 

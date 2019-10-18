@@ -15,7 +15,7 @@ tokio = "0.2.0-alpha.6"
 async-trait = "0.1"
 slog = { version = "2.5", features = ["nested-values"] }
 slog-json = { version = "2.3", features = ["nested-values"] }
-slog-env-cfg = "0.5"
+slog-env-cfg = "0.6"
 slog-scope = "4.1"
 slog-scope-futures = "0.1"
 slog_derive = "0.2"
