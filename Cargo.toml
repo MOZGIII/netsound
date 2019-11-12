@@ -17,14 +17,14 @@ async-trait = "0.1"
 slog = { version = "2.5", features = ["nested-values"] }
 slog-json = { version = "2.3", features = ["nested-values"] }
 slog-env-cfg = "0.6"
-slog-scope = "4.1"
+slog-scope = "4.3"
 slog-scope-futures = "0.1"
 slog_derive = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 erased-serde = "0.3"
-libpulse-binding = { version = "2.13", default-features = false, optional = true }
-libpulse-simple-binding = { version = "2.13", default-features = false, optional = true }
-crossbeam-utils = { version = "0.6", optional = true }
+libpulse-binding = { version = "2.14", default-features = false, optional = true }
+libpulse-simple-binding = { version = "2.14", default-features = false, optional = true }
+crossbeam-utils = { version = "0.7", optional = true }
 
 [dev-dependencies]
 futures-test = "0.3"
