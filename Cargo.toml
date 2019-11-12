@@ -21,7 +21,7 @@ slog-scope-futures = "0.1"
 slog_derive = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 erased-serde = "0.3"
-libpulse-binding = { version = "2.13", default-features = false, optional = true }
+libpulse-binding = { version = "2.14", default-features = false, optional = true }
 libpulse-simple-binding = { version = "2.13", default-features = false, optional = true }
 crossbeam-utils = { version = "0.6", optional = true }
 
