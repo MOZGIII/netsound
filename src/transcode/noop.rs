@@ -6,7 +6,7 @@ pub struct Noop;
 
 #[async_trait]
 impl Transcode for Noop {
-    type Ok = futures::Never;
+    type Ok = futures::never::Never;
 
     async fn transcode_loop(&mut self) -> std::result::Result<Self::Ok, crate::Error> {
         loop {

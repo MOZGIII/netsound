@@ -41,7 +41,7 @@ where
     pub async fn recv_loop(
         &mut self,
         mut socket: UdpSocketRecvHalf,
-    ) -> Result<futures::Never, crate::Error> {
+    ) -> Result<futures::never::Never, crate::Error> {
         let mut recv_buf = [0u8; SIZE];
         loop {
             trace!("Recv loop begin");

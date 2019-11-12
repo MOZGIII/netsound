@@ -45,7 +45,7 @@ where
         &mut self,
         mut socket: UdpSocketSendHalf,
         peer_addrs: Vec<SocketAddr>,
-    ) -> Result<futures::Never, crate::Error> {
+    ) -> Result<futures::never::Never, crate::Error> {
         let mut send_buf = [0u8; SIZE];
         loop {
             trace!("Send loop begin");

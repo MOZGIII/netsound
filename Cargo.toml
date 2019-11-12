@@ -10,7 +10,7 @@ audiopus = "0.2"
 failure = "0.1"
 cpal = "0.10"
 sample = "0.10"
-futures-preview = { version = "0.3.0-alpha.19", features = ["unstable", "async-await", "bilock"] }
+futures = { version = "0.3", features = ["unstable", "async-await", "bilock"] }
 tokio = "0.2.0-alpha.6"
 async-trait = "0.1"
 slog = { version = "2.5", features = ["nested-values"] }
@@ -26,7 +26,7 @@ libpulse-simple-binding = { version = "2.13", default-features = false, optional
 crossbeam-utils = { version = "0.6", optional = true }
 
 [dev-dependencies]
-futures-test-preview = "0.3.0-alpha.19"
+futures-test = "0.3"
 
 [features]
 pulse_simple_backend = ["libpulse-binding", "libpulse-simple-binding", "crossbeam-utils"]

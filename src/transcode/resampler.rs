@@ -45,7 +45,7 @@ impl<S> Transcode for Resampler<S>
 where
     S: Sample + Duplex<f64> + Unpin,
 {
-    type Ok = futures::Never;
+    type Ok = futures::never::Never;
 
     // We're using macros here that unwrap the same code 32 times. Clippy seems
     // to interpret this incorrectly. Disabling it as a palse-positive.

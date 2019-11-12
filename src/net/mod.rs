@@ -80,7 +80,7 @@ where
         &mut self,
         socket: UdpSocket,
         peer_addrs: Vec<SocketAddr>,
-    ) -> Result<futures::Never, crate::Error> {
+    ) -> Result<futures::never::Never, crate::Error> {
         let send_service = &mut self.send_service;
         let recv_service = &mut self.recv_service;
 

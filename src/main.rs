@@ -86,7 +86,7 @@ fn errmain() -> Result<(), Error> {
     );
 
     use std::convert::TryInto;
-    type DynTranscoder = Box<dyn transcode::Transcode<Ok = futures::Never> + Send>;
+    type DynTranscoder = Box<dyn transcode::Transcode<Ok = futures::never::Never> + Send>;
     let (capture_transcoder, capture_data_writer, capture_data_reader) = {
         let audio_format = &negotiated_formats.capture_format;
         let net_format = &net_capture_format;
