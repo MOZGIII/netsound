@@ -6,7 +6,7 @@ use failure::format_err;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 use std::net::SocketAddr;
-use tokio::net::udp::split::UdpSocketSendHalf;
+use tokio::net::udp::SendHalf;
 
 use super::*;
 
@@ -43,7 +43,7 @@ where
 {
     pub async fn send_loop(
         &mut self,
-        mut socket: UdpSocketSendHalf,
+        mut socket: SendHalf,
         peer_addrs: Vec<SocketAddr>,
     ) -> Result<futures::never::Never, crate::Error> {
         let mut send_buf = [0u8; SIZE];

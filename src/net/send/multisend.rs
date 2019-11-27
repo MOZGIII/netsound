@@ -1,9 +1,9 @@
 use std::borrow::Borrow;
 use std::net::SocketAddr;
-use tokio::net::udp::split::UdpSocketSendHalf;
+use tokio::net::udp::SendHalf;
 
 pub async fn multisend<'a, I>(
-    socket: &mut UdpSocketSendHalf,
+    socket: &mut SendHalf,
     buf: &[u8],
     peer_addrs: I,
 ) -> std::io::Result<Vec<usize>>

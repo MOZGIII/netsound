@@ -4,7 +4,7 @@ use crate::log::*;
 use crate::sample::Sample;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
-use tokio::net::udp::split::UdpSocketRecvHalf;
+use tokio::net::udp::RecvHalf;
 
 use super::*;
 
@@ -40,7 +40,7 @@ where
 {
     pub async fn recv_loop(
         &mut self,
-        mut socket: UdpSocketRecvHalf,
+        mut socket: RecvHalf,
     ) -> Result<futures::never::Never, crate::Error> {
         let mut recv_buf = [0u8; SIZE];
         loop {

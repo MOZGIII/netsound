@@ -9,7 +9,6 @@ use std::str::FromStr;
 
 use failure::Error;
 
-use futures::executor::block_on;
 use tokio::{net::UdpSocket, runtime::Runtime};
 
 use std::marker::PhantomData;
@@ -58,7 +57,11 @@ fn errmain() -> Result<(), Error> {
         result?
     };
 
-    let socket = block_on(UdpSocket::bind(&bind_addr))?;
+    use future::select_first;
+    use futures::FutureExt;
+    let mut rt = Runtime::new()?;
+
+    let socket = rt.block_on(UdpSocket::bind(&bind_addr))?;
     slog_info!(logger(), "Listening on: {}", socket.local_addr()?);
     info!("Sending to: {:?}", &send_addrs);
 
@@ -232,9 +235,6 @@ fn errmain() -> Result<(), Error> {
         },
     };
 
-    use future::select_first;
-    use futures::FutureExt;
-    let rt = Runtime::new()?;
     rt.block_on(select_first(
         net_service
             .net_loop(socket, send_addrs)

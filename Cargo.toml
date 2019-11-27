@@ -12,7 +12,7 @@ failure = "0.1"
 cpal = "0.10"
 sample = "0.10"
 futures = { version = "0.3", features = ["unstable", "async-await", "bilock"] }
-tokio = "0.2.0-alpha.6"
+tokio = { version = "0.2", features = ["full"] }
 async-trait = "0.1"
 slog = { version = "2.5", features = ["nested-values"] }
 slog-json = { version = "2.3", features = ["nested-values"] }
