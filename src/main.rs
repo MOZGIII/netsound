@@ -245,8 +245,6 @@ fn errmain() -> Result<(), Error> {
             .with_logger(logger().new(o!("logger" => "transcode")))
             .boxed(),
     ))?;
-
-    Ok(())
 }
 
 fn main() {
