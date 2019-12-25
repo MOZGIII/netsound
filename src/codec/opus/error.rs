@@ -1,5 +1,6 @@
 use std::fmt;
 use std::io;
+use std::num;
 
 #[derive(Debug)]
 pub enum Error {
@@ -8,8 +9,9 @@ pub enum Error {
         samples_available: usize,
         samples_required: usize,
     },
-    OpusError(audiopus::Error),
-    IoError(io::Error),
+    TryFromInt(num::TryFromIntError),
+    Opus(audiopus::Error),
+    Io(io::Error),
 }
 
 impl fmt::Display for Error {
@@ -23,8 +25,9 @@ impl fmt::Display for Error {
                 "Not enough data: {} samples available, {} samples required",
                 samples_available, samples_required
             ),
-            Error::OpusError(err) => write!(f, "Opus Error: {}", err),
-            Error::IoError(err) => write!(f, "IO Error: {}", err),
+            Error::TryFromInt(err) => write!(f, "Try From Int Error: {}", err),
+            Error::Opus(err) => write!(f, "Opus Error: {}", err),
+            Error::Io(err) => write!(f, "IO Error: {}", err),
         }
     }
 }
@@ -33,7 +36,7 @@ impl std::error::Error for Error {}
 
 impl From<audiopus::Error> for Error {
     fn from(err: audiopus::Error) -> Self {
-        Error::OpusError(err)
+        Error::Opus(err)
     }
 }
 
@@ -49,9 +52,7 @@ impl Into<super::super::EncodingError> for Error {
 impl Into<super::super::DecodingError> for Error {
     fn into(self) -> super::super::DecodingError {
         match self {
-            Error::OpusError(audiopus::Error::EmptyPacket) => {
-                super::super::DecodingError::EmptyPacket
-            }
+            Error::Opus(audiopus::Error::EmptyPacket) => super::super::DecodingError::EmptyPacket,
             err => super::super::DecodingError::Other(err.into()),
         }
     }
@@ -59,6 +60,12 @@ impl Into<super::super::DecodingError> for Error {
 
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
-        Error::IoError(err)
+        Error::Io(err)
+    }
+}
+
+impl From<num::TryFromIntError> for Error {
+    fn from(err: num::TryFromIntError) -> Self {
+        Error::TryFromInt(err)
     }
 }

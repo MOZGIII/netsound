@@ -48,6 +48,7 @@ where
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait AddSilentChannelsExt: Iterator + Sized
 where
     Self::Item: Sample,

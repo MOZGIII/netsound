@@ -7,20 +7,23 @@ pub use self::encoder::Encoder;
 pub use self::error::Error;
 
 use crate::format::Format;
-use audiopus::TryFrom;
+use audiopus::TryFrom as AudiopusTryFrom;
+use std::convert::TryFrom;
 
 pub fn make_encoder(format: Format<f32>, buf: Box<[f32]>) -> Result<Encoder, Error> {
     #[allow(unstable_name_collisions)]
-    let sample_rate = audiopus::SampleRate::try_from(format.sample_rate as i32)?;
-    let channels = audiopus::Channels::try_from(i32::from(format.channels))?;
+    let sample_rate: audiopus::SampleRate =
+        AudiopusTryFrom::try_from(i32::try_from(format.sample_rate)?)?;
+    let channels: audiopus::Channels = AudiopusTryFrom::try_from(i32::from(format.channels))?;
     let enc = audiopus::coder::Encoder::new(sample_rate, channels, audiopus::Application::Audio)?;
     Ok(Encoder { opus: enc, buf })
 }
 
 pub fn make_decoder(format: Format<f32>, buf: Box<[f32]>) -> Result<Decoder, Error> {
     #[allow(unstable_name_collisions)]
-    let sample_rate = audiopus::SampleRate::try_from(format.sample_rate as i32)?;
-    let channels = audiopus::Channels::try_from(i32::from(format.channels))?;
+    let sample_rate: audiopus::SampleRate =
+        AudiopusTryFrom::try_from(i32::try_from(format.sample_rate)?)?;
+    let channels: audiopus::Channels = AudiopusTryFrom::try_from(i32::from(format.channels))?;
     let dec = audiopus::coder::Decoder::new(sample_rate, channels)?;
     Ok(Decoder {
         opus: dec,
@@ -63,6 +66,7 @@ pub enum SupportedSampleRate {
 }
 
 #[allow(unused_variables)]
+#[allow(clippy::needless_pass_by_value)]
 pub fn buf_size(
     sample_rate_hz: u32,
     channels: u16,

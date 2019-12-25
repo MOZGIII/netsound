@@ -9,6 +9,7 @@ pub use read_items::*;
 mod read_exact_items;
 pub use read_exact_items::*;
 
+#[allow(clippy::module_name_repetitions)]
 pub trait AsyncWriteItemsExt<T: Unpin>: AsyncWriteItems<T> {
     fn write_items<'a>(&'a mut self, buf: &'a [T], wait_mode: WaitMode) -> WriteItems<'a, T, Self>
     where
@@ -20,6 +21,7 @@ pub trait AsyncWriteItemsExt<T: Unpin>: AsyncWriteItems<T> {
 
 impl<T: Unpin, W: AsyncWriteItems<T> + ?Sized> AsyncWriteItemsExt<T> for W {}
 
+#[allow(clippy::module_name_repetitions)]
 pub trait AsyncReadItemsExt<T: Unpin>: AsyncReadItems<T> {
     fn read_items<'a>(&'a mut self, buf: &'a mut [T], wait_mode: WaitMode) -> ReadItems<'a, T, Self>
     where

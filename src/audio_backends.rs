@@ -53,7 +53,7 @@ type NegotiateFormatsResult<
 >;
 
 pub fn negotiate_formats<TCaptureDataWriter, TPlaybackDataReader>(
-    backend_to_use: AudioBackendToUse,
+    backend_to_use: &AudioBackendToUse,
     build_params: BuildParams<'_, f32, f32>,
 ) -> NegotiateFormatsResult<f32, f32, TCaptureDataWriter, TPlaybackDataReader>
 where
@@ -132,6 +132,7 @@ where
 }
 
 #[cfg(not(feature = "pulse_simple_backend"))]
+#[allow(clippy::needless_pass_by_value)]
 fn build_pulse_simple<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>(
     _build_params: BuildParams<'_, TCaptureSample, TPlaybackSample>,
 ) -> NegotiateFormatsResult<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>

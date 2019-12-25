@@ -11,7 +11,6 @@ where
 
 pub fn take_first<T, A, B>(selected: Either<(T, B), (T, A)>) -> T {
     match selected {
-        Either::Left((x, _)) => x,
-        Either::Right((x, _)) => x,
+        Either::Left((x, _)) | Either::Right((x, _)) => x,
     }
 }

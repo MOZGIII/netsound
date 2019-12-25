@@ -1,11 +1,13 @@
 use std::fmt;
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub enum EncodingError {
     NotEnoughData,
     Other(crate::Error),
 }
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub enum DecodingError {
     EmptyPacket,

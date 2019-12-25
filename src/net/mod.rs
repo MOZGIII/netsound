@@ -4,6 +4,7 @@ use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::*;
 use crate::sample::Sample;
 use crate::UdpSocket;
+use futures::FutureExt;
 use std::net::SocketAddr;
 
 mod recv;
@@ -12,6 +13,7 @@ mod send;
 pub use recv::*;
 pub use send::*;
 
+#[allow(clippy::module_name_repetitions)]
 pub struct NetService<
     'a,
     TCaptureSample,
@@ -86,7 +88,6 @@ where
 
         let (socket_recv_half, socket_send_half) = socket.split();
 
-        use futures::FutureExt;
         let send_future = send_service
             .send_loop(socket_send_half, peer_addrs)
             .with_logger(logger().new(o!("logger" => "net::send")))

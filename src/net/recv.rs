@@ -8,6 +8,7 @@ use tokio::net::udp::RecvHalf;
 
 use super::*;
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize, KV)]
 pub struct RecvStats {
     pub data_arrived_but_was_dropped_due_to_lock_conention: usize,
@@ -19,6 +20,7 @@ pub struct RecvStats {
     pub empty_packets_decoding_errors: usize,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub struct RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TDecoder>
 where
     TPlaybackSample: Sample,
@@ -42,7 +44,7 @@ where
         &mut self,
         mut socket: RecvHalf,
     ) -> Result<futures::never::Never, crate::Error> {
-        let mut recv_buf = [0u8; SIZE];
+        let mut recv_buf = [0_u8; SIZE];
         loop {
             trace!("Recv loop begin");
 

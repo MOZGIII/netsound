@@ -35,6 +35,7 @@ where
     pub playback_format: Format<TPlaybackSample>,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait BackendBuilder {
     type Backend: Backend;
     fn build(self) -> Result<Self::Backend, Error>;

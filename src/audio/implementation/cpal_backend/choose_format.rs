@@ -42,9 +42,9 @@ pub fn choose_format<S: CompatibleSample, I: Iterator<Item = cpal::SupportedForm
     }
 
     // Preferred format wasn't found, use the first one that's supported.
-    if let Some(format) = supported_formats.into_iter().next() {
+    if let Some(ref format) = supported_formats.into_iter().next() {
         return Ok(format::from_cpal_supported_format(format));
     }
 
-    Err(super::errors::Error::FormatNegotiationError)
+    Err(super::errors::Error::FormatNegotiation)
 }

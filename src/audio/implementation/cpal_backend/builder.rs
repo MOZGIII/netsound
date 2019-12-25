@@ -83,6 +83,7 @@ where
     logger: Logger,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub struct BackendBuilder<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: CompatibleSample + Send + Sync,

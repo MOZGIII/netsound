@@ -56,22 +56,25 @@ pub mod format {
         panic!("sample formats do not match")
     }
 
+    #[allow(clippy::module_name_repetitions)]
     #[allow(dead_code)]
-    pub fn from_cpal_format<S: CompatibleSample>(f: cpal::Format) -> Format<S> {
+    pub fn from_cpal_format<S: CompatibleSample>(f: &cpal::Format) -> Format<S> {
         if S::cpal_sample_format() != f.data_type {
             sample_formats_do_not_match();
         }
         Format::<S>::new(f.channels, f.sample_rate.0)
     }
 
+    #[allow(clippy::module_name_repetitions)]
     #[allow(dead_code)]
-    pub fn from_cpal_supported_format<S: CompatibleSample>(f: cpal::SupportedFormat) -> Format<S> {
+    pub fn from_cpal_supported_format<S: CompatibleSample>(f: &cpal::SupportedFormat) -> Format<S> {
         if S::cpal_sample_format() != f.data_type {
             sample_formats_do_not_match();
         }
         Format::<S>::new(f.channels, f.max_sample_rate.0)
     }
 
+    #[allow(clippy::module_name_repetitions)]
     #[allow(dead_code)]
     pub fn to_cpal_format<S: CompatibleSample>(f: Format<S>) -> cpal::Format {
         cpal::Format {

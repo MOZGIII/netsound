@@ -12,6 +12,7 @@ use super::*;
 
 mod multisend;
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize, KV)]
 pub struct SendStats {
     pub frames_encoded: usize,
@@ -22,6 +23,7 @@ pub struct SendStats {
     pub bytes_sent_mismatches: usize,
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub struct SendService<'a, TCaptureSample, TCaptureDataReader, TEncoder>
 where
     TCaptureSample: Sample,
@@ -46,7 +48,7 @@ where
         mut socket: SendHalf,
         peer_addrs: Vec<SocketAddr>,
     ) -> Result<futures::never::Never, crate::Error> {
-        let mut send_buf = [0u8; SIZE];
+        let mut send_buf = [0_u8; SIZE];
         loop {
             trace!("Send loop begin");
 

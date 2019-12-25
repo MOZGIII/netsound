@@ -63,6 +63,7 @@ where
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait NormalizeChannelsExt: Iterator + Sized
 where
     Self::Item: Sample,

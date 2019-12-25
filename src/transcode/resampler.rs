@@ -88,7 +88,7 @@ where
                     to_buf.extend(
                         converter
                             .until_exhausted()
-                            .flat_map(|frame| frame.channels()),
+                            .flat_map(Frame::channels),
                     );
 
                     let from_buf_size_after = from_buf.len();

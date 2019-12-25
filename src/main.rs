@@ -2,16 +2,16 @@
 #![feature(const_fn)]
 #![feature(core_intrinsics)]
 #![warn(clippy::all)]
-
-use std::env;
-use std::net::SocketAddr;
-use std::str::FromStr;
+#![warn(clippy::pedantic)]
 
 use failure::Error;
-
-use tokio::{net::UdpSocket, runtime::Runtime};
-
+use futures::FutureExt;
+use std::convert::TryInto;
+use std::env;
 use std::marker::PhantomData;
+use std::net::SocketAddr;
+use std::str::FromStr;
+use tokio::{net::UdpSocket, runtime::Runtime};
 
 mod audio;
 mod audio_backends;
@@ -31,8 +31,12 @@ mod transcode;
 mod transcode_service;
 
 use audio::Backend;
+use future::select_first;
 use log::*;
 
+type DynTranscoder = Box<dyn transcode::Transcode<Ok = futures::never::Never> + Send>;
+
+#[allow(clippy::too_many_lines)]
 fn errmain() -> Result<(), Error> {
     let mut logger_cfg = slog_env_cfg::config_from_env()?;
     logger_cfg.env_logger_override_default_filter = Some("trace".to_string());
@@ -57,8 +61,6 @@ fn errmain() -> Result<(), Error> {
         result?
     };
 
-    use future::select_first;
-    use futures::FutureExt;
     let mut rt = Runtime::new()?;
 
     let socket = rt.block_on(UdpSocket::bind(&bind_addr))?;
@@ -77,7 +79,7 @@ fn errmain() -> Result<(), Error> {
         logger: logger().new(o!("logger" => "audio")),
     };
     let (negotiated_formats, continuation) =
-        audio_backends::negotiate_formats(backend_to_use, audio_backend_build_params)?;
+        audio_backends::negotiate_formats(&backend_to_use, audio_backend_build_params)?;
 
     let net_capture_format = format::Format::new(
         std::cmp::min(2, negotiated_formats.capture_format.channels),
@@ -88,8 +90,6 @@ fn errmain() -> Result<(), Error> {
         48000,
     );
 
-    use std::convert::TryInto;
-    type DynTranscoder = Box<dyn transcode::Transcode<Ok = futures::never::Never> + Send>;
     let (capture_transcoder, capture_data_writer, capture_data_reader) = {
         let audio_format = &negotiated_formats.capture_format;
         let net_format = &net_capture_format;

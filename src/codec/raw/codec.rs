@@ -15,7 +15,7 @@ where
     assert_eq!(samples_to_read * 4, output.len());
 
     let mut samples = Vec::with_capacity(samples_to_read);
-    samples.resize(samples_to_read, 0f32);
+    samples.resize(samples_to_read, 0_f32);
 
     let samples_read = input
         .read_items(&mut samples, WaitMode::WaitForReady)
@@ -41,7 +41,7 @@ where
     assert_eq!(samples_to_write * 4, input.len());
 
     let mut samples = Vec::with_capacity(samples_to_write);
-    samples.resize(samples_to_write, 0f32);
+    samples.resize(samples_to_write, 0_f32);
 
     for (chunk, sample_slot) in input.chunks(4).zip(&mut samples) {
         *sample_slot = E::read_f32(&chunk);

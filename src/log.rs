@@ -13,7 +13,7 @@ mod scopes {
     pub use super::base::*;
 
     pub use slog_scope::{logger, scope, with_logger};
-    pub use slog_scope_futures::FutureExt;
+    pub use slog_scope_futures::FutureExt as LogScopeFutureExt;
 
     pub use slog_scope::{crit, debug, error, info, trace, warn};
 }

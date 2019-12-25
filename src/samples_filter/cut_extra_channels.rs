@@ -52,6 +52,7 @@ where
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
 pub trait CutExtraChannelsExt: Iterator + Sized {
     fn cut_extra_channels(
         self,
