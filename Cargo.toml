@@ -6,25 +6,25 @@ edition = "2018"
 license = "AGPL-3.0-only"
 
 [dependencies]
-byteorder = "1.3"
-audiopus = "0.2"
-failure = "0.1"
-cpal = "0.11"
-sample = "0.10"
-futures = { version = "0.3", features = ["unstable", "async-await", "bilock"] }
-tokio = { version = "0.2", features = ["full"] }
 async-trait = "0.1"
-slog = { version = "2.5", features = ["nested-values"] }
-slog-json = { version = "2.3", features = ["nested-values"] }
-slog-env-cfg = "0.6"
-slog-scope = "4.3"
-slog-scope-futures = "0.1"
-slog_derive = "0.2"
-serde = { version = "1.0", features = ["derive"] }
+audiopus = "0.2"
+byteorder = "1.3"
+cpal = "0.11"
+crossbeam-utils = { version = "0.7", optional = true }
 erased-serde = "0.3"
+failure = "0.1"
+futures = { version = "0.3", features = ["unstable", "async-await", "bilock"] }
 libpulse-binding = { version = "2.15", default-features = false, optional = true }
 libpulse-simple-binding = { version = "2.15", default-features = false, optional = true }
-crossbeam-utils = { version = "0.7", optional = true }
+sample = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+slog = { version = "2.5", features = ["nested-values"] }
+slog_derive = "0.2"
+slog-env-cfg = "0.6"
+slog-json = { version = "2.3", features = ["nested-values"] }
+slog-scope = "4.3"
+slog-scope-futures = "0.1"
+tokio = { version = "0.2", features = ["full"] }
 
 [dev-dependencies]
 futures-test = "0.3"
