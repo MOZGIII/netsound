@@ -2,9 +2,9 @@ mod decoder;
 mod encoder;
 mod error;
 
-pub use self::decoder::Decoder;
-pub use self::encoder::Encoder;
-pub use self::error::Error;
+pub use decoder::Decoder;
+pub use encoder::Encoder;
+pub use error::Error;
 
 use crate::format::Format;
 use audiopus::TryFrom as AudiopusTryFrom;

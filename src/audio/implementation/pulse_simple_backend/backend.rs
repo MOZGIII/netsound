@@ -2,15 +2,13 @@ use super::*;
 use crate::audio;
 use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
 use crate::log::no_scopes::*;
-use crossbeam_utils;
+use crossbeam_utils::thread;
 use futures::executor::block_on;
 use libpulse_binding as pulse;
 use libpulse_simple_binding as psimple;
+use psimple::Simple;
+use pulse::error::PAErr;
 use std::marker::PhantomData;
-
-use self::crossbeam_utils::thread;
-use self::psimple::Simple;
-use self::pulse::error::PAErr;
 
 pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where

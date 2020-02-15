@@ -6,7 +6,7 @@ use crate::log::no_scopes::*;
 use libpulse_binding as pulse;
 use std::marker::PhantomData;
 
-use self::pulse::stream::Direction;
+use pulse::stream::Direction;
 
 pub struct FormatNegotiator;
 
