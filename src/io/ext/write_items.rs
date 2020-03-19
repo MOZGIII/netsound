@@ -1,4 +1,4 @@
-use super::*;
+use super::{AsyncWriteItems, WaitMode};
 use futures::future::Future;
 use futures::task::{Context, Poll};
 use std::io;

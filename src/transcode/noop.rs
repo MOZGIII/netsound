@@ -1,4 +1,4 @@
-use super::*;
+use super::Transcode;
 use async_trait::async_trait;
 
 #[derive(Debug)]

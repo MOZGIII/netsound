@@ -1,6 +1,6 @@
 use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
-use crate::log::*;
+use crate::log::{KV, debug, error, trace, warn};
 use crate::sample::Sample;
 use failure::format_err;
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 use std::net::SocketAddr;
 use tokio::net::udp::SendHalf;
 
-use super::*;
+use super::SIZE;
 
 mod multisend;
 

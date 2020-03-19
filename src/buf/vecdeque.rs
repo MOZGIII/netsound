@@ -1,5 +1,5 @@
 use crate::io::{AsyncReadItems, AsyncWriteItems, WaitMode};
-use crate::log::*;
+use crate::log::trace;
 use futures::lock::{BiLock, BiLockAcquire, BiLockGuard};
 use futures::ready;
 use futures::task::AtomicWaker;

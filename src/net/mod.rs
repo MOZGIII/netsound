@@ -1,7 +1,7 @@
 use crate::codec::{Decoder, Encoder};
 use crate::future::select_first;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::*;
+use crate::log::{LogScopeFutureExt, debug, logger, o};
 use crate::sample::Sample;
 use crate::UdpSocket;
 use futures::FutureExt;

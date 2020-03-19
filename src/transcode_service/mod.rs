@@ -1,5 +1,5 @@
 use crate::future::select_first;
-use crate::log::*;
+use crate::log::{LogScopeFutureExt, logger, o};
 use crate::transcode::Transcode;
 
 pub struct TranscodeService<T> {

@@ -1,12 +1,12 @@
 use crate::codec::{Decoder, DecodingError};
 use crate::io::AsyncWriteItems;
-use crate::log::*;
+use crate::log::{KV, debug, error, trace, warn};
 use crate::sample::Sample;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 use tokio::net::udp::RecvHalf;
 
-use super::*;
+use super::SIZE;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Default, Clone, Serialize, Deserialize, KV)]

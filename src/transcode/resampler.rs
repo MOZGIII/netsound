@@ -1,7 +1,7 @@
-use super::*;
+use super::Transcode;
 use crate::buf::{VecDequeBufferReader, VecDequeBufferWriter};
 use crate::io::{AsyncReadItemsExt, WaitMode};
-use crate::log::*;
+use crate::log::trace;
 use crate::match_channels;
 use crate::sample::Sample;
 use crate::samples_filter::NormalizeChannelsExt;

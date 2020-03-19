@@ -32,7 +32,7 @@ mod transcode_service;
 
 use audio::Backend;
 use future::select_first;
-use log::*;
+use log::{LogScopeFutureExt, info, logger, o, slog_info, warn};
 
 type DynTranscoder = Box<dyn transcode::Transcode<Ok = futures::never::Never> + Send>;
 

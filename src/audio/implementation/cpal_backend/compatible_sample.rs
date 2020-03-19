@@ -49,7 +49,7 @@ impl_compatibe_sample![
 ];
 
 pub mod format {
-    use super::*;
+    use super::CompatibleSample;
     use crate::format::Format;
 
     fn sample_formats_do_not_match() -> ! {
