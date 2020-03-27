@@ -43,7 +43,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::ensure_same_sizes;
 
     #[test]
     fn ensure_same_sizes_test() {

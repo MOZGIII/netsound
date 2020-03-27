@@ -20,7 +20,7 @@ macro_rules! impl_compatibe_sample {
 impl_compatibe_sample![[f32, SAMPLE_FLOAT32]];
 
 pub mod format {
-    use super::*;
+    use super::{CompatibleSample, pulse_sample};
     use crate::format::Format;
 
     fn sample_formats_do_not_match() -> ! {

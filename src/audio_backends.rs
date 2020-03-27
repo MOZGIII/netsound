@@ -1,7 +1,7 @@
 use crate::audio::{self, BackendBuilder, FormatNegotiator};
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::*;
+use crate::log::Logger;
 use crate::sample::Sample;
 
 #[derive(Debug)]

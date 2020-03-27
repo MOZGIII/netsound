@@ -1,11 +1,11 @@
-use super::{choose_format::choose_format, *};
+use super::{choose_format::choose_format, Backend, CompatibleSample, default, format};
 use crate::audio;
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::no_scopes::*;
+use crate::log::no_scopes::{Logger, info, slog_info};
 use std::marker::PhantomData;
 
-use cpal::traits::*;
+use cpal::traits::{DeviceTrait, EventLoopTrait, HostTrait};
 
 #[derive(Debug)]
 pub struct FormatNegotiator;

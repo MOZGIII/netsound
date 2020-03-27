@@ -1,6 +1,6 @@
 use super::Error;
 use crate::io::{AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
-use crate::log::*;
+use crate::log::trace;
 use async_trait::async_trait;
 use audiopus::coder::Decoder as OpusDecoder;
 

@@ -67,7 +67,7 @@ impl<I> CutExtraChannelsExt for I where I: Iterator + Sized {}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::CutExtraChannelsExt;
 
     #[test]
     fn basic() {

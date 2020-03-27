@@ -71,7 +71,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::AddSilentChannelsExt;
 
     #[test]
     fn basic() {

@@ -1,5 +1,5 @@
-use super::*;
-use crate::log::*;
+use super::{AddSilentChannels, AddSilentChannelsExt, CutExtraChannels, CutExtraChannelsExt};
+use crate::log::trace;
 use crate::sample::Sample;
 use std::cmp::Ordering;
 
@@ -86,7 +86,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::NormalizeChannelsExt;
 
     #[test]
     fn reduce() {

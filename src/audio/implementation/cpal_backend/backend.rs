@@ -1,9 +1,9 @@
-use super::*;
+use super::{CompatibleSample, io};
 use crate::audio;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::no_scopes::*;
+use crate::log::no_scopes::{Logger, crit, trace};
 use crate::sample::Sample;
-use cpal::traits::*;
+use cpal::traits::EventLoopTrait;
 use std::marker::PhantomData;
 
 pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>

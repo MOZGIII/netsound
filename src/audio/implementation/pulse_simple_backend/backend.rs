@@ -1,7 +1,7 @@
-use super::*;
+use super::CompatibleSample;
 use crate::audio;
 use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
-use crate::log::no_scopes::*;
+use crate::log::no_scopes::Logger;
 use crossbeam_utils::thread;
 use futures::executor::block_on;
 use libpulse_binding as pulse;
