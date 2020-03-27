@@ -1,4 +1,4 @@
-use super::{VecDeque, vec_deque_buffer, vec_deque_buffer_with_capacity};
+use super::{vec_deque_buffer, vec_deque_buffer_with_capacity, VecDeque};
 use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
 use futures::executor::block_on;
 use futures::future::FutureExt;

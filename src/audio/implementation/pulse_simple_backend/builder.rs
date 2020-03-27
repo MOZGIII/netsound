@@ -1,4 +1,4 @@
-use super::{Backend, CompatibleSample, format, util};
+use super::{format, util, Backend, CompatibleSample};
 use crate::audio;
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};

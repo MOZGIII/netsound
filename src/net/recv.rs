@@ -1,6 +1,6 @@
 use crate::codec::{Decoder, DecodingError};
 use crate::io::AsyncWriteItems;
-use crate::log::{KV, debug, error, trace, warn};
+use crate::log::{debug, error, trace, warn, KV};
 use crate::sample::Sample;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;

@@ -1,8 +1,8 @@
-use super::{choose_format::choose_format, Backend, CompatibleSample, default, format};
+use super::{choose_format::choose_format, default, format, Backend, CompatibleSample};
 use crate::audio;
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::no_scopes::{Logger, info, slog_info};
+use crate::log::no_scopes::{info, slog_info, Logger};
 use std::marker::PhantomData;
 
 use cpal::traits::{DeviceTrait, EventLoopTrait, HostTrait};

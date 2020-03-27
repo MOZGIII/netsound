@@ -1,6 +1,6 @@
 use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
-use crate::log::{KV, debug, error, trace, warn};
+use crate::log::{debug, error, trace, warn, KV};
 use crate::sample::Sample;
 use failure::format_err;
 use serde::{Deserialize, Serialize};

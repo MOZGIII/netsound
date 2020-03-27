@@ -1,6 +1,6 @@
 use super::{format, CompatibleSample};
 use crate::format::Format;
-use crate::log::no_scopes::{Logger, trace};
+use crate::log::no_scopes::{trace, Logger};
 
 pub fn choose_format<S: CompatibleSample, I: Iterator<Item = cpal::SupportedFormat>>(
     logger: &mut Logger,

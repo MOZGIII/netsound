@@ -20,11 +20,10 @@ macro_rules! deref_async_read_items {
             cx: &mut Context<'_>,
             items: &mut [$T],
             wait_mode: WaitMode,
-        ) -> Poll<Result<usize>>
-        {
+        ) -> Poll<Result<usize>> {
             Pin::new(&mut **self).poll_read_items(cx, items, wait_mode)
         }
-    }
+    };
 }
 
 impl<T: Unpin, A: ?Sized + AsyncReadItems<T> + Unpin> AsyncReadItems<T> for Box<A> {

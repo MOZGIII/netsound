@@ -1,7 +1,7 @@
-use super::{CompatibleSample, io};
+use super::{io, CompatibleSample};
 use crate::audio;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::no_scopes::{Logger, crit, trace};
+use crate::log::no_scopes::{crit, trace, Logger};
 use crate::sample::Sample;
 use cpal::traits::EventLoopTrait;
 use std::marker::PhantomData;
