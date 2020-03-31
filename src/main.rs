@@ -24,6 +24,7 @@ mod io;
 mod log;
 mod match_channels;
 mod net;
+mod positional_allocator;
 mod preallocated_map;
 mod sample;
 mod sample_type_name;
