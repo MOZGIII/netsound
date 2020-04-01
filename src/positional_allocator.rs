@@ -92,4 +92,17 @@ mod tests {
             UnorderedEq::new(vec![(&"a", &0), (&"b", &1)])
         );
     }
+
+    #[test]
+    fn free_all() {
+        let mut map = PositionalAllocator::new(0..);
+        map.take("a").unwrap();
+        map.take("b").unwrap();
+
+        let actual = map.free_all(0..).collect::<Vec<_>>();
+        assert_eq!(
+            UnorderedEq::new(actual),
+            UnorderedEq::new(vec![("a", 0), ("b", 1)])
+        );
+    }
 }
