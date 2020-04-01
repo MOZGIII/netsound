@@ -29,6 +29,7 @@ mod preallocated_map;
 mod sample;
 mod sample_type_name;
 mod samples_filter;
+mod test_util;
 mod transcode;
 mod transcode_service;
 
