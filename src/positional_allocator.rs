@@ -48,6 +48,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::PositionalAllocator;
+    use crate::test_util::unordered_eq::UnorderedEq;
 
     #[test]
     fn zero_size() {
@@ -84,9 +85,11 @@ mod tests {
         let mut map = PositionalAllocator::new(0..);
         map.take("a").unwrap();
         map.take("b").unwrap();
+
+        let actual = map.allocated().collect::<Vec<_>>();
         assert_eq!(
-            map.allocated().collect::<Vec<_>>(),
-            &[(&"a", &0), (&"b", &1)]
+            UnorderedEq::new(actual),
+            UnorderedEq::new(vec![(&"a", &0), (&"b", &1)])
         );
     }
 }
