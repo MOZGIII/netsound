@@ -106,5 +106,10 @@ mod tests {
 
             assert!(iter.next().is_none());
         }
+
+        {
+            let mut iter = map.allocated();
+            assert!(iter.next().is_none());
+        }
     }
 }
