@@ -1,0 +1,12 @@
+@startuml audio-output-flow
+
+start
+
+://recv// a __data packet__ over UDP;
+:Decode __data packet__ into __PCM data__ using a codec;
+:Pass the __PCM data__ to transcoders stack and get new __PCM data__;
+:Pass the __PCM data__ to the audio backend for playback;
+
+stop
+
+@enduml
