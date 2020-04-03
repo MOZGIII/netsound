@@ -4,7 +4,11 @@ use std::hash::Hash;
 use std::ops::Range;
 
 #[derive(Debug)]
-pub struct PreallocatedMap<K, V, S: AsMut<[V]>> {
+pub struct PreallocatedMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: AsMut<[V]>,
+{
     value_type: std::marker::PhantomData<V>,
     values: S,
     positional_allocator: PositionalAllocator<K, usize, Range<usize>>,

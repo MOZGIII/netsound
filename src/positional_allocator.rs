@@ -2,7 +2,10 @@ use std::collections::{hash_map::Entry, HashMap};
 use std::hash::Hash;
 
 #[derive(Debug)]
-pub struct PositionalAllocator<K, V, G> {
+pub struct PositionalAllocator<K, V, G>
+where
+    K: Eq + Hash,
+{
     generator: G,
     map: HashMap<K, V>,
 }
