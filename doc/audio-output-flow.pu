@@ -2,10 +2,21 @@
 
 start
 
-://recv// a __data packet__ over UDP;
-:Decode __data packet__ into __PCM data__ using a codec;
-:Pass the __PCM data__ to transcoders stack and get new __PCM data__;
-:Pass the __PCM data__ to the audio backend for playback;
+partition "Networking" {
+  ://recv// a __data packet__ over UDP;
+  :Decode __data packet__ into __PCM data__ using a codec;
+  :Produce a __data packet__ and a __stream id__;
+}
+
+partition "Transcoding" {
+  :Pass the __PCM data__ to per-stream transcoders stack;
+  :Produce new per-stream __PCM data__;
+}
+
+partition "Audio" {
+  :Aggregate __PCM data__ from all streams, pass to mixer, produce mixed __PCM data__;
+  :Pass the mixed __PCM data__ to the audio backend for playback;
+}
 
 stop
 
