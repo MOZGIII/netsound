@@ -522,11 +522,11 @@ dependencies = [
 
 [[package]]
 name = "libpulse-binding"
-version = "2.15.0"
+version = "2.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.68 (registry+https://github.com/rust-lang/crates.io-index)",
- "libpulse-sys 1.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-sys 1.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -535,9 +535,9 @@ name = "libpulse-simple-binding"
 version = "2.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "libpulse-binding 2.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-binding 2.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libpulse-simple-sys 1.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "libpulse-sys 1.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-sys 1.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -545,13 +545,13 @@ name = "libpulse-simple-sys"
 version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "libpulse-sys 1.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-sys 1.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pkg-config 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "libpulse-sys"
-version = "1.12.1"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.68 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -667,7 +667,7 @@ dependencies = [
  "failure 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-test 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "libpulse-binding 2.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-binding 2.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "libpulse-simple-binding 2.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sample 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.105 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1220,10 +1220,10 @@ dependencies = [
 "checksum lazycell 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
 "checksum libc 0.2.68 (registry+https://github.com/rust-lang/crates.io-index)" = "dea0c0405123bba743ee3f91f49b1c7cfb684eef0da0a50110f758ccf24cdff0"
 "checksum libloading 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f2b111a074963af1d37a139918ac6d49ad1d0d5e47f72fd55388619691a7d753"
-"checksum libpulse-binding 2.15.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bf6cf349b1f74f14bffd8f7897c4043a6b53eb1893159b3c628005624661f06f"
+"checksum libpulse-binding 2.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "35b35c3c377b537d044107ff0830b4e5ae32a5c106289977a04b3387a143e994"
 "checksum libpulse-simple-binding 2.15.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b37d0e197487fc00ac6f560d9cce7c1e33951a5f2358c47397a477df1ff99317"
 "checksum libpulse-simple-sys 1.12.1 (registry+https://github.com/rust-lang/crates.io-index)" = "63ec4ead758215fc3f704364f79a8e5532db6c265d4f62d138e0ee332cc7e89f"
-"checksum libpulse-sys 1.12.1 (registry+https://github.com/rust-lang/crates.io-index)" = "53b35bb99a41910a408c28cafbdd6708584a2cbc90a57b82f1f08b13413cf094"
+"checksum libpulse-sys 1.13.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b4c5aecc8dd651c60c212267ef9599a6be8765e63509816695f96a91b1e06151"
 "checksum log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)" = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
 "checksum maybe-uninit 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 "checksum memchr 2.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
