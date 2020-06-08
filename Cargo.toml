@@ -36,5 +36,9 @@ tokio = { version = "0.2", features = ["full"] }
 futures-test = "0.3"
 
 [features]
-pulse_simple_backend = ["libpulse-binding", "libpulse-simple-binding", "crossbeam-utils"]
+pulse_simple_backend = [
+  "libpulse-binding",
+  "libpulse-simple-binding",
+  "crossbeam-utils"
+]
 trace = ["slog/max_level_trace"]
