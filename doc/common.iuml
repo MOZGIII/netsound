@@ -1,0 +1,21 @@
+skinparam defaultTextAlignment center
+
+!include <tupadr3/common>
+!include <tupadr3/font-awesome-5/microphone>
+!include <tupadr3/font-awesome-5/signal>
+!include <tupadr3/font-awesome-5/sitemap>
+!include <tupadr3/material/mic>
+!include <tupadr3/material/more_horiz>
+!include <tupadr3/material/graphic_eq>
+
+!unquoted procedure RECT($alias, $label)
+rectangle "$label" as $alias
+!endprocedure
+
+!unquoted procedure SIGNAL($alias, $label)
+MATERIAL_GRAPHIC_EQ($alias, $label)
+!endprocedure
+
+!unquoted procedure ABSTRACT($alias)
+MATERIAL_MORE_HORIZ($alias)
+!endprocedure

@@ -1,0 +1,46 @@
+@startuml
+
+!include ./common.iuml
+
+title Input flow
+
+frame "Input signal capture" {
+  MATERIAL_MIC(audio_input_callback, "Audio input\ncallback")
+  SIGNAL(input_signal_a, "Input signal A")
+}
+
+ABSTRACT(input_signal_b_source)
+SIGNAL(input_signal_b, "Input signal B")
+
+FA5_SITEMAP(input_mixer, "Input mixer")
+
+SIGNAL(mixed_input_signal, "Mixed Input signal")
+
+RECT(opus_encoder, "Opus encoder")
+RECT(network_sender, "Network sender")
+
+cloud {
+  RECT(network_receiver_a, "Network receiver A")
+  RECT(network_receiver_b, "Network receiver B")
+}
+
+audio_input_callback --> input_signal_a : \
+  read frames (interleaved samples)\n\
+  from the short-lived callback buffer\n\
+  into the signal ring-buffer
+
+input_signal_b_source --> input_signal_b
+
+input_signal_a --> input_mixer
+input_signal_b --> input_mixer
+
+input_mixer --> mixed_input_signal
+
+mixed_input_signal --> opus_encoder
+
+opus_encoder --> network_sender
+
+network_sender --> network_receiver_a
+network_sender --> network_receiver_b
+
+@enduml

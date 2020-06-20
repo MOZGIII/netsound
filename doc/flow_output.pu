@@ -1,0 +1,59 @@
+@startuml
+
+!include ./common.iuml
+
+title Output flow
+
+cloud {
+  RECT(network_sender_a, "Network sender A")
+  RECT(network_sender_b, "Network sender B")
+}
+
+frame "Receiver pipeline" {
+  RECT(network_receiver, "Network receiver")
+
+  RECT(stream_demultiplexer, "Stream demultiplexer")
+}
+
+RECT(opus_decoder_a, "Opus decoder A")
+SIGNAL(output_signal_a, "Output signal A")
+
+RECT(opus_decoder_b, "Opus decoder B")
+SIGNAL(output_signal_b, "Output signal B")
+
+
+ABSTRACT(output_signal_c_source)
+SIGNAL(output_signal_c, "Output signal C")
+
+FA5_SITEMAP(output_mixer, "Output mixer")
+
+frame "Output signal playback" {
+  SIGNAL(mixed_output_signal, "Mixed output signal")
+  MATERIAL_MIC(audio_output_callback, "Audio output\ncallback")
+}
+
+network_sender_a --> network_receiver
+network_sender_b --> network_receiver
+
+network_receiver --> stream_demultiplexer
+
+stream_demultiplexer --> opus_decoder_a
+opus_decoder_a --> output_signal_a
+
+stream_demultiplexer --> opus_decoder_b
+opus_decoder_b --> output_signal_b
+
+output_signal_c_source --> output_signal_c
+
+output_signal_a --> output_mixer
+output_signal_b --> output_mixer
+output_signal_c --> output_mixer
+
+output_mixer --> mixed_output_signal
+
+mixed_output_signal --> audio_output_callback : \
+  write frames (interleaved samples)\n\
+  from the mixed signal ring-buffer\n\
+  into the short-lived callback buffer
+
+@enduml
