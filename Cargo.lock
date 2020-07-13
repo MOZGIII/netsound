@@ -531,7 +531,7 @@ dependencies = [
 
 [[package]]
 name = "libpulse-binding"
-version = "2.16.0"
+version = "2.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.71 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -544,7 +544,7 @@ name = "libpulse-simple-binding"
 version = "2.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "libpulse-binding 2.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-binding 2.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libpulse-simple-sys 1.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libpulse-sys 1.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -676,7 +676,7 @@ dependencies = [
  "failure 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures-test 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "libpulse-binding 2.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libpulse-binding 2.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libpulse-simple-binding 2.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sample 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.111 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1257,7 +1257,7 @@ dependencies = [
 "checksum lazycell 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b294d6fa9ee409a054354afc4352b0b9ef7ca222c69b8812cbea9e7d2bf3783f"
 "checksum libc 0.2.71 (registry+https://github.com/rust-lang/crates.io-index)" = "9457b06509d27052635f90d6466700c65095fdf75409b3fbdd903e988b886f49"
 "checksum libloading 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f2b111a074963af1d37a139918ac6d49ad1d0d5e47f72fd55388619691a7d753"
-"checksum libpulse-binding 2.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "35b35c3c377b537d044107ff0830b4e5ae32a5c106289977a04b3387a143e994"
+"checksum libpulse-binding 2.16.1 (registry+https://github.com/rust-lang/crates.io-index)" = "5c71487f89ebfe3d2c23e706774d9d5c25208a30205909d77b304066876306bd"
 "checksum libpulse-simple-binding 2.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a4ef3ce750cdbce60fc96aac1f6dad84d67419d2307a05a27b73700f1f5d33e0"
 "checksum libpulse-simple-sys 1.13.1 (registry+https://github.com/rust-lang/crates.io-index)" = "a48e779375c1d6e8b8d2fcbca67cc2f3208d447f17215f8ea600d6a58ccc6a56"
 "checksum libpulse-sys 1.13.1 (registry+https://github.com/rust-lang/crates.io-index)" = "aa9559e91871e5f820c3b4e181b8c8f3ebd0b7839c92943802caf0f1477fdc27"
