@@ -15,7 +15,7 @@ debug = true
 async-trait = "0.1"
 audiopus = "0.2"
 byteorder = "1.3"
-cpal = "0.11"
+cpal = "0.12"
 crossbeam-utils = { version = "0.7", optional = true }
 erased-serde = "0.3"
 failure = "0.1"
