@@ -30,7 +30,7 @@ slog-env-cfg = "0.6"
 slog-json = { version = "2.3", features = ["nested-values"] }
 slog-scope = "4.3"
 slog-scope-futures = "0.1"
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "0.3", features = ["full"] }
 
 [dev-dependencies]
 futures-test = "0.3"
