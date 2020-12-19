@@ -38,7 +38,8 @@ jobs:
 
         mode:
           - name: clippy
-            cargo-command: clippy -- -D warnings
+            cargo-command: clippy
+            cargo-args: -- -D warnings
           - name: test
             cargo-command: test
           - name: build
@@ -79,3 +80,4 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: ${{ matrix.mode.cargo-command }}
+          args: ${{ matrix.mode.cargo-args }}
