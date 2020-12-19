@@ -816,7 +816,7 @@ dependencies = [
  "audiopus",
  "byteorder",
  "cpal",
- "crossbeam-utils 0.7.2",
+ "crossbeam-utils 0.8.1",
  "dasp_frame",
  "dasp_interpolate",
  "dasp_sample",
