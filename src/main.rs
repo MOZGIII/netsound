@@ -213,7 +213,7 @@ fn errmain() -> Result<(), Error> {
     };
 
     let audio_backend = continuation(capture_data_writer, playback_data_reader)?;
-    run_audio_backend(audio_backend)?;
+    run_audio_backend(audio_backend);
 
     let mut transcode_service = transcode_service::TranscodeService {
         capture_transcoder,
@@ -275,12 +275,11 @@ impl CodecToUse {
     }
 }
 
-fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) -> Result<(), Error> {
+fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) {
     std::thread::spawn(move || {
         let mut local = audio_backend;
         local.run()
     });
-    Ok(())
 }
 
 fn buffer<T: Default + Clone>(size: usize) -> Box<[T]> {
