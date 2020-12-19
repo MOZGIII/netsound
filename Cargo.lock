@@ -655,54 +655,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libpulse-binding"
-version = "2.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d256d40d52bf1792bbbebdde944fe11616da910eb0bfb41d3e6baff048dd2639"
-dependencies = [
- "bitflags",
- "libc",
- "libpulse-sys",
- "num-derive",
- "num-traits",
- "winapi 0.3.9",
-]
-
-[[package]]
-name = "libpulse-simple-binding"
-version = "2.20.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e47f6cda2748fb86f15e5e65cc33be306577140f4b500622b5d98df2ca17240"
-dependencies = [
- "libpulse-binding",
- "libpulse-simple-sys",
- "libpulse-sys",
-]
-
-[[package]]
-name = "libpulse-simple-sys"
-version = "1.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "468cf582b7b022c0d1b266fefc7fc8fa7b1ddcb61214224f2f105c95a9c2d5c1"
-dependencies = [
- "libpulse-sys",
- "pkg-config",
-]
-
-[[package]]
-name = "libpulse-sys"
-version = "1.16.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "983d218251c15d53120c72a4cff5552e45e8ccf00dd96a233462efd5c447a963"
-dependencies = [
- "libc",
- "num-derive",
- "num-traits",
- "pkg-config",
- "winapi 0.3.9",
-]
-
-[[package]]
 name = "log"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -816,7 +768,6 @@ dependencies = [
  "audiopus",
  "byteorder",
  "cpal",
- "crossbeam-utils 0.8.1",
  "dasp_frame",
  "dasp_interpolate",
  "dasp_sample",
@@ -825,8 +776,6 @@ dependencies = [
  "failure",
  "futures",
  "futures-test",
- "libpulse-binding",
- "libpulse-simple-binding",
  "serde",
  "slog",
  "slog-env-cfg",
@@ -845,17 +794,6 @@ checksum = "ffb4262d26ed83a1c0a33a38fe2bb15797329c85770da05e6b828ddb782627af"
 dependencies = [
  "memchr",
  "version_check",
-]
-
-[[package]]
-name = "num-derive"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
