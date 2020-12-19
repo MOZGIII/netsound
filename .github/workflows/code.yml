@@ -38,7 +38,7 @@ jobs:
 
         mode:
           - name: clippy
-            cargo-command: clippy
+            cargo-command: clippy -- -D warnings
           - name: test
             cargo-command: test
           - name: build
