@@ -23,6 +23,6 @@ where
 
     // We _must_ fill the whole `to` buffer.
     for sample_slot in to[samples_read..].iter_mut() {
-        *sample_slot = S::equilibrium();
+        *sample_slot = S::EQUILIBRIUM;
     }
 }

@@ -36,7 +36,7 @@ where
         let item = if self.current_channel < self.source_channels {
             self.source_iter.next()
         } else {
-            Some(<<I as Iterator>::Item as sample::Sample>::equilibrium())
+            Some(<<I as Iterator>::Item as dasp_sample::Sample>::EQUILIBRIUM)
         };
 
         self.current_channel += 1;

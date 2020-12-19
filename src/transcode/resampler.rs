@@ -6,7 +6,9 @@ use crate::match_channels;
 use crate::sample::Sample;
 use crate::samples_filter::NormalizeChannelsExt;
 use async_trait::async_trait;
-use sample::{interpolate, signal, Duplex, Frame, Signal};
+use dasp_frame::Frame;
+use dasp_sample::Duplex;
+use dasp_signal::{interpolate, Signal};
 
 #[derive(Debug)]
 pub struct Resampler<S: Sample> {
@@ -56,7 +58,7 @@ where
 
         match_channels! {
             F => [to_channels] => {
-                let mut first_frame_data = F::<S>::equilibrium();
+                let mut first_frame_data = F::<S>::EQUILIBRIUM;
                 loop {
                     trace!("Resampler: before read_exact_items");
                     this.from_buf.read_exact_items(&mut first_frame_data, WaitMode::WaitForReady).await?;
@@ -73,8 +75,10 @@ where
                     let iter = first_frame_data.iter().cloned();
                     let iter = iter.chain(from_buf.drain(..));
                     let iter = iter.normalize_channels(this.from_channels, to_channels);
-                    let mut from_signal = signal::from_interleaved_samples_iter::<_, F<S>>(iter);
-                    let interpolator = interpolate::Linear::from_source(&mut from_signal);
+                    let mut from_signal = dasp_signal::from_interleaved_samples_iter::<_, F<S>>(iter);
+                    let left = from_signal.next();
+                    let right = from_signal.next();
+                    let interpolator = dasp_interpolate::linear::Linear::new(left, right);
                     let converter = interpolate::Converter::from_hz_to_hz(
                         from_signal,
                         interpolator,

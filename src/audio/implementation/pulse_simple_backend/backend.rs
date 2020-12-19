@@ -46,8 +46,8 @@ where
         let _logger = &mut self.logger;
 
         thread::scope(|s| {
-            let mut playback_samples = [TPlaybackSample::equilibrium(); 128];
-            let mut capture_samples = [TCaptureSample::equilibrium(); 128];
+            let mut playback_samples = [TPlaybackSample::EQUILIBRIUM; 128];
+            let mut capture_samples = [TCaptureSample::EQUILIBRIUM; 128];
             let playback_handle = s.spawn(move |_| {
                 loop {
                     // Play what's in playback buffer.

@@ -22,7 +22,7 @@ macro_rules! match_channels_explicit {
 ///
 /// let val = match_channels! {
 ///     F => [channels] => {
-///         format!("{:?}", F::<f32>::equilibrium())
+///         format!("{:?}", F::<f32>::EQUILIBRIUM)
 ///     }
 /// };
 ///
@@ -40,7 +40,7 @@ macro_rules! match_channels {
 
 #[cfg(test)]
 mod tests {
-    use sample::Frame;
+    use dasp_frame::Frame;
 
     #[test]
     fn test_1() {
@@ -48,7 +48,7 @@ mod tests {
 
         let val = match_channels! {
             F => [channels] => {
-                format!("{:?}", F::<f32>::equilibrium())
+                format!("{:?}", F::<f32>::EQUILIBRIUM)
             }
         };
 
@@ -61,7 +61,7 @@ mod tests {
 
         let val = match_channels! {
              F => [channels] => {
-                format!("{:?}", F::<f32>::equilibrium())
+                format!("{:?}", F::<f32>::EQUILIBRIUM)
             }
         };
 
@@ -74,7 +74,7 @@ mod tests {
 
         let val = match_channels! {
              F => [channels] => {
-                format!("{:?}", F::<i16>::equilibrium())
+                format!("{:?}", F::<i16>::EQUILIBRIUM)
             }
         };
 
@@ -82,7 +82,7 @@ mod tests {
     }
 
     mod generic {
-        use sample::Sample;
+        use dasp_sample::Sample;
         use std::marker::PhantomData;
 
         struct MyGenericType<S: Sample> {
@@ -102,8 +102,8 @@ mod tests {
                 let channels = self.channels;
                 match_channels! {
                     F => [channels] => {
-                        use sample::Frame;
-                        format!("{:?}", F::<S>::equilibrium())
+                        use dasp_frame::Frame;
+                        format!("{:?}", F::<S>::EQUILIBRIUM)
                     }
                 }
             }
