@@ -1,5 +1,6 @@
 use crate::sample::Sample;
 
+#[derive(Debug)]
 pub struct AddSilentChannels<I>
 where
     I: Iterator,

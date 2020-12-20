@@ -4,6 +4,7 @@ use futures::task::{Context, Poll};
 use std::io;
 use std::pin::Pin;
 
+#[derive(Debug)]
 pub struct WriteItems<'a, T, W: ?Sized + Unpin> {
     writer: &'a mut W,
     buf: &'a [T],

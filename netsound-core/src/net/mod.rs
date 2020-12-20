@@ -14,6 +14,7 @@ pub use recv::*;
 pub use send::*;
 
 #[allow(clippy::module_name_repetitions)]
+#[derive(Debug)]
 pub struct NetService<
     'a,
     TCaptureSample,

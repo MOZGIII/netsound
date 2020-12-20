@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use crate::format::Format;
 use crate::log::no_scopes::Logger;
 use crate::sample::Sample;
@@ -26,7 +24,7 @@ where
     >;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NegotiatedFormats<TCaptureSample, TPlaybackSample>
 where
     TCaptureSample: Sample,

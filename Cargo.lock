@@ -384,6 +384,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "derivative"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb582b60359da160a9477ee80f15c8d784c477e69c217ef2cdd4169c24ea380f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "dirs"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -730,6 +741,7 @@ name = "netsound-audio-backend-cpal"
 version = "0.1.0"
 dependencies = [
  "cpal",
+ "derivative",
  "futures",
  "netsound-core",
 ]
@@ -745,6 +757,7 @@ dependencies = [
  "dasp_interpolate",
  "dasp_sample",
  "dasp_signal",
+ "derivative",
  "failure",
  "futures",
  "futures-test",

@@ -13,6 +13,7 @@ dasp_frame = "0.11"
 dasp_interpolate = { version = "0.11", features = ["linear"] }
 dasp_sample = "0.11"
 dasp_signal = "0.11"
+derivative = "2"
 failure = "0.1"
 futures = { version = "0.3", features = ["unstable", "bilock"] }
 serde = { version = "1.0", features = ["derive"] }

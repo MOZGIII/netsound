@@ -163,6 +163,7 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct InnerVecDequeGuard<'a, T: Unpin> {
     inner_guard: BiLockGuard<'a, Inner<T>>,
 }
@@ -192,6 +193,7 @@ impl<T: Unpin> Drop for InnerVecDequeGuard<'_, T> {
     }
 }
 
+#[derive(Debug)]
 pub struct InnerVecDequeAcquire<'a, T> {
     inner_acquire: BiLockAcquire<'a, Inner<T>>,
 }

@@ -21,6 +21,7 @@ pub struct RecvStats {
 }
 
 #[allow(clippy::module_name_repetitions)]
+#[derive(Debug)]
 pub struct RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TDecoder>
 where
     TPlaybackSample: Sample,

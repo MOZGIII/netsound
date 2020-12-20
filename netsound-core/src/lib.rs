@@ -4,6 +4,9 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 
+#[macro_use]
+extern crate derivative;
+
 pub use failure::Error;
 
 pub mod audio_backend;

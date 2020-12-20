@@ -6,6 +6,8 @@ use netsound_core::log::no_scopes::{crit, trace, Logger};
 use netsound_core::sample::Sample;
 use std::marker::PhantomData;
 
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: Sample,
@@ -25,6 +27,7 @@ where
     #[allow(dead_code)]
     pub(super) playback_stream_id: cpal::StreamId,
 
+    #[derivative(Debug = "ignore")]
     pub(super) cpal_event_loop: cpal::EventLoop,
 
     pub(super) logger: Logger,

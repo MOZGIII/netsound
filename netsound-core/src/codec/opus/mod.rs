@@ -33,7 +33,7 @@ pub fn make_decoder(format: Format<f32>, buf: Box<[f32]>) -> Result<Decoder, Err
     })
 }
 
-#[allow(dead_code)]
+#[derive(Debug)]
 pub enum SupportedFrameSizeMS {
     F2p5,
     F5,
@@ -56,7 +56,7 @@ impl SupportedFrameSizeMS {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Debug)]
 pub enum SupportedSampleRate {
     SR8,
     SR12,

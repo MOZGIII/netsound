@@ -3,6 +3,7 @@ use crate::log::trace;
 use crate::sample::Sample;
 use std::cmp::Ordering;
 
+#[derive(Debug)]
 pub enum NormalizeChannels<I>
 where
     I: Iterator,

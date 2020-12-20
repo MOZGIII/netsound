@@ -4,6 +4,9 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 
+#[macro_use]
+extern crate derivative;
+
 mod backend;
 mod builder;
 mod choose_format;

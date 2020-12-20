@@ -67,14 +67,19 @@ where
     }
 }
 
+#[derive(Derivative)]
+#[derivative(Debug)]
 pub struct FormatNegotiationContinuation<TCaptureSample, TPlaybackSample>
 where
     TCaptureSample: CompatibleSample,
     TPlaybackSample: CompatibleSample,
 {
+    #[derivative(Debug = "ignore")]
     cpal_event_loop: <cpal::Host as HostTrait>::EventLoop,
 
+    #[derivative(Debug = "ignore")]
     cpal_input_device: <cpal::Host as HostTrait>::Device,
+    #[derivative(Debug = "ignore")]
     cpal_output_device: <cpal::Host as HostTrait>::Device,
 
     capture_format: Format<TCaptureSample>,
@@ -84,6 +89,7 @@ where
 }
 
 #[allow(clippy::module_name_repetitions)]
+#[derive(Debug)]
 pub struct BackendBuilder<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: CompatibleSample + Send + Sync,

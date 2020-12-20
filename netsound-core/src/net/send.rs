@@ -24,6 +24,7 @@ pub struct SendStats {
 }
 
 #[allow(clippy::module_name_repetitions)]
+#[derive(Debug)]
 pub struct SendService<'a, TCaptureSample, TCaptureDataReader, TEncoder>
 where
     TCaptureSample: Sample,

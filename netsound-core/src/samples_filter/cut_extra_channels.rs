@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct CutExtraChannels<I>
 where
     I: Iterator,
