@@ -4,7 +4,6 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 
-use failure::Error;
 use futures::FutureExt;
 use std::convert::TryInto;
 use std::env;

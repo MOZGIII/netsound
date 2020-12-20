@@ -9,22 +9,19 @@ license = "AGPL-3.0-only"
 async-trait = "0.1"
 audiopus = "0.2"
 byteorder = "1.3"
-cpal = "0.11"
 dasp_frame = "0.11"
 dasp_interpolate = { version = "0.11", features = ["linear"] }
 dasp_sample = "0.11"
 dasp_signal = "0.11"
-erased-serde = "0.3"
 failure = "0.1"
-futures = { version = "0.3", features = ["unstable", "async-await", "bilock"] }
+futures = { version = "0.3", features = ["unstable", "bilock"] }
 serde = { version = "1.0", features = ["derive"] }
-slog = { version = "2.5", features = ["nested-values"] }
+slog = "2.5"
 slog_derive = "0.2"
 slog-env-cfg = "0.6"
-slog-json = { version = "2.3", features = ["nested-values"] }
 slog-scope = "4.3"
 slog-scope-futures = "0.1"
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "0.2", features = ["udp"] }
 
 [dev-dependencies]
 futures-test = "0.3"
