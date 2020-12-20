@@ -1,5 +1,5 @@
 use super::{choose_format::choose_format, default, format, Backend, CompatibleSample};
-use netsound_core::audio;
+use netsound_core::audio_backend;
 use netsound_core::format::Format;
 use netsound_core::io::{AsyncReadItems, AsyncWriteItems};
 use netsound_core::log::no_scopes::{info, slog_info, Logger};
@@ -11,7 +11,7 @@ use cpal::traits::{DeviceTrait, EventLoopTrait, HostTrait};
 pub struct FormatNegotiator;
 
 impl<TCaptureSample, TPlaybackSample>
-    audio::backend::FormatNegotiator<TCaptureSample, TPlaybackSample> for FormatNegotiator
+    audio_backend::FormatNegotiator<TCaptureSample, TPlaybackSample> for FormatNegotiator
 where
     TCaptureSample: CompatibleSample,
     TPlaybackSample: CompatibleSample,
@@ -25,7 +25,7 @@ where
         mut logger: Logger,
     ) -> Result<
         (
-            audio::backend::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
+            audio_backend::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
             Self::Continuation,
         ),
         netsound_core::Error,
@@ -49,7 +49,7 @@ where
             request_playback_formats,
         )?;
 
-        let negotiated_formats = audio::backend::NegotiatedFormats {
+        let negotiated_formats = audio_backend::NegotiatedFormats {
             capture_format,
             playback_format,
         };
@@ -99,7 +99,7 @@ where
 }
 
 impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
-    audio::backend::Builder
+    audio_backend::Builder
     for BackendBuilder<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: CompatibleSample + Send + Sync,

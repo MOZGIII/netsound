@@ -6,7 +6,7 @@
 
 pub use failure::Error;
 
-pub mod audio;
+pub mod audio_backend;
 pub mod buf;
 pub mod codec;
 pub mod format;

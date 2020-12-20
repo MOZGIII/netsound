@@ -1,7 +1,4 @@
-use crate::audio::{
-    self,
-    backend::{Builder, FormatNegotiator},
-};
+use crate::audio_backend::{self, Builder, FormatNegotiator};
 use crate::format::Format;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::Logger;
@@ -38,7 +35,7 @@ type NegotiateFormatsContinuationFn<TCaptureDataWriter, TPlaybackDataReader> =
     dyn FnOnce(
         TCaptureDataWriter,
         TPlaybackDataReader,
-    ) -> Result<Box<dyn audio::backend::Backend>, crate::Error>;
+    ) -> Result<Box<dyn audio_backend::Backend>, crate::Error>;
 
 type NegotiateFormatsResult<
     TCaptureSample,
@@ -47,7 +44,7 @@ type NegotiateFormatsResult<
     TPlaybackDataReader,
 > = Result<
     (
-        audio::backend::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
+        audio_backend::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
         Box<NegotiateFormatsContinuationFn<TCaptureDataWriter, TPlaybackDataReader>>,
     ),
     crate::Error,
@@ -90,7 +87,7 @@ where
             playback_data_reader,
         }
         .build()?;
-        let backend: Box<dyn audio::backend::Backend> = Box::new(backend);
+        let backend: Box<dyn audio_backend::Backend> = Box::new(backend);
         Ok(backend)
     };
     let continuation_adapter = Box::new(continuation_adapter);

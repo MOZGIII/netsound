@@ -1,6 +1,6 @@
 use super::{io, CompatibleSample};
 use cpal::traits::EventLoopTrait;
-use netsound_core::audio;
+use netsound_core::audio_backend;
 use netsound_core::io::{AsyncReadItems, AsyncWriteItems};
 use netsound_core::log::no_scopes::{crit, trace, Logger};
 use netsound_core::sample::Sample;
@@ -31,7 +31,7 @@ where
 }
 
 impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
-    audio::backend::Backend
+    audio_backend::Backend
     for Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: CompatibleSample + Send + Sync,
