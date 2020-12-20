@@ -2,3 +2,7 @@ cargo-features = ["named-profiles"]
 
 [workspace]
 members = ["netsound-core", "netsound"]
+
+[profile.relwithdebinfo]
+inherits = "release"
+debug = true
