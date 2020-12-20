@@ -3,7 +3,7 @@ use crate::buf::{VecDequeBufferReader, VecDequeBufferWriter};
 use crate::io::{AsyncReadItemsExt, WaitMode};
 use crate::log::trace;
 use crate::match_channels;
-use crate::sample::Sample;
+use crate::pcm::{self, Sample};
 use crate::samples_filter::NormalizeChannelsExt;
 use async_trait::async_trait;
 use dasp_frame::Frame;
@@ -12,8 +12,8 @@ use dasp_signal::{interpolate, Signal};
 
 #[derive(Debug)]
 pub struct Resampler<S: Sample> {
-    pub from_channels: usize,
-    pub to_channels: usize,
+    pub from_channels: pcm::Channels,
+    pub to_channels: pcm::Channels,
 
     pub from_hz: f64,
     pub to_hz: f64,
@@ -25,8 +25,8 @@ pub struct Resampler<S: Sample> {
 impl<S: Sample> Resampler<S> {
     #[must_use]
     pub fn new(
-        from_channels: usize,
-        to_channels: usize,
+        from_channels: pcm::Channels,
+        to_channels: pcm::Channels,
         from_hz: f64,
         to_hz: f64,
         from_buf: VecDequeBufferReader<S>,

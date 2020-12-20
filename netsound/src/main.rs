@@ -11,11 +11,11 @@ use std::str::FromStr;
 use tokio::{net::UdpSocket, runtime::Runtime};
 
 use netsound_core::{
-    audio_backend, buf, codec, format, formats, future, io, log, net, sample, transcode,
-    transcode_service, Error,
+    audio_backend, buf, codec, future, io, log, net, pcm, transcode, transcode_service, Error,
 };
 
 mod audio_backends;
+mod stream_configs;
 
 use audio_backend::Backend;
 use future::select_first;
@@ -61,30 +61,30 @@ fn errmain() -> Result<(), Error> {
     info!("Using audio backend: {:?}", backend_to_use);
 
     let audio_backend_build_params = audio_backends::BuildParams {
-        request_capture_formats: formats::input(),
-        request_playback_formats: formats::output(),
+        request_capture_stream_configs: stream_configs::input(),
+        request_playback_stream_configs: stream_configs::output(),
         logger: logger().new(o!("logger" => "audio")),
     };
-    let (negotiated_formats, continuation) =
-        audio_backends::negotiate_formats(&backend_to_use, audio_backend_build_params)?;
+    let (negotiated_stream_configs, continuation) =
+        audio_backends::negotiate_stream_configs(&backend_to_use, audio_backend_build_params)?;
 
-    let net_capture_format = format::Format::new(
-        std::cmp::min(2, negotiated_formats.capture_format.channels),
-        48000,
+    let net_capture_stream_config = pcm::StreamConfig::new(
+        48000.into(),
+        std::cmp::min(2, negotiated_stream_configs.capture.channels()),
     );
-    let net_playback_format = format::Format::new(
-        std::cmp::min(2, negotiated_formats.playback_format.channels),
-        48000,
+    let net_playback_stream_config = pcm::StreamConfig::new(
+        48000.into(),
+        std::cmp::min(2, negotiated_stream_configs.playback.channels()),
     );
 
     let (capture_transcoder, capture_data_writer, capture_data_reader) = {
-        let audio_format = &negotiated_formats.capture_format;
-        let net_format = &net_capture_format;
+        let audio_stream_config = &negotiated_stream_configs.capture;
+        let net_stream_config = &net_capture_stream_config;
 
-        if audio_format == net_format {
+        if audio_stream_config == net_stream_config {
             info!(
                 "capture transcoder is noop: {} => {}",
-                audio_format, net_format,
+                audio_stream_config, net_stream_config,
             );
 
             let (audio_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
@@ -96,13 +96,19 @@ fn errmain() -> Result<(), Error> {
         } else {
             info!(
                 "capture resampler config: {} => {}",
-                audio_format, net_format,
+                audio_stream_config, net_stream_config,
             );
 
-            let audio_channels = audio_format.channels.try_into()?;
-            let net_channels = net_format.channels.try_into()?;
-            let audio_sample_rate = audio_format.sample_rate.into();
-            let net_sample_rate = net_format.sample_rate.into();
+            let audio_channels = audio_stream_config.channels();
+            let net_channels = net_stream_config.channels();
+            let audio_sample_rate = {
+                let val: u32 = audio_stream_config.sample_rate().as_usize().try_into()?;
+                val.into()
+            };
+            let net_sample_rate = {
+                let val: u32 = net_stream_config.sample_rate().as_usize().try_into()?;
+                val.into()
+            };
 
             let (audio_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
             let (transcoder_writer, net_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
@@ -122,13 +128,13 @@ fn errmain() -> Result<(), Error> {
         }
     };
     let (playback_transcoder, playback_data_writer, playback_data_reader) = {
-        let net_format = &net_playback_format;
-        let audio_format = &negotiated_formats.playback_format;
+        let net_stream_config = &net_playback_stream_config;
+        let audio_stream_config = &negotiated_stream_configs.playback;
 
-        if net_format == audio_format {
+        if net_stream_config == audio_stream_config {
             info!(
                 "playback transcoder is noop: {} => {}",
-                net_format, audio_format,
+                net_stream_config, audio_stream_config,
             );
 
             let (net_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
@@ -140,13 +146,19 @@ fn errmain() -> Result<(), Error> {
         } else {
             info!(
                 "playback resampler config: {} => {}",
-                net_format, audio_format,
+                net_stream_config, audio_stream_config,
             );
 
-            let net_channels = net_format.channels.try_into()?;
-            let audio_channels = audio_format.channels.try_into()?;
-            let net_sample_rate = net_format.sample_rate.into();
-            let audio_sample_rate = audio_format.sample_rate.into();
+            let net_channels = net_stream_config.channels();
+            let audio_channels = audio_stream_config.channels();
+            let net_sample_rate = {
+                let val: u32 = net_stream_config.sample_rate().as_usize().try_into()?;
+                val.into()
+            };
+            let audio_sample_rate = {
+                let val: u32 = audio_stream_config.sample_rate().as_usize().try_into()?;
+                val.into()
+            };
 
             let (net_writer, transcoder_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
             let (transcoder_writer, audio_reader) = buf::vec_deque_buffer_with_capacity(30_000_000);
@@ -172,24 +184,24 @@ fn errmain() -> Result<(), Error> {
     match codec_to_use {
         CodecToUse::Opus => {
             let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                net_capture_format.sample_rate,
-                net_capture_format.channels,
+                net_capture_stream_config.sample_rate(),
+                net_capture_stream_config.channels(),
                 codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
             let opus_decoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                net_playback_format.sample_rate,
-                net_playback_format.channels,
+                net_playback_stream_config.sample_rate(),
+                net_playback_stream_config.channels(),
                 codec::opus::SupportedFrameSizeMS::F20,
                 false,
             ));
 
             encoder = Box::new(codec::opus::make_encoder(
-                net_capture_format,
+                net_capture_stream_config,
                 opus_encoder_buf,
             )?);
             decoder = Box::new(codec::opus::make_decoder(
-                net_playback_format,
+                net_playback_stream_config,
                 opus_decoder_buf,
             )?);
         }

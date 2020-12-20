@@ -1,5 +1,5 @@
 use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::sample::Sample;
+use crate::pcm::Sample;
 use async_trait::async_trait;
 
 pub mod opus;

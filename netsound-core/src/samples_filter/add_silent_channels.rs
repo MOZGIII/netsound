@@ -1,4 +1,4 @@
-use crate::sample::Sample;
+use crate::pcm::Sample;
 
 #[derive(Debug)]
 pub struct AddSilentChannels<I>

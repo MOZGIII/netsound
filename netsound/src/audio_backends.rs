@@ -1,8 +1,8 @@
-use crate::audio_backend::{self, Builder, FormatNegotiator};
-use crate::format::Format;
+use crate::audio_backend::{self, Builder, StreamConfigNegotiator};
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::Logger;
-use crate::sample::Sample;
+use crate::pcm::Sample;
+use crate::pcm::StreamConfig;
 
 #[derive(Debug)]
 pub enum AudioBackendToUse {
@@ -26,34 +26,34 @@ where
     TCaptureSample: Sample,
     TPlaybackSample: Sample,
 {
-    pub request_capture_formats: &'a [Format<TCaptureSample>],
-    pub request_playback_formats: &'a [Format<TPlaybackSample>],
+    pub request_capture_stream_configs: &'a [StreamConfig<TCaptureSample>],
+    pub request_playback_stream_configs: &'a [StreamConfig<TPlaybackSample>],
     pub logger: Logger,
 }
 
-type NegotiateFormatsContinuationFn<TCaptureDataWriter, TPlaybackDataReader> =
+type NegotiateStreamConfigsContinuationFn<TCaptureDataWriter, TPlaybackDataReader> =
     dyn FnOnce(
         TCaptureDataWriter,
         TPlaybackDataReader,
     ) -> Result<Box<dyn audio_backend::Backend>, crate::Error>;
 
-type NegotiateFormatsResult<
+type NegotiateStreamConfigsResult<
     TCaptureSample,
     TPlaybackSample,
     TCaptureDataWriter,
     TPlaybackDataReader,
 > = Result<
     (
-        audio_backend::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
-        Box<NegotiateFormatsContinuationFn<TCaptureDataWriter, TPlaybackDataReader>>,
+        audio_backend::NegotiatedStreamConfigs<TCaptureSample, TPlaybackSample>,
+        Box<NegotiateStreamConfigsContinuationFn<TCaptureDataWriter, TPlaybackDataReader>>,
     ),
     crate::Error,
 >;
 
-pub fn negotiate_formats<TCaptureDataWriter, TPlaybackDataReader>(
+pub fn negotiate_stream_configs<TCaptureDataWriter, TPlaybackDataReader>(
     backend_to_use: &AudioBackendToUse,
     build_params: BuildParams<'_, f32, f32>,
-) -> NegotiateFormatsResult<f32, f32, TCaptureDataWriter, TPlaybackDataReader>
+) -> NegotiateStreamConfigsResult<f32, f32, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureDataWriter: AsyncWriteItems<f32> + Unpin + Send + Sync + 'static,
     TPlaybackDataReader: AsyncReadItems<f32> + Unpin + Send + Sync + 'static,
@@ -65,7 +65,12 @@ where
 
 fn build_cpal<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>(
     build_params: BuildParams<'_, TCaptureSample, TPlaybackSample>,
-) -> NegotiateFormatsResult<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
+) -> NegotiateStreamConfigsResult<
+    TCaptureSample,
+    TPlaybackSample,
+    TCaptureDataWriter,
+    TPlaybackDataReader,
+>
 where
     TCaptureSample: Sample + netsound_audio_backend_cpal::CompatibleSample + Send + Sync + 'static,
     TPlaybackSample: Sample + netsound_audio_backend_cpal::CompatibleSample + Send + Sync + 'static,
@@ -73,10 +78,10 @@ where
     TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync + 'static,
     TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync + 'static,
 {
-    let format_negotiator = netsound_audio_backend_cpal::FormatNegotiator;
-    let (negotiated_formats, continuation) = format_negotiator.negotiate_formats(
-        build_params.request_capture_formats,
-        build_params.request_playback_formats,
+    let stream_config_negotiator = netsound_audio_backend_cpal::StreamConfigNegotiator;
+    let (negotiated_stream_configs, continuation) = stream_config_negotiator.negotiate(
+        build_params.request_capture_stream_configs,
+        build_params.request_playback_stream_configs,
         build_params.logger,
     )?;
 
@@ -92,5 +97,5 @@ where
     };
     let continuation_adapter = Box::new(continuation_adapter);
 
-    Ok((negotiated_formats, continuation_adapter))
+    Ok((negotiated_stream_configs, continuation_adapter))
 }

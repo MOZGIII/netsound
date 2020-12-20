@@ -1,4 +1,4 @@
-use netsound_core::sample::Sample;
+use netsound_core::pcm::Sample;
 
 pub trait CompatibleSample: Sample {
     fn unwrap_cpal_input_buffer<'a>(buf: &'a cpal::UnknownTypeInputBuffer<'a>) -> &'a [Self];
@@ -48,35 +48,41 @@ impl_compatibe_sample![
     [f32, F32, F32]
 ];
 
-pub mod format {
+pub mod stream_config {
+    use std::convert::TryInto;
+
     use super::CompatibleSample;
-    use netsound_core::format::Format;
+    use netsound_core::pcm::StreamConfig;
 
     fn sample_formats_do_not_match() -> ! {
         panic!("sample formats do not match")
     }
 
     #[must_use]
-    pub fn from_cpal<S: CompatibleSample>(f: &cpal::Format) -> Format<S> {
+    pub fn from_cpal_format<S: CompatibleSample>(f: &cpal::Format) -> StreamConfig<S> {
         if S::cpal_sample_format() != f.data_type {
             sample_formats_do_not_match();
         }
-        Format::<S>::new(f.channels, f.sample_rate.0)
+        let sample_rate: usize = f.sample_rate.0.try_into().unwrap();
+        StreamConfig::<S>::new(sample_rate.into(), f.channels.try_into().unwrap())
     }
 
     #[must_use]
-    pub fn from_cpal_supported<S: CompatibleSample>(f: &cpal::SupportedFormat) -> Format<S> {
-        if S::cpal_sample_format() != f.data_type {
+    pub fn from_cpal_supported_format<S: CompatibleSample>(
+        sf: &cpal::SupportedFormat,
+    ) -> StreamConfig<S> {
+        if S::cpal_sample_format() != sf.data_type {
             sample_formats_do_not_match();
         }
-        Format::<S>::new(f.channels, f.max_sample_rate.0)
+        let sample_rate: usize = sf.max_sample_rate.0.try_into().unwrap();
+        StreamConfig::<S>::new(sample_rate.into(), sf.channels.into())
     }
 
     #[must_use]
-    pub fn to_cpal<S: CompatibleSample>(f: Format<S>) -> cpal::Format {
+    pub fn to_cpal_format<S: CompatibleSample>(sc: StreamConfig<S>) -> cpal::Format {
         cpal::Format {
-            channels: f.channels,
-            sample_rate: cpal::SampleRate(f.sample_rate),
+            channels: sc.channels().try_into().unwrap(),
+            sample_rate: cpal::SampleRate(sc.sample_rate().as_usize().try_into().unwrap()),
             data_type: S::cpal_sample_format(),
         }
     }

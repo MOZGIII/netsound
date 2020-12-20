@@ -3,7 +3,7 @@ use cpal::traits::EventLoopTrait;
 use netsound_core::audio_backend;
 use netsound_core::io::{AsyncReadItems, AsyncWriteItems};
 use netsound_core::log::no_scopes::{crit, trace, Logger};
-use netsound_core::sample::Sample;
+use netsound_core::pcm::Sample;
 use std::marker::PhantomData;
 
 #[derive(Derivative)]

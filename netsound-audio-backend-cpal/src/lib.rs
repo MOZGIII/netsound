@@ -7,7 +7,7 @@ extern crate derivative;
 
 mod backend;
 mod builder;
-mod choose_format;
+mod choose_stream_config;
 mod compatible_sample;
 mod default;
 mod errors;

@@ -1,6 +1,6 @@
 use super::{AddSilentChannels, AddSilentChannelsExt, CutExtraChannels, CutExtraChannelsExt};
 use crate::log::trace;
-use crate::sample::Sample;
+use crate::pcm::Sample;
 use std::cmp::Ordering;
 
 #[derive(Debug)]

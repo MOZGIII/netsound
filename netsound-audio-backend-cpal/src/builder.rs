@@ -1,31 +1,34 @@
-use super::{choose_format::choose_format, default, format, Backend, CompatibleSample};
+use super::{
+    choose_stream_config::choose_stream_config, default, stream_config, Backend, CompatibleSample,
+};
 use netsound_core::audio_backend;
-use netsound_core::format::Format;
 use netsound_core::io::{AsyncReadItems, AsyncWriteItems};
 use netsound_core::log::no_scopes::{info, slog_info, Logger};
+use netsound_core::pcm::StreamConfig;
 use std::marker::PhantomData;
 
 use cpal::traits::{DeviceTrait, EventLoopTrait, HostTrait};
 
 #[derive(Debug)]
-pub struct FormatNegotiator;
+pub struct StreamConfigNegotiator;
 
 impl<TCaptureSample, TPlaybackSample>
-    audio_backend::FormatNegotiator<TCaptureSample, TPlaybackSample> for FormatNegotiator
+    audio_backend::StreamConfigNegotiator<TCaptureSample, TPlaybackSample>
+    for StreamConfigNegotiator
 where
     TCaptureSample: CompatibleSample,
     TPlaybackSample: CompatibleSample,
 {
-    type Continuation = FormatNegotiationContinuation<TCaptureSample, TPlaybackSample>;
+    type Continuation = StreamConfigNegotiationContinuation<TCaptureSample, TPlaybackSample>;
 
-    fn negotiate_formats<'a>(
+    fn negotiate<'a>(
         self,
-        request_capture_formats: &'a [Format<TCaptureSample>],
-        request_playback_formats: &'a [Format<TPlaybackSample>],
+        requested_capture_stream_configs: &'a [StreamConfig<TCaptureSample>],
+        requested_playback_stream_configs: &'a [StreamConfig<TPlaybackSample>],
         mut logger: Logger,
     ) -> Result<
         (
-            audio_backend::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
+            audio_backend::NegotiatedStreamConfigs<TCaptureSample, TPlaybackSample>,
             Self::Continuation,
         ),
         netsound_core::Error,
@@ -38,38 +41,38 @@ where
         let cpal_input_device = default::input_device(&cpal_host)?;
         let cpal_output_device = default::output_device(&cpal_host)?;
 
-        let capture_format = choose_format(
+        let capture_stream_config = choose_stream_config(
             &mut logger,
             cpal_input_device.supported_input_formats()?,
-            request_capture_formats,
+            requested_capture_stream_configs,
         )?;
-        let playback_format = choose_format(
+        let playback_stream_config = choose_stream_config(
             &mut logger,
             cpal_output_device.supported_output_formats()?,
-            request_playback_formats,
+            requested_playback_stream_configs,
         )?;
 
-        let negotiated_formats = audio_backend::NegotiatedFormats {
-            capture_format,
-            playback_format,
+        let negotiated_stream_configs = audio_backend::NegotiatedStreamConfigs {
+            capture: capture_stream_config,
+            playback: playback_stream_config,
         };
 
-        let continuation = FormatNegotiationContinuation {
+        let continuation = StreamConfigNegotiationContinuation {
             cpal_event_loop,
             cpal_input_device,
             cpal_output_device,
-            capture_format,
-            playback_format,
+            capture_stream_config,
+            playback_stream_config,
             logger,
         };
 
-        Ok((negotiated_formats, continuation))
+        Ok((negotiated_stream_configs, continuation))
     }
 }
 
 #[derive(Derivative)]
 #[derivative(Debug)]
-pub struct FormatNegotiationContinuation<TCaptureSample, TPlaybackSample>
+pub struct StreamConfigNegotiationContinuation<TCaptureSample, TPlaybackSample>
 where
     TCaptureSample: CompatibleSample,
     TPlaybackSample: CompatibleSample,
@@ -82,8 +85,8 @@ where
     #[derivative(Debug = "ignore")]
     cpal_output_device: <cpal::Host as HostTrait>::Device,
 
-    capture_format: Format<TCaptureSample>,
-    playback_format: Format<TPlaybackSample>,
+    capture_stream_config: StreamConfig<TCaptureSample>,
+    playback_stream_config: StreamConfig<TPlaybackSample>,
 
     logger: Logger,
 }
@@ -98,7 +101,7 @@ where
     TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync,
     TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync,
 {
-    pub continuation: FormatNegotiationContinuation<TCaptureSample, TPlaybackSample>,
+    pub continuation: StreamConfigNegotiationContinuation<TCaptureSample, TPlaybackSample>,
 
     pub capture_data_writer: TCaptureDataWriter,
     pub playback_data_reader: TPlaybackDataReader,
@@ -118,8 +121,10 @@ where
         Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>;
 
     fn build(self) -> Result<Self::Backend, netsound_core::Error> {
-        let cpal_capture_format = format::to_cpal(self.continuation.capture_format);
-        let cpal_playback_format = format::to_cpal(self.continuation.playback_format);
+        let cpal_capture_format =
+            stream_config::to_cpal_format(self.continuation.capture_stream_config);
+        let cpal_playback_format =
+            stream_config::to_cpal_format(self.continuation.playback_stream_config);
         let mut logger = self.continuation.logger;
 
         log_config(

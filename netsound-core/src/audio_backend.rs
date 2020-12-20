@@ -1,23 +1,22 @@
-use crate::format::Format;
 use crate::log::no_scopes::Logger;
-use crate::sample::Sample;
+use crate::pcm::{Sample, StreamConfig};
 use crate::Error;
 
-pub trait FormatNegotiator<TCaptureSample, TPlaybackSample>
+pub trait StreamConfigNegotiator<TCaptureSample, TPlaybackSample>
 where
     TCaptureSample: Sample,
     TPlaybackSample: Sample,
 {
     type Continuation;
 
-    fn negotiate_formats<'a>(
+    fn negotiate<'a>(
         self,
-        request_capture_formats: &'a [Format<TCaptureSample>],
-        request_playback_formats: &'a [Format<TPlaybackSample>],
+        requested_capture_stream_configs: &'a [StreamConfig<TCaptureSample>],
+        requested_playback_stream_configs: &'a [StreamConfig<TPlaybackSample>],
         logger: Logger,
     ) -> Result<
         (
-            NegotiatedFormats<TCaptureSample, TPlaybackSample>,
+            NegotiatedStreamConfigs<TCaptureSample, TPlaybackSample>,
             Self::Continuation,
         ),
         Error,
@@ -25,13 +24,13 @@ where
 }
 
 #[derive(Clone, Debug)]
-pub struct NegotiatedFormats<TCaptureSample, TPlaybackSample>
+pub struct NegotiatedStreamConfigs<TCaptureSample, TPlaybackSample>
 where
     TCaptureSample: Sample,
     TPlaybackSample: Sample,
 {
-    pub capture_format: Format<TCaptureSample>,
-    pub playback_format: Format<TPlaybackSample>,
+    pub capture: StreamConfig<TCaptureSample>,
+    pub playback: StreamConfig<TPlaybackSample>,
 }
 
 pub trait Builder {

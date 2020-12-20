@@ -3,7 +3,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum Error {
     DefaultDevice,
-    FormatNegotiation,
+    StreamConfigNegotiation,
     SupportedFormats(cpal::SupportedFormatsError),
     BuildStream(cpal::BuildStreamError),
     DeviceName(cpal::DeviceNameError),
@@ -14,7 +14,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::DefaultDevice => write!(f, "Unable to determine default audio device"),
-            Error::FormatNegotiation => write!(f, "Unable to determine default audio format"),
+            Error::StreamConfigNegotiation => {
+                write!(f, "Unable to determine default audio stream config")
+            }
             Error::SupportedFormats(err) => {
                 write!(f, "Unable to fetch supported audio formats: {}", err)
             }

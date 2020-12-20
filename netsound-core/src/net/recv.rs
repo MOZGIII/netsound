@@ -1,7 +1,7 @@
 use crate::codec::{Decoder, DecodingError};
 use crate::io::AsyncWriteItems;
 use crate::log::{debug, error, trace, warn, KV};
-use crate::sample::Sample;
+use crate::pcm::Sample;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 use tokio::net::udp::RecvHalf;
