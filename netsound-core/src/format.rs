@@ -10,6 +10,7 @@ pub struct Format<S: Sample> {
 }
 
 impl<S: Sample> Format<S> {
+    #[must_use]
     pub const fn new(channels: u16, sample_rate: u32) -> Self {
         Self {
             channels,

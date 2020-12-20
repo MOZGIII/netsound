@@ -22,9 +22,7 @@ where
     pub(super) capture_data_writer: TCaptureDataWriter,
     pub(super) playback_data_reader: TPlaybackDataReader,
 
-    #[allow(dead_code)]
     pub(super) capture_stream_id: cpal::StreamId,
-    #[allow(dead_code)]
     pub(super) playback_stream_id: cpal::StreamId,
 
     #[derivative(Debug = "ignore")]

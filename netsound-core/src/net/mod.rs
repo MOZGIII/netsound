@@ -37,7 +37,6 @@ pub struct NetService<
     pub recv_service: RecvService<'a, TPlaybackSample, TPlaybackDataWriter, TDecoder>,
 }
 
-#[allow(dead_code)]
 pub type DynNetService<'a, TCaptureSample, TPlaybackSample, TCaptureData, TPlaybackData> =
     NetService<
         'a,

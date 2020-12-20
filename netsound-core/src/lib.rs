@@ -3,6 +3,7 @@
 #![feature(core_intrinsics)]
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::missing_errors_doc)]
 
 #[macro_use]
 extern crate derivative;

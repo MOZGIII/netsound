@@ -118,8 +118,8 @@ where
         Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>;
 
     fn build(self) -> Result<Self::Backend, netsound_core::Error> {
-        let cpal_capture_format = format::to_cpal_format(self.continuation.capture_format);
-        let cpal_playback_format = format::to_cpal_format(self.continuation.playback_format);
+        let cpal_capture_format = format::to_cpal(self.continuation.capture_format);
+        let cpal_playback_format = format::to_cpal(self.continuation.playback_format);
         let mut logger = self.continuation.logger;
 
         log_config(

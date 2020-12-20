@@ -4,7 +4,6 @@ use std::num;
 
 #[derive(Debug)]
 pub enum Error {
-    #[allow(dead_code)]
     NotEnoughData {
         samples_available: usize,
         samples_required: usize,

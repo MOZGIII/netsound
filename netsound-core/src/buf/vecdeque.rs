@@ -21,12 +21,14 @@ struct Inner<T> {
     write_waker: AtomicWaker,
 }
 
+#[must_use]
 pub fn vec_deque_buffer_with_capacity<T>(
     capacity: usize,
 ) -> (VecDequeBufferWriter<T>, VecDequeBufferReader<T>) {
     vec_deque_buffer(VecDeque::with_capacity(capacity))
 }
 
+#[must_use]
 pub fn vec_deque_buffer<T>(vd: VecDeque<T>) -> (VecDequeBufferWriter<T>, VecDequeBufferReader<T>) {
     let (reader_inner, writer_inner) = BiLock::new(Inner {
         vd,

@@ -12,7 +12,10 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use tokio::{net::UdpSocket, runtime::Runtime};
 
-use netsound_core::*;
+use netsound_core::{
+    audio_backend, buf, codec, format, formats, future, io, log, net, sample, transcode,
+    transcode_service, Error,
+};
 
 mod audio_backends;
 

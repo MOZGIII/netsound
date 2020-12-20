@@ -1,6 +1,7 @@
 use crate::sample::Sample;
 use std::intrinsics::type_name;
 
+#[must_use]
 pub fn sample_type_name<S: Sample>() -> SampleTypeName {
     SampleTypeName(type_name::<S>())
 }

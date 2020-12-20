@@ -23,6 +23,7 @@ pub struct Resampler<S: Sample> {
 }
 
 impl<S: Sample> Resampler<S> {
+    #[must_use]
     pub fn new(
         from_channels: usize,
         to_channels: usize,

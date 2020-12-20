@@ -13,10 +13,12 @@ static FORMATS: &[Format<f32>] = &[
     Format::new(1, 8000),
 ];
 
+#[must_use]
 pub fn input() -> &'static [Format<f32>] {
     FORMATS
 }
 
+#[must_use]
 pub fn output() -> &'static [Format<f32>] {
     FORMATS
 }
