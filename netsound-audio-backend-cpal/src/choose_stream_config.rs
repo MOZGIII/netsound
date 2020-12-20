@@ -4,13 +4,17 @@ use super::{stream_config, CompatibleSample};
 use netsound_core::log::no_scopes::{trace, Logger};
 use netsound_core::pcm::StreamConfig;
 
-pub fn choose_stream_config<S: CompatibleSample, I: Iterator<Item = cpal::SupportedFormat>>(
+pub fn choose_stream_config<S, I>(
     logger: &mut Logger,
     iter: I,
     requested_stream_configs: &[StreamConfig<S>],
-) -> Result<StreamConfig<S>, super::errors::Error> {
-    let supported_formats: Vec<_> = iter.collect();
-    let cpal_sample_format = S::cpal_sample_format();
+) -> Result<StreamConfig<S>, super::errors::Error>
+where
+    S: CompatibleSample,
+    I: Iterator<Item = cpal::SupportedStreamConfigRange>,
+{
+    let supported_ranges: Vec<_> = iter.collect();
+    let cpal_sample_format = <S as cpal::Sample>::FORMAT;
 
     // Try to use stream config from the preferred stream configs list.
     for requested_stream_config in requested_stream_configs {
@@ -22,25 +26,27 @@ pub fn choose_stream_config<S: CompatibleSample, I: Iterator<Item = cpal::Suppor
 
         let requested_stream_config_cpal_channels: u16 =
             requested_stream_config.channels().try_into().unwrap();
-        let requested_stream_config_cpal_sample_rate: u32 = requested_stream_config
-            .sample_rate()
-            .as_usize()
-            .try_into()
-            .unwrap();
+        let requested_stream_config_cpal_sample_rate = cpal::SampleRate(
+            requested_stream_config
+                .sample_rate()
+                .as_usize()
+                .try_into()
+                .unwrap(),
+        );
 
-        for supported_format in &supported_formats {
+        for supported_range in &supported_ranges {
             trace!(
                 logger,
-                "Matching with supported format {:?}",
-                supported_format
+                "Matching with supported config range {:?}",
+                supported_range
             );
-            if supported_format.data_type != cpal_sample_format {
+            if supported_range.sample_format() != cpal_sample_format {
                 continue;
             }
-            if supported_format.channels != requested_stream_config_cpal_channels {
+            if supported_range.channels() != requested_stream_config_cpal_channels {
                 continue;
             }
-            if !(supported_format.min_sample_rate.0..=supported_format.max_sample_rate.0)
+            if !(supported_range.min_sample_rate()..=supported_range.max_sample_rate())
                 .contains(&requested_stream_config_cpal_sample_rate)
             {
                 continue;
@@ -48,17 +54,19 @@ pub fn choose_stream_config<S: CompatibleSample, I: Iterator<Item = cpal::Suppor
 
             trace!(
                 logger,
-                "Matched requested format {:?} with supported format {:?}",
+                "Matched requested format {:?} with supported range {:?}",
                 requested_stream_config,
-                supported_format
+                supported_range
             );
             return Ok(*requested_stream_config);
         }
     }
 
-    // Preferred format wasn't found, use the first one that's supported.
-    if let Some(ref format) = supported_formats.into_iter().next() {
-        return Ok(stream_config::from_cpal_supported_format(format));
+    // Preferred stream config wasn't found, use the first one that's supported.
+    if let Some(range) = supported_ranges.into_iter().next() {
+        return Ok(stream_config::from_cpal_supported(
+            &range.with_max_sample_rate(),
+        ));
     }
 
     Err(super::errors::Error::StreamConfigNegotiation)

@@ -4,22 +4,20 @@ use netsound_core::io::{
     AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode,
 };
 
-pub fn capture<'a, S, W>(from: &'a mut cpal::UnknownTypeInputBuffer<'a>, to: &mut W)
+pub fn capture<'a, S, W>(from: &'a [S], to: &mut W)
 where
     S: CompatibleSample + 'a,
     W: AsyncWriteItems<S> + Unpin,
 {
-    let from = S::unwrap_cpal_input_buffer(from);
     let result = block_on(to.write_items(from, WaitMode::NoWait));
     let _ = result.expect("failed to write to shared buf");
 }
 
-pub fn play<'a, S, R>(from: &mut R, to: &'a mut cpal::UnknownTypeOutputBuffer<'a>)
+pub fn play<'a, S, R>(from: &mut R, to: &'a mut [S])
 where
     S: CompatibleSample + 'a,
     R: AsyncReadItems<S> + Unpin,
 {
-    let to = S::unwrap_cpal_output_buffer(to);
     let result = block_on(from.read_items(to, WaitMode::NoWait));
     let samples_read = result.expect("failed to read from shared buf");
 
