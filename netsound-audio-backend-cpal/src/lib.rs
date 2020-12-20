@@ -9,6 +9,7 @@ mod backend;
 mod builder;
 mod choose_stream_config;
 mod compatible_sample;
+mod control;
 mod default;
 mod errors;
 mod io;

@@ -4,7 +4,7 @@ use std::fmt;
 pub enum Error {
     DefaultDevice,
     StreamConfigNegotiation,
-    SupportedFormats(cpal::SupportedFormatsError),
+    SupportedStreamConfigs(cpal::SupportedStreamConfigsError),
     BuildStream(cpal::BuildStreamError),
     DeviceName(cpal::DeviceNameError),
     PlayStream(cpal::PlayStreamError),
@@ -15,10 +15,10 @@ impl fmt::Display for Error {
         match self {
             Error::DefaultDevice => write!(f, "Unable to determine default audio device"),
             Error::StreamConfigNegotiation => {
-                write!(f, "Unable to determine default audio stream config")
+                write!(f, "Unable to negotiate audio stream config")
             }
-            Error::SupportedFormats(err) => {
-                write!(f, "Unable to fetch supported audio formats: {}", err)
+            Error::SupportedStreamConfigs(err) => {
+                write!(f, "Unable to fetch supported audio stream configs: {}", err)
             }
             Error::BuildStream(err) => write!(f, "Unable to build stream: {}", err),
             Error::DeviceName(err) => write!(f, "Unable to get device name: {}", err),
@@ -29,9 +29,9 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-impl From<cpal::SupportedFormatsError> for Error {
-    fn from(err: cpal::SupportedFormatsError) -> Error {
-        Error::SupportedFormats(err)
+impl From<cpal::SupportedStreamConfigsError> for Error {
+    fn from(err: cpal::SupportedStreamConfigsError) -> Error {
+        Error::SupportedStreamConfigs(err)
     }
 }
 

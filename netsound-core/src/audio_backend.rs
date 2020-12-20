@@ -2,6 +2,8 @@ use crate::log::no_scopes::Logger;
 use crate::pcm::{Sample, StreamConfig};
 use crate::Error;
 
+use async_trait::async_trait;
+
 pub trait StreamConfigNegotiator<TCaptureSample, TPlaybackSample>
 where
     TCaptureSample: Sample,
@@ -39,6 +41,7 @@ pub trait Builder {
 }
 
 /// Backend's only responsibility is to manage the runtime.
+#[async_trait]
 pub trait Backend: Send + Sync {
-    fn run(&mut self);
+    async fn run(&mut self);
 }

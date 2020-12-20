@@ -1,52 +1,8 @@
 use netsound_core::pcm::Sample;
 
-pub trait CompatibleSample: Sample {
-    fn unwrap_cpal_input_buffer<'a>(buf: &'a cpal::UnknownTypeInputBuffer<'a>) -> &'a [Self];
-    fn unwrap_cpal_output_buffer<'a>(
-        buf: &'a mut cpal::UnknownTypeOutputBuffer<'a>,
-    ) -> &'a mut [Self];
-    fn cpal_sample_format() -> cpal::SampleFormat;
-}
+pub trait CompatibleSample: Sample + cpal::Sample {}
 
-fn unexpected_buffer_type() -> ! {
-    panic!("Unexpected buffer type")
-}
-
-macro_rules! impl_compatibe_sample {
-    ($([$sample_type:ty, $sample_buffer_variant:ident, $sample_format_variant:ident])*) => {
-        $(
-            impl CompatibleSample for $sample_type {
-                fn unwrap_cpal_input_buffer<'a>(
-                    buf: &'a cpal::UnknownTypeInputBuffer<'a>
-                ) -> &'a [Self] {
-                    match buf {
-                        cpal::UnknownTypeInputBuffer::$sample_buffer_variant(buffer) => &*buffer,
-                        _ => unexpected_buffer_type(),
-                    }
-                }
-
-                fn unwrap_cpal_output_buffer<'a>(
-                    buf: &'a mut cpal::UnknownTypeOutputBuffer<'a>,
-                ) -> &'a mut [Self] {
-                    match buf {
-                        cpal::UnknownTypeOutputBuffer::$sample_buffer_variant(buffer) => &mut *buffer,
-                        _ => unexpected_buffer_type(),
-                    }
-                }
-
-                fn cpal_sample_format() -> cpal::SampleFormat {
-                    cpal::SampleFormat::$sample_format_variant
-                }
-            }
-        )*
-    };
-}
-
-impl_compatibe_sample![
-    [u16, U16, U16]
-    [i16, I16, I16]
-    [f32, F32, F32]
-];
+impl<T> CompatibleSample for T where T: Sample + cpal::Sample {}
 
 pub mod stream_config {
     use std::convert::TryInto;
@@ -59,31 +15,28 @@ pub mod stream_config {
     }
 
     #[must_use]
-    pub fn from_cpal_format<S: CompatibleSample>(f: &cpal::Format) -> StreamConfig<S> {
-        if S::cpal_sample_format() != f.data_type {
-            sample_formats_do_not_match();
-        }
-        let sample_rate: usize = f.sample_rate.0.try_into().unwrap();
-        StreamConfig::<S>::new(sample_rate.into(), f.channels.try_into().unwrap())
+    pub fn from_cpal<S: CompatibleSample>(config: &cpal::StreamConfig) -> StreamConfig<S> {
+        let sample_rate: usize = config.sample_rate.0.try_into().unwrap();
+        StreamConfig::<S>::new(sample_rate.into(), config.channels.try_into().unwrap())
     }
 
     #[must_use]
-    pub fn from_cpal_supported_format<S: CompatibleSample>(
-        sf: &cpal::SupportedFormat,
+    pub fn from_cpal_supported<S: CompatibleSample>(
+        config: &cpal::SupportedStreamConfig,
     ) -> StreamConfig<S> {
-        if S::cpal_sample_format() != sf.data_type {
+        if <S as cpal::Sample>::FORMAT != config.sample_format() {
             sample_formats_do_not_match();
         }
-        let sample_rate: usize = sf.max_sample_rate.0.try_into().unwrap();
-        StreamConfig::<S>::new(sample_rate.into(), sf.channels.into())
+        let sample_rate: usize = config.sample_rate().0.try_into().unwrap();
+        StreamConfig::<S>::new(sample_rate.into(), config.channels().into())
     }
 
     #[must_use]
-    pub fn to_cpal_format<S: CompatibleSample>(sc: StreamConfig<S>) -> cpal::Format {
-        cpal::Format {
-            channels: sc.channels().try_into().unwrap(),
-            sample_rate: cpal::SampleRate(sc.sample_rate().as_usize().try_into().unwrap()),
-            data_type: S::cpal_sample_format(),
+    pub fn to_cpal<S: CompatibleSample>(config: StreamConfig<S>) -> cpal::StreamConfig {
+        cpal::StreamConfig {
+            channels: config.channels().try_into().unwrap(),
+            sample_rate: cpal::SampleRate(config.sample_rate().as_usize().try_into().unwrap()),
+            buffer_size: cpal::BufferSize::Default, // TODO: implement support for configuring buffer types.
         }
     }
 }

@@ -277,7 +277,7 @@ impl CodecToUse {
 fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) {
     std::thread::spawn(move || {
         let mut local = audio_backend;
-        local.run()
+        futures::executor::block_on(local.run())
     });
 }
 
