@@ -1,8 +1,8 @@
 use super::{choose_format::choose_format, default, format, Backend, CompatibleSample};
-use crate::audio;
-use crate::format::Format;
-use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::no_scopes::{info, slog_info, Logger};
+use netsound_core::audio;
+use netsound_core::format::Format;
+use netsound_core::io::{AsyncReadItems, AsyncWriteItems};
+use netsound_core::log::no_scopes::{info, slog_info, Logger};
 use std::marker::PhantomData;
 
 use cpal::traits::{DeviceTrait, EventLoopTrait, HostTrait};
@@ -28,7 +28,7 @@ where
             audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
             Self::Continuation,
         ),
-        crate::Error,
+        netsound_core::Error,
     > {
         let cpal_host = cpal::default_host();
         info!(logger, "Cpal Host: {:?}", &cpal_host.id());
@@ -110,7 +110,7 @@ where
     type Backend =
         Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>;
 
-    fn build(self) -> Result<Self::Backend, crate::Error> {
+    fn build(self) -> Result<Self::Backend, netsound_core::Error> {
         let cpal_capture_format = format::to_cpal_format(self.continuation.capture_format);
         let cpal_playback_format = format::to_cpal_format(self.continuation.playback_format);
         let mut logger = self.continuation.logger;

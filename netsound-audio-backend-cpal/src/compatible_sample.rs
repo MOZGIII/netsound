@@ -1,4 +1,4 @@
-use crate::sample::Sample;
+use netsound_core::sample::Sample;
 
 pub trait CompatibleSample: Sample {
     fn unwrap_cpal_input_buffer<'a>(buf: &'a cpal::UnknownTypeInputBuffer<'a>) -> &'a [Self];
@@ -50,7 +50,7 @@ impl_compatibe_sample![
 
 pub mod format {
     use super::CompatibleSample;
-    use crate::format::Format;
+    use netsound_core::format::Format;
 
     fn sample_formats_do_not_match() -> ! {
         panic!("sample formats do not match")

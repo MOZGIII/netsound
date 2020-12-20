@@ -1,6 +1,8 @@
 use super::CompatibleSample;
-use crate::io::{AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
 use futures::executor::block_on;
+use netsound_core::io::{
+    AsyncReadItems, AsyncReadItemsExt, AsyncWriteItems, AsyncWriteItemsExt, WaitMode,
+};
 
 pub fn capture<'a, S, W>(from: &'a mut cpal::UnknownTypeInputBuffer<'a>, to: &mut W)
 where

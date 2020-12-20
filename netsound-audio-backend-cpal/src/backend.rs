@@ -1,9 +1,9 @@
 use super::{io, CompatibleSample};
-use crate::audio;
-use crate::io::{AsyncReadItems, AsyncWriteItems};
-use crate::log::no_scopes::{crit, trace, Logger};
-use crate::sample::Sample;
 use cpal::traits::EventLoopTrait;
+use netsound_core::audio;
+use netsound_core::io::{AsyncReadItems, AsyncWriteItems};
+use netsound_core::log::no_scopes::{crit, trace, Logger};
+use netsound_core::sample::Sample;
 use std::marker::PhantomData;
 
 pub struct Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>

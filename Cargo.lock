@@ -775,6 +775,34 @@ dependencies = [
  "erased-serde",
  "failure",
  "futures",
+ "netsound-audio-backend-cpal",
+ "netsound-core",
+ "serde",
+ "slog",
+ "slog-env-cfg",
+ "slog-json",
+ "slog-scope",
+ "slog-scope-futures",
+ "slog_derive",
+ "tokio",
+]
+
+[[package]]
+name = "netsound-audio-backend-cpal"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "audiopus",
+ "byteorder",
+ "cpal",
+ "dasp_frame",
+ "dasp_interpolate",
+ "dasp_sample",
+ "dasp_signal",
+ "erased-serde",
+ "failure",
+ "futures",
+ "futures-test",
  "netsound-core",
  "serde",
  "slog",

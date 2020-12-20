@@ -67,13 +67,13 @@ fn build_cpal<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackData
     build_params: BuildParams<'_, TCaptureSample, TPlaybackSample>,
 ) -> NegotiateFormatsResult<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
-    TCaptureSample: Sample + audio::cpal_backend::CompatibleSample + Send + Sync + 'static,
-    TPlaybackSample: Sample + audio::cpal_backend::CompatibleSample + Send + Sync + 'static,
+    TCaptureSample: Sample + netsound_audio_backend_cpal::CompatibleSample + Send + Sync + 'static,
+    TPlaybackSample: Sample + netsound_audio_backend_cpal::CompatibleSample + Send + Sync + 'static,
 
     TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync + 'static,
     TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync + 'static,
 {
-    let format_negotiator = audio::cpal_backend::FormatNegotiator;
+    let format_negotiator = netsound_audio_backend_cpal::FormatNegotiator;
     let (negotiated_formats, continuation) = format_negotiator.negotiate_formats(
         build_params.request_capture_formats,
         build_params.request_playback_formats,
@@ -81,7 +81,7 @@ where
     )?;
 
     let continuation_adapter = move |capture_data_writer, playback_data_reader| {
-        let backend = audio::cpal_backend::BackendBuilder {
+        let backend = netsound_audio_backend_cpal::BackendBuilder {
             continuation,
             capture_data_writer,
             playback_data_reader,

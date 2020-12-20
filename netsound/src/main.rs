@@ -15,6 +15,8 @@ use tokio::{net::UdpSocket, runtime::Runtime};
 
 use netsound_core::*;
 
+mod audio_backends;
+
 use audio::Backend;
 use future::select_first;
 use log::{info, logger, o, slog_info, warn, LogScopeFutureExt};

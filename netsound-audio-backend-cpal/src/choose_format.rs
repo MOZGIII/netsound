@@ -1,6 +1,6 @@
 use super::{format, CompatibleSample};
-use crate::format::Format;
-use crate::log::no_scopes::{trace, Logger};
+use netsound_core::format::Format;
+use netsound_core::log::no_scopes::{trace, Logger};
 
 pub fn choose_format<S: CompatibleSample, I: Iterator<Item = cpal::SupportedFormat>>(
     logger: &mut Logger,
