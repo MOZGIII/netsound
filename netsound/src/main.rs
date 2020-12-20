@@ -13,22 +13,7 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use tokio::{net::UdpSocket, runtime::Runtime};
 
-mod audio;
-mod audio_backends;
-mod buf;
-mod codec;
-mod format;
-mod formats;
-mod future;
-mod io;
-mod log;
-mod match_channels;
-mod net;
-mod sample;
-mod sample_type_name;
-mod samples_filter;
-mod transcode;
-mod transcode_service;
+use netsound_core::*;
 
 use audio::Backend;
 use future::select_first;

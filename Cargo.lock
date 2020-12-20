@@ -761,6 +761,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "netsound"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "audiopus",
+ "byteorder",
+ "cpal",
+ "dasp_frame",
+ "dasp_interpolate",
+ "dasp_sample",
+ "dasp_signal",
+ "erased-serde",
+ "failure",
+ "futures",
+ "netsound-core",
+ "serde",
+ "slog",
+ "slog-env-cfg",
+ "slog-json",
+ "slog-scope",
+ "slog-scope-futures",
+ "slog_derive",
+ "tokio",
+]
+
+[[package]]
 name = "netsound-core"
 version = "0.1.0"
 dependencies = [

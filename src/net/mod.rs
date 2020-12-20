@@ -3,9 +3,9 @@ use crate::future::select_first;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::{debug, logger, o, LogScopeFutureExt};
 use crate::sample::Sample;
-use crate::UdpSocket;
 use futures::FutureExt;
 use std::net::SocketAddr;
+use tokio::net::UdpSocket;
 
 mod recv;
 mod send;
