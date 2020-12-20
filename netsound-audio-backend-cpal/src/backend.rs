@@ -30,7 +30,8 @@ where
     pub(super) logger: Logger,
 }
 
-impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader> audio::Backend
+impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
+    audio::backend::Backend
     for Backend<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: CompatibleSample + Send + Sync,

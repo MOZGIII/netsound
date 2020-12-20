@@ -10,8 +10,8 @@ use cpal::traits::{DeviceTrait, EventLoopTrait, HostTrait};
 #[derive(Debug)]
 pub struct FormatNegotiator;
 
-impl<TCaptureSample, TPlaybackSample> audio::FormatNegotiator<TCaptureSample, TPlaybackSample>
-    for FormatNegotiator
+impl<TCaptureSample, TPlaybackSample>
+    audio::backend::FormatNegotiator<TCaptureSample, TPlaybackSample> for FormatNegotiator
 where
     TCaptureSample: CompatibleSample,
     TPlaybackSample: CompatibleSample,
@@ -25,7 +25,7 @@ where
         mut logger: Logger,
     ) -> Result<
         (
-            audio::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
+            audio::backend::NegotiatedFormats<TCaptureSample, TPlaybackSample>,
             Self::Continuation,
         ),
         netsound_core::Error,
@@ -49,7 +49,7 @@ where
             request_playback_formats,
         )?;
 
-        let negotiated_formats = audio::NegotiatedFormats {
+        let negotiated_formats = audio::backend::NegotiatedFormats {
             capture_format,
             playback_format,
         };
@@ -98,7 +98,8 @@ where
     pub playback_data_reader: TPlaybackDataReader,
 }
 
-impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader> audio::BackendBuilder
+impl<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
+    audio::backend::Builder
     for BackendBuilder<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>
 where
     TCaptureSample: CompatibleSample + Send + Sync,

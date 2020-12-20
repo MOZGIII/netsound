@@ -16,7 +16,7 @@ use netsound_core::*;
 
 mod audio_backends;
 
-use audio::Backend;
+use audio::backend::Backend;
 use future::select_first;
 use log::{info, logger, o, slog_info, warn, LogScopeFutureExt};
 
