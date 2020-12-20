@@ -1,7 +1,7 @@
 cargo-features = ["named-profiles"]
 
 [package]
-name = "netsound"
+name = "netsound-core"
 version = "0.1.0"
 authors = ["MOZGIII <mike-n@narod.ru>"]
 edition = "2018"
