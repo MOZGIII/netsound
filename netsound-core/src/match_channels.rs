@@ -18,6 +18,9 @@ macro_rules! match_channels_explicit {
 /// Example:
 ///
 /// ```
+/// use netsound_core::match_channels;
+/// use dasp_frame::Frame;
+///
 /// let channels = 1;
 ///
 /// let val = match_channels! {
@@ -31,7 +34,7 @@ macro_rules! match_channels_explicit {
 #[macro_export]
 macro_rules! match_channels {
     ($frame:ident => [$channels:ident] => $body:expr) => {
-        crate::match_channels_explicit! { $frame => [$channels] => [
+        $crate::match_channels_explicit! { $frame => [$channels] => [
             1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
             27 28 29 30 31 32
         ] => $body }
