@@ -26,3 +26,6 @@ slog-json = { version = "2.3", features = ["nested-values"] }
 slog-scope = "4.3"
 slog-scope-futures = "0.1"
 tokio = { version = "0.2", features = ["full"] }
+
+[features]
+trace = ["netsound-core/trace"]
