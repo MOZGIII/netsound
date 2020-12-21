@@ -146,57 +146,62 @@ where
 
         let logger_clone = logger.clone();
 
-        std::thread::spawn(move || {
-            let logger = logger_clone;
+        std::thread::Builder::new()
+            .name("netsound-audio-driver-cpal-control".into())
+            .spawn(move || {
+                let logger = logger_clone;
 
-            let mut playback_data_reader = playback_data_reader;
-            let mut capture_data_writer = capture_data_writer;
+                let mut playback_data_reader = playback_data_reader;
+                let mut capture_data_writer = capture_data_writer;
 
-            let logger_clone = logger.clone();
-            let mut error_tx_clone = error_tx.clone();
-            let cpal_output_stream = cpal_output_device
-                .build_output_stream(
-                    &cpal_playback_stream_config,
-                    move |data: &mut [TPlaybackSample], _: &cpal::OutputCallbackInfo| {
-                        trace!(logger_clone, "cpal: before play");
-                        io::play(&mut playback_data_reader, data);
-                        trace!(logger_clone, "cpal: after play");
-                    },
-                    move |err| {
-                        block_on(async { error_tx_clone.send(("playback", err)).await.unwrap() })
-                    },
-                )
-                .unwrap();
+                let logger_clone = logger.clone();
+                let mut error_tx_clone = error_tx.clone();
+                let cpal_output_stream = cpal_output_device
+                    .build_output_stream(
+                        &cpal_playback_stream_config,
+                        move |data: &mut [TPlaybackSample], _: &cpal::OutputCallbackInfo| {
+                            trace!(logger_clone, "cpal: before play");
+                            io::play(&mut playback_data_reader, data);
+                            trace!(logger_clone, "cpal: after play");
+                        },
+                        move |err| {
+                            block_on(async {
+                                error_tx_clone.send(("playback", err)).await.unwrap()
+                            })
+                        },
+                    )
+                    .unwrap();
 
-            let logger_clone = logger.clone();
-            let mut error_tx_clone = error_tx.clone();
-            let cpal_input_stream = cpal_input_device
-                .build_input_stream(
-                    &cpal_capture_stream_config,
-                    move |data: &[TCaptureSample], _: &cpal::InputCallbackInfo| {
-                        trace!(logger_clone, "cpal: before capture");
-                        io::capture(data, &mut capture_data_writer);
-                        trace!(logger_clone, "cpal: after capture");
-                    },
-                    move |err| {
-                        block_on(async { error_tx_clone.send(("capture", err)).await.unwrap() })
-                    },
-                )
-                .unwrap();
+                let logger_clone = logger.clone();
+                let mut error_tx_clone = error_tx.clone();
+                let cpal_input_stream = cpal_input_device
+                    .build_input_stream(
+                        &cpal_capture_stream_config,
+                        move |data: &[TCaptureSample], _: &cpal::InputCallbackInfo| {
+                            trace!(logger_clone, "cpal: before capture");
+                            io::capture(data, &mut capture_data_writer);
+                            trace!(logger_clone, "cpal: after capture");
+                        },
+                        move |err| {
+                            block_on(async { error_tx_clone.send(("capture", err)).await.unwrap() })
+                        },
+                    )
+                    .unwrap();
 
-            cpal_output_stream.play().unwrap();
-            cpal_input_stream.play().unwrap();
+                cpal_output_stream.play().unwrap();
+                cpal_input_stream.play().unwrap();
 
-            futures::executor::block_on(async {
-                let _ = drop_rx.await;
-            });
+                futures::executor::block_on(async {
+                    let _ = drop_rx.await;
+                });
 
-            cpal_output_stream.pause().unwrap();
-            cpal_input_stream.pause().unwrap();
+                cpal_output_stream.pause().unwrap();
+                cpal_input_stream.pause().unwrap();
 
-            drop(cpal_output_stream);
-            drop(cpal_input_stream);
-        });
+                drop(cpal_output_stream);
+                drop(cpal_input_stream);
+            })
+            .expect("unable to start the cpal control thread");
 
         let backend = Backend {
             error_rx,
