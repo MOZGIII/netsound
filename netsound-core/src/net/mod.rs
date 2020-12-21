@@ -4,7 +4,7 @@ use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::{debug, logger, o, LogScopeFutureExt};
 use crate::pcm::Sample;
 use futures::FutureExt;
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 use tokio::net::UdpSocket;
 
 mod recv;
@@ -86,14 +86,14 @@ where
         let send_service = &mut self.send_service;
         let recv_service = &mut self.recv_service;
 
-        let (socket_recv_half, socket_send_half) = socket.split();
+        let socket = Arc::new(socket);
 
         let send_future = send_service
-            .send_loop(socket_send_half, peer_addrs)
+            .send_loop(socket.clone(), peer_addrs)
             .with_logger(logger().new(o!("logger" => "net::send")))
             .boxed();
         let recv_future = recv_service
-            .recv_loop(socket_recv_half)
+            .recv_loop(socket)
             .with_logger(logger().new(o!("logger" => "net::recv")))
             .boxed();
 

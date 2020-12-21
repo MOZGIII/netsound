@@ -3,8 +3,8 @@ use crate::io::AsyncWriteItems;
 use crate::log::{debug, error, trace, warn, KV};
 use crate::pcm::Sample;
 use serde::{Deserialize, Serialize};
-use std::marker::PhantomData;
-use tokio::net::udp::RecvHalf;
+use std::{marker::PhantomData, sync::Arc};
+use tokio::net::UdpSocket;
 
 use super::SIZE;
 
@@ -43,7 +43,7 @@ where
 {
     pub async fn recv_loop(
         &mut self,
-        mut socket: RecvHalf,
+        socket: Arc<UdpSocket>,
     ) -> Result<futures::never::Never, crate::Error> {
         let mut recv_buf = [0_u8; SIZE];
         loop {

@@ -4,9 +4,9 @@ use crate::log::{debug, error, trace, warn, KV};
 use crate::pcm::Sample;
 use failure::format_err;
 use serde::{Deserialize, Serialize};
-use std::marker::PhantomData;
 use std::net::SocketAddr;
-use tokio::net::udp::SendHalf;
+use std::{marker::PhantomData, sync::Arc};
+use tokio::net::UdpSocket;
 
 use super::SIZE;
 
@@ -46,7 +46,7 @@ where
 {
     pub async fn send_loop(
         &mut self,
-        mut socket: SendHalf,
+        socket: Arc<UdpSocket>,
         peer_addrs: Vec<SocketAddr>,
     ) -> Result<futures::never::Never, crate::Error> {
         let mut send_buf = [0_u8; SIZE];
@@ -67,7 +67,7 @@ where
                     trace!("Send: before send_to");
                     let bytes_sent = multisend::ensure_same_sizes(
                         multisend::multisend(
-                            &mut socket,
+                            socket.as_ref(),
                             &send_buf[..bytes_to_send],
                             peer_addrs.iter(),
                         )

@@ -48,7 +48,7 @@ fn errmain() -> Result<(), Error> {
         result?
     };
 
-    let mut rt = Runtime::new()?;
+    let rt = Runtime::new()?;
 
     let socket = rt.block_on(UdpSocket::bind(&bind_addr))?;
     slog_info!(logger(), "Listening on: {}", socket.local_addr()?);
