@@ -114,6 +114,16 @@ macro_rules! audio_backend_variants {
                 }
             }
         }
+
+        impl std::fmt::Display for $enum_name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    $(
+                        $enum_name::$variant(val) => val.fmt(f),
+                    ),*
+                }
+            }
+        }
     };
 }
 
