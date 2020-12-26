@@ -97,13 +97,14 @@ audio_backend_variants! {
     }
 }
 
-pub fn variant_from_env() -> Result<AnyAudioBackendVariant, std::env::VarError> {
+pub fn variant_from_env() -> Result<AnyAudioBackendVariant, anyhow::Error> {
     let name = match std::env::var("AUDIO_BACKEND") {
         Ok(name) => name,
         Err(std::env::VarError::NotPresent) => "cpal".to_owned(),
-        Err(e) => return Err(e),
+        Err(err) => return Err(err.into()),
     };
-    Ok(AnyAudioBackendVariant::by_name(&name).unwrap())
+    Ok(AnyAudioBackendVariant::by_name(&name)
+        .ok_or_else(|| anyhow::format_err!("audio backend {} is not available", name))?)
 }
 
 pub struct BuildParams<'a, TCaptureSample, TPlaybackSample>

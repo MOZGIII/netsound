@@ -8,6 +8,7 @@ license = "AGPL-3.0-only"
 [dependencies]
 netsound-core = { version = "0.1", path = "../netsound-core" }
 netsound-audio-backend-cpal = { version = "0.1", path = "../netsound-audio-backend-cpal" }
+anyhow = "1"
 futures = "0.3"
 slog = "2.5"
 slog-env-cfg = "0.6"
