@@ -1,6 +1,5 @@
 use crate::log::no_scopes::Logger;
 use crate::pcm::{Sample, StreamConfig};
-use crate::Error;
 
 use async_trait::async_trait;
 
@@ -10,7 +9,9 @@ where
     TPlaybackSample: Sample,
 {
     type Continuation;
+    type Error;
 
+    #[allow(clippy::type_complexity)]
     fn negotiate<'a>(
         self,
         requested_capture_stream_configs: &'a [StreamConfig<TCaptureSample>],
@@ -21,7 +22,7 @@ where
             NegotiatedStreamConfigs<TCaptureSample, TPlaybackSample>,
             Self::Continuation,
         ),
-        Error,
+        Self::Error,
     >;
 }
 
@@ -37,7 +38,8 @@ where
 
 pub trait Builder {
     type Backend: Backend;
-    fn build(self) -> Result<Self::Backend, Error>;
+    type Error;
+    fn build(self) -> Result<Self::Backend, Self::Error>;
 }
 
 /// Backend's only responsibility is to manage the runtime.

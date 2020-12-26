@@ -23,7 +23,9 @@ where
     TPlaybackSample: CompatibleSample,
 {
     type Continuation = StreamConfigNegotiationContinuation<TCaptureSample, TPlaybackSample>;
+    type Error = Error;
 
+    #[allow(clippy::type_complexity)]
     fn negotiate<'a>(
         self,
         requested_capture_stream_configs: &'a [StreamConfig<TCaptureSample>],
@@ -34,7 +36,7 @@ where
             audio_backend::NegotiatedStreamConfigs<TCaptureSample, TPlaybackSample>,
             Self::Continuation,
         ),
-        netsound_core::Error,
+        Self::Error,
     > {
         let cpal_host = cpal::default_host();
         info!(logger, "Cpal Host: {:?}", &cpal_host.id());
@@ -121,8 +123,9 @@ where
     TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync + 'static,
 {
     type Backend = Backend;
+    type Error = Error;
 
-    fn build(self) -> Result<Self::Backend, netsound_core::Error> {
+    fn build(self) -> Result<Self::Backend, Self::Error> {
         let cpal_capture_stream_config =
             stream_config::to_cpal(self.continuation.capture_stream_config);
         let cpal_playback_stream_config =
