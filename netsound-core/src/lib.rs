@@ -8,7 +8,7 @@
 #[macro_use]
 extern crate derivative;
 
-pub use failure::Error;
+pub use anyhow::Error;
 
 pub mod audio_backend;
 pub mod buf;

@@ -2,7 +2,7 @@ use crate::codec::{Encoder, EncodingError};
 use crate::io::AsyncReadItems;
 use crate::log::{debug, error, trace, warn, KV};
 use crate::pcm::Sample;
-use failure::format_err;
+use anyhow::format_err;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::{marker::PhantomData, sync::Arc};
