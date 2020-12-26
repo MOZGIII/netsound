@@ -7,10 +7,8 @@
 
 use futures::FutureExt;
 use std::convert::TryInto;
-use std::env;
 use std::marker::PhantomData;
-use std::net::SocketAddr;
-use std::str::FromStr;
+use structopt::StructOpt;
 use tokio::{net::UdpSocket, runtime::Runtime};
 
 use netsound_core::{
@@ -19,6 +17,7 @@ use netsound_core::{
 
 mod audio_backend_config;
 mod audio_params;
+mod cli;
 
 use audio_backend::Backend;
 use future::select_first;
@@ -33,22 +32,27 @@ fn errmain() -> Result<(), Error> {
     let logger_root = slog::Logger::root(logger_cfg.build(), o![]);
     let _logger_guard = slog_scope::set_global_logger(logger_root);
 
-    let mut args = env::args().skip(1);
-
-    let bind_addr = args.next().unwrap_or_else(|| "127.0.0.1:8080".to_string());
-    let send_addrs = {
-        let vec: Vec<_> = args.collect();
-        if vec.is_empty() {
-            vec![bind_addr.clone()]
-        } else {
-            vec
+    let command = cli::Command::from_args();
+    let params = match command {
+        cli::Command::Run(params) => params,
+        cli::Command::ListAudioBackends => {
+            for variant in audio_backend_config::AnyAudioBackendVariant::all() {
+                println!("{}", variant);
+            }
+            return Ok(());
         }
     };
-    let bind_addr: SocketAddr = bind_addr.parse()?;
+    let cli::RunParams {
+        bind_addr,
+        send_addrs,
+    } = params;
+
     let send_addrs = {
-        let result: Result<Vec<SocketAddr>, <SocketAddr as FromStr>::Err> =
-            send_addrs.into_iter().map(|e| e.parse()).collect();
-        result?
+        if send_addrs.is_empty() {
+            vec![bind_addr]
+        } else {
+            send_addrs
+        }
     };
 
     let rt = Runtime::new()?;
