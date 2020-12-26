@@ -5,14 +5,14 @@
 #![feature(const_generics)]
 #![feature(const_fn)]
 
-use futures::FutureExt;
+use futures::{future::select, FutureExt};
 use std::convert::TryInto;
 use std::marker::PhantomData;
 use structopt::StructOpt;
 use tokio::{net::UdpSocket, runtime::Runtime};
 
 use netsound_core::{
-    audio_backend, buf, codec, future, io, log, net, pcm, transcode, transcode_service, Error,
+    audio_backend, buf, codec, io, log, net, pcm, transcode, transcode_service, Error,
 };
 
 mod audio_backend_config;
@@ -21,7 +21,6 @@ mod cli;
 mod codec_config;
 
 use audio_backend::Backend;
-use future::select_first;
 use log::{info, logger, o, slog_info, warn, LogScopeFutureExt};
 
 type DynTranscoder = Box<dyn transcode::Transcode<Ok = futures::never::Never> + Send>;
@@ -241,16 +240,21 @@ fn errmain() -> Result<(), Error> {
         },
     };
 
-    rt.block_on(select_first(
-        net_service
-            .net_loop(socket, send_addrs)
-            .with_logger(logger().new(o!("logger" => "net")))
-            .boxed(),
-        transcode_service
-            .transcode_loop()
-            .with_logger(logger().new(o!("logger" => "transcode")))
-            .boxed(),
-    ))?;
+    rt.block_on(async {
+        select(
+            net_service
+                .net_loop(socket, send_addrs)
+                .with_logger(logger().new(o!("logger" => "net")))
+                .boxed(),
+            transcode_service
+                .transcode_loop()
+                .with_logger(logger().new(o!("logger" => "transcode")))
+                .boxed(),
+        )
+        .await
+        .factor_first()
+        .0
+    })?;
 
     unreachable!();
 }

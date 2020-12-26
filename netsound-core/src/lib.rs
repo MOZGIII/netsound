@@ -13,7 +13,6 @@ pub use anyhow::Error;
 pub mod audio_backend;
 pub mod buf;
 pub mod codec;
-pub mod future;
 pub mod io;
 pub mod log;
 pub mod match_channels;

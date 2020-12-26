@@ -1,9 +1,8 @@
 use crate::codec::{Decoder, Encoder};
-use crate::future::select_first;
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::{debug, logger, o, LogScopeFutureExt};
 use crate::pcm::Sample;
-use futures::FutureExt;
+use futures::{future::select, FutureExt};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::UdpSocket;
 
@@ -97,7 +96,7 @@ where
             .with_logger(logger().new(o!("logger" => "net::recv")))
             .boxed();
 
-        let val = select_first(recv_future, send_future).await;
+        let val = select(recv_future, send_future).await.factor_first().0;
 
         debug!("net loop finished");
 
