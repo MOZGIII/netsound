@@ -8,7 +8,7 @@ pub fn choose_stream_config<S, I>(
     logger: &mut Logger,
     iter: I,
     requested_stream_configs: &[StreamConfig<S>],
-) -> Result<StreamConfig<S>, super::errors::Error>
+) -> Option<StreamConfig<S>>
 where
     S: CompatibleSample,
     I: Iterator<Item = cpal::SupportedStreamConfigRange>,
@@ -58,16 +58,16 @@ where
                 requested_stream_config,
                 supported_range
             );
-            return Ok(*requested_stream_config);
+            return Some(*requested_stream_config);
         }
     }
 
     // Preferred stream config wasn't found, use the first one that's supported.
     if let Some(range) = supported_ranges.into_iter().next() {
-        return Ok(stream_config::from_cpal_supported(
+        return Some(stream_config::from_cpal_supported(
             &range.with_max_sample_rate(),
         ));
     }
 
-    Err(super::errors::Error::StreamConfigNegotiation)
+    None
 }

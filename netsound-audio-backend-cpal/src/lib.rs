@@ -10,11 +10,9 @@ mod builder;
 mod choose_stream_config;
 mod compatible_sample;
 mod control;
-mod default;
-mod errors;
+pub mod error;
 mod io;
 
 pub use backend::*;
 pub use builder::*;
 pub use compatible_sample::*;
-pub use errors::*;

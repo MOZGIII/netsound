@@ -1,7 +1,8 @@
 use crate::{control, io};
 
 use super::{
-    choose_stream_config::choose_stream_config, default, stream_config, Backend, CompatibleSample,
+    choose_stream_config::choose_stream_config, error::Error, stream_config, Backend,
+    CompatibleSample,
 };
 use futures::{executor::block_on, SinkExt};
 use netsound_core::io::{AsyncReadItems, AsyncWriteItems};
@@ -38,19 +39,25 @@ where
         let cpal_host = cpal::default_host();
         info!(logger, "Cpal Host: {:?}", &cpal_host.id());
 
-        let cpal_input_device = default::input_device(&cpal_host)?;
-        let cpal_output_device = default::output_device(&cpal_host)?;
+        let cpal_input_device = cpal_host
+            .default_input_device()
+            .ok_or(Error::DefaultDevice)?;
+        let cpal_output_device = cpal_host
+            .default_output_device()
+            .ok_or(Error::DefaultDevice)?;
 
         let capture_stream_config = choose_stream_config(
             &mut logger,
             cpal_input_device.supported_input_configs()?,
             requested_capture_stream_configs,
-        )?;
+        )
+        .ok_or(Error::StreamConfigNegotiation)?;
         let playback_stream_config = choose_stream_config(
             &mut logger,
             cpal_output_device.supported_output_configs()?,
             requested_playback_stream_configs,
-        )?;
+        )
+        .ok_or(Error::StreamConfigNegotiation)?;
 
         let negotiated_stream_configs = audio_backend::NegotiatedStreamConfigs {
             capture: capture_stream_config,
