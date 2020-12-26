@@ -17,7 +17,7 @@ dasp_signal = "0.11"
 derivative = "2"
 futures = { version = "0.3", features = ["unstable", "bilock"] }
 serde = { version = "1.0", features = ["derive"] }
-slog = "2.5"
+slog = "2.7"
 slog_derive = "0.2"
 slog-env-cfg = "0.6"
 slog-scope = "4.3"
