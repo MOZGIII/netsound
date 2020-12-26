@@ -18,6 +18,7 @@ use netsound_core::{
 mod audio_backend_config;
 mod audio_params;
 mod cli;
+mod codec_config;
 
 use audio_backend::Backend;
 use future::select_first;
@@ -46,6 +47,7 @@ fn errmain() -> Result<(), Error> {
         bind_addr,
         send_addrs,
         audio_backend_variant,
+        codec_to_use,
     } = params;
 
     let send_addrs = {
@@ -62,9 +64,7 @@ fn errmain() -> Result<(), Error> {
     slog_info!(logger(), "Listening on: {}", socket.local_addr()?);
     info!("Sending to: {:?}", &send_addrs);
 
-    let codec_to_use = CodecToUse::from_env()?;
     info!("Using codec: {:?}", codec_to_use);
-
     info!("Using audio backend: {:?}", audio_backend_variant);
 
     let audio_backend_build_params = audio_backend_config::BuildParams {
@@ -189,7 +189,7 @@ fn errmain() -> Result<(), Error> {
     let mut decoder: Box<dyn codec::Decoder<f32, _> + Send>;
 
     match codec_to_use {
-        CodecToUse::Opus => {
+        codec_config::CodecToUse::Opus => {
             let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
                 net_capture_stream_config.sample_rate(),
                 net_capture_stream_config.channels(),
@@ -212,7 +212,7 @@ fn errmain() -> Result<(), Error> {
                 opus_decoder_buf,
             )?);
         }
-        CodecToUse::Raw => {
+        codec_config::CodecToUse::Raw => {
             encoder = Box::new(codec::raw::Encoder);
             decoder = Box::new(codec::raw::Decoder);
         }
@@ -259,25 +259,6 @@ fn main() {
     if let Err(err) = errmain() {
         eprintln!("Error: {} [{:?}]", err, err);
         std::process::exit(1);
-    }
-}
-
-#[derive(Debug)]
-enum CodecToUse {
-    Opus,
-    Raw,
-}
-
-impl CodecToUse {
-    fn from_env() -> Result<Self, std::env::VarError> {
-        Ok(match std::env::var("CODEC") {
-            Ok(ref val) if val == "opus" => CodecToUse::Opus,
-            Ok(ref val) if val == "raw" => CodecToUse::Raw,
-            // Defaults.
-            Ok(_) | Err(std::env::VarError::NotPresent) => CodecToUse::Opus,
-            // Invalid value.
-            Err(e) => return Err(e),
-        })
     }
 }
 

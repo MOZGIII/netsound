@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use structopt::StructOpt;
 
-use crate::audio_backend_config::AnyAudioBackendVariant;
+use crate::{audio_backend_config::AnyAudioBackendVariant, codec_config::CodecToUse};
 
 #[derive(StructOpt)]
 pub enum Command {
@@ -22,6 +22,9 @@ pub struct RunParams {
         env = "AUDIO_BACKEND"
     )]
     pub audio_backend_variant: AnyAudioBackendVariant,
+    /// Audio codec to use.
+    #[structopt(short = "c", long = "codec", default_value = "opus", env = "CODEC")]
+    pub codec_to_use: CodecToUse,
 
     /// Interface address and the port to bind to.
     #[structopt(short = "b", long = "bind", default_value = "127.0.0.1:8080")]
