@@ -27,7 +27,12 @@ pub struct RunParams {
     pub codec_to_use: CodecToUse,
 
     /// Interface address and the port to bind to.
-    #[structopt(short = "b", long = "bind", default_value = "127.0.0.1:8080")]
+    #[structopt(
+        short = "b",
+        long = "bind",
+        default_value = "127.0.0.1:8080",
+        env = "BIND_ADDR"
+    )]
     pub bind_addr: SocketAddr,
     /// A list of host:port pairs to send the audio packets to.
     /// If not set, data is sent to the binded address (loopback).
