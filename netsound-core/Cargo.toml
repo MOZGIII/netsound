@@ -22,7 +22,7 @@ slog_derive = "0.2"
 slog-env-cfg = "0.6"
 slog-scope = "4.3"
 slog-scope-futures = "0.1"
-tokio = { version = "0.3", features = ["net", "io-util"] }
+tokio = { version = "1", features = ["net", "io-util"] }
 
 [dev-dependencies]
 futures-test = "0.3"

@@ -13,7 +13,7 @@ futures = "0.3"
 slog = "2.7"
 slog-env-cfg = "0.6"
 slog-scope = "4.3"
-tokio = { version = "0.3", features = ["rt-multi-thread"] }
+tokio = { version = "1", features = ["rt-multi-thread"] }
 
 [features]
 trace = ["netsound-core/trace"]
