@@ -1,6 +1,9 @@
 #![warn(rust_2018_idioms, missing_debug_implementations)]
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(incomplete_features)]
+#![feature(const_generics)]
+#![feature(const_fn)]
 
 use futures::FutureExt;
 use std::convert::TryInto;
@@ -14,7 +17,7 @@ use netsound_core::{
     audio_backend, buf, codec, future, io, log, net, pcm, transcode, transcode_service, Error,
 };
 
-mod audio_backends;
+mod audio_backend_config;
 mod stream_configs;
 
 use audio_backend::Backend;
@@ -57,16 +60,16 @@ fn errmain() -> Result<(), Error> {
     let codec_to_use = CodecToUse::from_env()?;
     info!("Using codec: {:?}", codec_to_use);
 
-    let backend_to_use = audio_backends::AudioBackendToUse::from_env()?;
+    let backend_to_use = audio_backend_config::variant_from_env()?;
     info!("Using audio backend: {:?}", backend_to_use);
 
-    let audio_backend_build_params = audio_backends::BuildParams {
+    let audio_backend_build_params = audio_backend_config::BuildParams {
         request_capture_stream_configs: stream_configs::input(),
         request_playback_stream_configs: stream_configs::output(),
         logger: logger().new(o!("logger" => "audio")),
     };
     let (negotiated_stream_configs, continuation) =
-        audio_backends::negotiate_stream_configs(&backend_to_use, audio_backend_build_params)?;
+        audio_backend_config::negotiate_stream_configs(backend_to_use, audio_backend_build_params)?;
 
     let net_capture_stream_config = pcm::StreamConfig::new(
         48000.into(),
