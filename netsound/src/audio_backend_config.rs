@@ -93,12 +93,14 @@ macro_rules! audio_backend_variants {
         }
 
         impl $enum_name {
+            #[allow(dead_code)]
             const ALL: &'static [Self] = &[
                 $(
                     $enum_name::$variant(AudioBackendVariant::new()),
                 ),*
             ];
 
+            #[allow(dead_code)]
             pub const fn all() -> &'static [Self] {
                 Self::ALL
             }
