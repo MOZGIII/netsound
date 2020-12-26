@@ -45,6 +45,7 @@ fn errmain() -> Result<(), Error> {
     let cli::RunParams {
         bind_addr,
         send_addrs,
+        audio_backend_variant,
     } = params;
 
     let send_addrs = {
@@ -64,8 +65,7 @@ fn errmain() -> Result<(), Error> {
     let codec_to_use = CodecToUse::from_env()?;
     info!("Using codec: {:?}", codec_to_use);
 
-    let backend_to_use = audio_backend_config::variant_from_env()?;
-    info!("Using audio backend: {:?}", backend_to_use);
+    info!("Using audio backend: {:?}", audio_backend_variant);
 
     let audio_backend_build_params = audio_backend_config::BuildParams {
         request_capture_params: audio_params::input(),
@@ -73,7 +73,7 @@ fn errmain() -> Result<(), Error> {
         logger: logger().new(o!("logger" => "audio")),
     };
     let (negotiated_stream_configs, continuation) =
-        audio_backend_config::Factory::build(&backend_to_use, audio_backend_build_params)?;
+        audio_backend_config::Factory::build(&audio_backend_variant, audio_backend_build_params)?;
 
     let net_capture_stream_config = pcm::StreamConfig::new(
         48000.into(),
