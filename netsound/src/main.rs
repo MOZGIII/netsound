@@ -18,7 +18,7 @@ use netsound_core::{
 };
 
 mod audio_backend_config;
-mod stream_configs;
+mod audio_params;
 
 use audio_backend::Backend;
 use future::select_first;
@@ -64,12 +64,12 @@ fn errmain() -> Result<(), Error> {
     info!("Using audio backend: {:?}", backend_to_use);
 
     let audio_backend_build_params = audio_backend_config::BuildParams {
-        request_capture_stream_configs: stream_configs::input(),
-        request_playback_stream_configs: stream_configs::output(),
+        request_capture_params: audio_params::input(),
+        request_playback_params: audio_params::output(),
         logger: logger().new(o!("logger" => "audio")),
     };
     let (negotiated_stream_configs, continuation) =
-        audio_backend_config::negotiate_stream_configs(backend_to_use, audio_backend_build_params)?;
+        audio_backend_config::Factory::build(&backend_to_use, audio_backend_build_params)?;
 
     let net_capture_stream_config = pcm::StreamConfig::new(
         48000.into(),

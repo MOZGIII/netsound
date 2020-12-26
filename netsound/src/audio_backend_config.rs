@@ -3,21 +3,23 @@ use std::marker::PhantomData;
 use crate::audio_backend::{self, Builder, StreamConfigNegotiator};
 use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::log::Logger;
-use crate::pcm::Sample;
-use crate::pcm::StreamConfig;
+use crate::pcm::{self, Sample};
 
 #[derive(Clone, Copy)]
-pub struct AudioBackendVariant<
+pub struct AudioBackendVariant<TCaptureSample, TPlaybackSample, const BACKEND_NAME: &'static str>
+where
     TCaptureSample: Sample,
     TPlaybackSample: Sample,
-    const BACKEND_NAME: &'static str,
-> {
+{
     capture_sample_type: PhantomData<TCaptureSample>,
     playback_sample_type: PhantomData<TPlaybackSample>,
 }
 
-impl<TCaptureSample: Sample, TPlaybackSample: Sample, const BACKEND_NAME: &'static str>
+impl<TCaptureSample, TPlaybackSample, const BACKEND_NAME: &'static str>
     AudioBackendVariant<TCaptureSample, TPlaybackSample, BACKEND_NAME>
+where
+    TCaptureSample: Sample,
+    TPlaybackSample: Sample,
 {
     pub const fn new() -> Self {
         Self {
@@ -25,6 +27,28 @@ impl<TCaptureSample: Sample, TPlaybackSample: Sample, const BACKEND_NAME: &'stat
             playback_sample_type: PhantomData,
         }
     }
+}
+
+pub trait Factory {
+    type CaptureSample: Sample;
+    type PlaybackSample: Sample;
+
+    fn build<TCaptureDataWriter, TPlaybackDataReader>(
+        &self,
+        build_params: BuildParams<
+            '_,
+            (pcm::SampleRate, pcm::Channels),
+            (pcm::SampleRate, pcm::Channels),
+        >,
+    ) -> NegotiateStreamConfigsResult<
+        Self::CaptureSample,
+        Self::PlaybackSample,
+        TCaptureDataWriter,
+        TPlaybackDataReader,
+    >
+    where
+        TCaptureDataWriter: AsyncWriteItems<Self::CaptureSample> + Unpin + Send + Sync + 'static,
+        TPlaybackDataReader: AsyncReadItems<Self::PlaybackSample> + Unpin + Send + Sync + 'static;
 }
 
 impl<TCaptureSample: Sample, TPlaybackSample: Sample, const BACKEND_NAME: &'static str>
@@ -91,12 +115,6 @@ macro_rules! audio_backend_variants {
     };
 }
 
-audio_backend_variants! {
-    pub enum AnyAudioBackendVariant {
-        [Cpal, "cpal", f32, f32],
-    }
-}
-
 pub fn variant_from_env() -> Result<AnyAudioBackendVariant, anyhow::Error> {
     let name = match std::env::var("AUDIO_BACKEND") {
         Ok(name) => name,
@@ -107,13 +125,9 @@ pub fn variant_from_env() -> Result<AnyAudioBackendVariant, anyhow::Error> {
         .ok_or_else(|| anyhow::format_err!("audio backend {} is not available", name))?)
 }
 
-pub struct BuildParams<'a, TCaptureSample, TPlaybackSample>
-where
-    TCaptureSample: Sample,
-    TPlaybackSample: Sample,
-{
-    pub request_capture_stream_configs: &'a [StreamConfig<TCaptureSample>],
-    pub request_playback_stream_configs: &'a [StreamConfig<TPlaybackSample>],
+pub struct BuildParams<'a, TCaptureParams, TPlaybackParams> {
+    pub request_capture_params: &'a [TCaptureParams],
+    pub request_playback_params: &'a [TPlaybackParams],
     pub logger: Logger,
 }
 
@@ -136,52 +150,98 @@ type NegotiateStreamConfigsResult<
     crate::Error,
 >;
 
-pub fn negotiate_stream_configs<TCaptureDataWriter, TPlaybackDataReader>(
-    backend_to_use: AnyAudioBackendVariant,
-    build_params: BuildParams<'_, f32, f32>,
-) -> NegotiateStreamConfigsResult<f32, f32, TCaptureDataWriter, TPlaybackDataReader>
-where
-    TCaptureDataWriter: AsyncWriteItems<f32> + Unpin + Send + Sync + 'static,
-    TPlaybackDataReader: AsyncReadItems<f32> + Unpin + Send + Sync + 'static,
-{
-    match backend_to_use {
-        AnyAudioBackendVariant::Cpal(_) => build_cpal(build_params),
+audio_backend_variants! {
+    pub enum AnyAudioBackendVariant {
+        [Cpal, "cpal", f32, f32],
     }
 }
 
-fn build_cpal<TCaptureSample, TPlaybackSample, TCaptureDataWriter, TPlaybackDataReader>(
-    build_params: BuildParams<'_, TCaptureSample, TPlaybackSample>,
-) -> NegotiateStreamConfigsResult<
-    TCaptureSample,
-    TPlaybackSample,
-    TCaptureDataWriter,
-    TPlaybackDataReader,
->
+// A hack for now.
+// Ideally we want to include this in the macro, but this would require
+// rewriting the macro in a different form, so this is left as is for now.
+impl Factory for AnyAudioBackendVariant {
+    type CaptureSample = f32;
+    type PlaybackSample = f32;
+
+    fn build<TCaptureDataWriter, TPlaybackDataReader>(
+        &self,
+        build_params: BuildParams<
+            '_,
+            (pcm::SampleRate, pcm::Channels),
+            (pcm::SampleRate, pcm::Channels),
+        >,
+    ) -> NegotiateStreamConfigsResult<f32, f32, TCaptureDataWriter, TPlaybackDataReader>
+    where
+        TCaptureDataWriter: AsyncWriteItems<f32> + Unpin + Send + Sync + 'static,
+        TPlaybackDataReader: AsyncReadItems<f32> + Unpin + Send + Sync + 'static,
+    {
+        match self {
+            AnyAudioBackendVariant::Cpal(variant) => variant.build(build_params),
+        }
+    }
+}
+
+impl<TCaptureSample, TPlaybackSample> Factory
+    for AudioBackendVariant<TCaptureSample, TPlaybackSample, "cpal">
 where
     TCaptureSample: Sample + netsound_audio_backend_cpal::CompatibleSample + Send + Sync + 'static,
     TPlaybackSample: Sample + netsound_audio_backend_cpal::CompatibleSample + Send + Sync + 'static,
-
-    TCaptureDataWriter: AsyncWriteItems<TCaptureSample> + Unpin + Send + Sync + 'static,
-    TPlaybackDataReader: AsyncReadItems<TPlaybackSample> + Unpin + Send + Sync + 'static,
 {
-    let stream_config_negotiator = netsound_audio_backend_cpal::StreamConfigNegotiator;
-    let (negotiated_stream_configs, continuation) = stream_config_negotiator.negotiate(
-        build_params.request_capture_stream_configs,
-        build_params.request_playback_stream_configs,
-        build_params.logger,
-    )?;
+    type CaptureSample = TCaptureSample;
+    type PlaybackSample = TPlaybackSample;
 
-    let continuation_adapter = move |capture_data_writer, playback_data_reader| {
-        let backend = netsound_audio_backend_cpal::BackendBuilder {
-            continuation,
-            capture_data_writer,
-            playback_data_reader,
-        }
-        .build()?;
-        let backend: Box<dyn audio_backend::Backend> = Box::new(backend);
-        Ok(backend)
-    };
-    let continuation_adapter = Box::new(continuation_adapter);
+    fn build<TCaptureDataWriter, TPlaybackDataReader>(
+        &self,
+        build_params: BuildParams<
+            '_,
+            (pcm::SampleRate, pcm::Channels),
+            (pcm::SampleRate, pcm::Channels),
+        >,
+    ) -> NegotiateStreamConfigsResult<
+        Self::CaptureSample,
+        Self::PlaybackSample,
+        TCaptureDataWriter,
+        TPlaybackDataReader,
+    >
+    where
+        TCaptureDataWriter: AsyncWriteItems<Self::CaptureSample> + Unpin + Send + Sync + 'static,
+        TPlaybackDataReader: AsyncReadItems<Self::PlaybackSample> + Unpin + Send + Sync + 'static,
+    {
+        let BuildParams {
+            request_capture_params,
+            request_playback_params,
+            logger,
+        } = build_params;
 
-    Ok((negotiated_stream_configs, continuation_adapter))
+        let stream_config_negotiator = netsound_audio_backend_cpal::StreamConfigNegotiator;
+
+        let request_capture_stream_configs: Vec<_> = request_capture_params
+            .iter()
+            .map(|(sample_rate, channels)| pcm::StreamConfig::new(*sample_rate, *channels))
+            .collect();
+        let request_playback_stream_configs: Vec<_> = request_playback_params
+            .iter()
+            .map(|(sample_rate, channels)| pcm::StreamConfig::new(*sample_rate, *channels))
+            .collect();
+
+        let (negotiated_stream_configs, continuation) = stream_config_negotiator.negotiate(
+            &request_capture_stream_configs,
+            &request_playback_stream_configs,
+            logger,
+        )?;
+
+        let continuation_adapter = move |capture_data_writer, playback_data_reader| {
+            let backend = netsound_audio_backend_cpal::BackendBuilder {
+                continuation,
+                capture_data_writer,
+                playback_data_reader,
+            }
+            .build()?;
+            let backend: Box<dyn audio_backend::Backend> = Box::new(backend);
+            Ok(backend)
+        };
+        let continuation_adapter = Box::new(continuation_adapter);
+
+        Ok((negotiated_stream_configs, continuation_adapter))
+    }
 }
