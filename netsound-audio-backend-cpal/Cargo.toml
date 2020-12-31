@@ -9,6 +9,6 @@ license = "AGPL-3.0-only"
 netsound-core = { version = "0.1", path = "../netsound-core" }
 async-trait = "0.1"
 cpal = "0.13"
-futures = "0.3"
 derivative = "2"
+futures = "0.3"
 thiserror = "1"
