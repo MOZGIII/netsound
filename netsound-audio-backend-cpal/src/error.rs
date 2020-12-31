@@ -1,54 +1,17 @@
-use std::fmt;
+use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("unable to determine default audio device")]
     DefaultDevice,
+    #[error("unable to negotiate audio stream config")]
     StreamConfigNegotiation,
-    SupportedStreamConfigs(cpal::SupportedStreamConfigsError),
-    BuildStream(cpal::BuildStreamError),
-    DeviceName(cpal::DeviceNameError),
-    PlayStream(cpal::PlayStreamError),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Error::DefaultDevice => write!(f, "Unable to determine default audio device"),
-            Error::StreamConfigNegotiation => {
-                write!(f, "Unable to negotiate audio stream config")
-            }
-            Error::SupportedStreamConfigs(err) => {
-                write!(f, "Unable to fetch supported audio stream configs: {}", err)
-            }
-            Error::BuildStream(err) => write!(f, "Unable to build stream: {}", err),
-            Error::DeviceName(err) => write!(f, "Unable to get device name: {}", err),
-            Error::PlayStream(err) => write!(f, "Unable to play stream: {}", err),
-        }
-    }
-}
-
-impl std::error::Error for Error {}
-
-impl From<cpal::SupportedStreamConfigsError> for Error {
-    fn from(err: cpal::SupportedStreamConfigsError) -> Error {
-        Error::SupportedStreamConfigs(err)
-    }
-}
-
-impl From<cpal::BuildStreamError> for Error {
-    fn from(err: cpal::BuildStreamError) -> Error {
-        Error::BuildStream(err)
-    }
-}
-
-impl From<cpal::DeviceNameError> for Error {
-    fn from(err: cpal::DeviceNameError) -> Error {
-        Error::DeviceName(err)
-    }
-}
-
-impl From<cpal::PlayStreamError> for Error {
-    fn from(err: cpal::PlayStreamError) -> Error {
-        Error::PlayStream(err)
-    }
+    #[error("unable to fetch supported audio stream configs: {0}")]
+    SupportedStreamConfigs(#[from] cpal::SupportedStreamConfigsError),
+    #[error("unable to build stream: {0}")]
+    BuildStream(#[from] cpal::BuildStreamError),
+    #[error("unable to get device name: {0}")]
+    DeviceName(#[from] cpal::DeviceNameError),
+    #[error("unable to play stream: {0}")]
+    PlayStream(#[from] cpal::PlayStreamError),
 }

@@ -1089,6 +1089,7 @@ dependencies = [
  "derivative",
  "futures",
  "netsound-core",
+ "thiserror",
 ]
 
 [[package]]
