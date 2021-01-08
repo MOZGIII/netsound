@@ -44,7 +44,7 @@ where
         &mut self,
         input: &[u8],
         output: &mut T,
-    ) -> Result<usize, super::super::DecodingError> {
+    ) -> Result<usize, super::super::error::Decoding> {
         self.decode_float(input, output, self.fec)
             .await
             .map_err(|err| err.into())

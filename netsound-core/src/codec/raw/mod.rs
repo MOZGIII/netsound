@@ -17,10 +17,10 @@ where
         &mut self,
         input: &mut T,
         output: &mut [u8],
-    ) -> Result<usize, super::EncodingError> {
+    ) -> Result<usize, super::error::Encoding> {
         Ok(codec::encode::<Endian, T>(input, output)
             .await
-            .map_err(|err| super::EncodingError::Other(err.into()))?)
+            .map_err(|err| super::error::Encoding::Other(err.into()))?)
     }
 }
 
@@ -36,9 +36,9 @@ where
         &mut self,
         input: &[u8],
         output: &mut T,
-    ) -> Result<usize, super::DecodingError> {
+    ) -> Result<usize, super::error::Decoding> {
         Ok(codec::decode::<Endian, T>(input, output)
             .await
-            .map_err(|err| super::DecodingError::Other(err.into()))?)
+            .map_err(|err| super::error::Decoding::Other(err.into()))?)
     }
 }

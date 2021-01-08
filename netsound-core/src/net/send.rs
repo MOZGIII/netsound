@@ -1,4 +1,4 @@
-use crate::codec::{Encoder, EncodingError};
+use crate::codec::{self, Encoder};
 use crate::io::AsyncReadItems;
 use crate::log::{debug, error, trace, warn, KV};
 use crate::pcm::Sample;
@@ -90,7 +90,7 @@ where
 
                     trace!("Send: sent a non-empty packet");
                 }
-                Err(EncodingError::NotEnoughData) => {
+                Err(codec::error::Encoding::NotEnoughData(_)) => {
                     self.stats.not_enough_data_at_encoding_errors += 1;
                 }
                 Err(err) => {

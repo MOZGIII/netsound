@@ -37,7 +37,7 @@ where
         &mut self,
         input: &mut T,
         output: &mut [u8],
-    ) -> Result<usize, super::super::EncodingError> {
+    ) -> Result<usize, super::super::error::Encoding> {
         self.encode_float(input, output)
             .await
             .map_err(|err| err.into())

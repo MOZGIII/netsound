@@ -1,4 +1,4 @@
-use crate::codec::{Decoder, DecodingError};
+use crate::codec::{self, Decoder};
 use crate::io::AsyncWriteItems;
 use crate::log::{debug, error, trace, warn, KV};
 use crate::pcm::Sample;
@@ -67,7 +67,7 @@ where
                         self.stats.samples_decoded += num_samples;
                         self.stats.frames_decoded += 1;
                     }
-                    Err(DecodingError::EmptyPacket) => {
+                    Err(codec::error::Decoding::EmptyPacket(_)) => {
                         self.stats.empty_packets_decoding_errors += 1;
                         // noop
                     }
