@@ -1,0 +1,12 @@
+[package]
+name = "netsound-codec-opus"
+version = "0.1.0"
+authors = ["MOZGIII <mike-n@narod.ru>"]
+edition = "2018"
+license = "AGPL-3.0-only"
+
+[dependencies]
+netsound-core = { version = "0.1", path = "../netsound-core" }
+async-trait = "0.1"
+audiopus = "0.2"
+thiserror = "1"

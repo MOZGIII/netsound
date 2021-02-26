@@ -1,7 +1,12 @@
 cargo-features = ["named-profiles"]
 
 [workspace]
-members = ["netsound-core", "netsound-audio-backend-cpal", "netsound"]
+members = [
+  "netsound-core",
+  "netsound-audio-backend-cpal",
+  "netsound-codec-opus",
+  "netsound",
+]
 
 [profile.relwithdebinfo]
 inherits = "release"

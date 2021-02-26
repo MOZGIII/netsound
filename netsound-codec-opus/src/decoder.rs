@@ -1,9 +1,11 @@
-use super::Error;
-use crate::io::{AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
-use crate::log::trace;
+use crate::{common::convert_params, error};
 use async_trait::async_trait;
 use audiopus::coder::Decoder as OpusDecoder;
+use netsound_core::io::{AsyncWriteItems, AsyncWriteItemsExt, WaitMode};
+use netsound_core::log::trace;
+use netsound_core::pcm;
 
+/// Opus decoder.
 #[derive(Debug)]
 pub struct Decoder {
     pub(super) opus: OpusDecoder,
@@ -13,12 +15,32 @@ pub struct Decoder {
 }
 
 impl Decoder {
-    pub async fn decode_float<T>(
+    /// Create a new [`Decoder`] with the specified params.
+    ///
+    /// # Errors
+    ///
+    /// Fails if the parameters validation fails or underlying opus codec
+    /// library returns an error.
+    pub fn new(
+        stream_config: pcm::StreamConfig<f32>,
+        buf: Box<[f32]>,
+    ) -> Result<Self, error::Init> {
+        let (sample_rate, channels) = convert_params(stream_config)?;
+        let dec = audiopus::coder::Decoder::new(sample_rate, channels)?;
+        Ok(Self {
+            opus: dec,
+            buf,
+            fec: false,
+            channels: (channels as usize),
+        })
+    }
+
+    async fn decode_float<T>(
         &mut self,
         input: &[u8],
         output: &mut T,
         fec: bool,
-    ) -> Result<usize, Error>
+    ) -> Result<usize, error::Op>
     where
         T: AsyncWriteItems<f32> + Unpin,
     {
@@ -36,7 +58,7 @@ impl Decoder {
 }
 
 #[async_trait]
-impl<T> super::super::Decoder<f32, T> for Decoder
+impl<T> netsound_core::codec::Decoder<f32, T> for Decoder
 where
     T: AsyncWriteItems<f32> + Unpin + Send,
 {
@@ -44,7 +66,7 @@ where
         &mut self,
         input: &[u8],
         output: &mut T,
-    ) -> Result<usize, super::super::error::Decoding> {
+    ) -> Result<usize, netsound_core::codec::error::Decoding> {
         self.decode_float(input, output, self.fec)
             .await
             .map_err(|err| err.into())

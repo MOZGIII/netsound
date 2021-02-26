@@ -189,24 +189,22 @@ fn errmain() -> Result<(), Error> {
 
     match codec_to_use {
         codec_config::CodecToUse::Opus => {
-            let opus_encoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                net_capture_stream_config.sample_rate(),
-                net_capture_stream_config.channels(),
-                codec::opus::SupportedFrameSizeMS::F20,
-                false,
-            ));
-            let opus_decoder_buf: Box<[f32]> = buffer(codec::opus::buf_size(
-                net_playback_stream_config.sample_rate(),
-                net_playback_stream_config.channels(),
-                codec::opus::SupportedFrameSizeMS::F20,
-                false,
-            ));
+            let opus_encoder_buf: Box<[f32]> =
+                buffer(netsound_codec_opus::compute_required_buf_size(
+                    net_capture_stream_config.channels(),
+                    net_capture_stream_config.sample_rate(),
+                ));
+            let opus_decoder_buf: Box<[f32]> =
+                buffer(netsound_codec_opus::compute_required_buf_size(
+                    net_playback_stream_config.channels(),
+                    net_playback_stream_config.sample_rate(),
+                ));
 
-            encoder = Box::new(codec::opus::make_encoder(
+            encoder = Box::new(netsound_codec_opus::Encoder::new(
                 net_capture_stream_config,
                 opus_encoder_buf,
             )?);
-            decoder = Box::new(codec::opus::make_decoder(
+            decoder = Box::new(netsound_codec_opus::Decoder::new(
                 net_playback_stream_config,
                 opus_decoder_buf,
             )?);

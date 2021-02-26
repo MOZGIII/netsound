@@ -2,7 +2,6 @@ use crate::io::{AsyncReadItems, AsyncWriteItems};
 use crate::pcm::Sample;
 use async_trait::async_trait;
 
-pub mod opus;
 pub mod raw;
 
 pub mod error;
