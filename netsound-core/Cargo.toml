@@ -8,7 +8,7 @@ license = "AGPL-3.0-only"
 [dependencies]
 anyhow = "1"
 async-trait = "0.1"
-byteorder = "1.3"
+byteorder = "1.4"
 dasp_frame = "0.11"
 dasp_interpolate = { version = "0.11", features = ["linear"] }
 dasp_sample = "0.11"
