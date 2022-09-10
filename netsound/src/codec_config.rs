@@ -11,7 +11,7 @@ impl std::str::FromStr for CodecToUse {
         Ok(match name {
             "opus" => CodecToUse::Opus,
             "raw" => CodecToUse::Raw,
-            _ => return Err(anyhow::format_err!("codec {:?} is not available")),
+            name => return Err(anyhow::format_err!("codec {:?} is not available", name)),
         })
     }
 }
