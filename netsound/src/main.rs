@@ -2,8 +2,7 @@
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 #![allow(incomplete_features)]
-#![feature(const_generics)]
-#![feature(const_fn)]
+#![feature(adt_const_params)]
 
 use futures::{future::select, FutureExt};
 use std::convert::TryInto;
