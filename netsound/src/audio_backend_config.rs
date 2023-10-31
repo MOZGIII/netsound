@@ -131,7 +131,7 @@ impl std::str::FromStr for AnyAudioBackendVariant {
     type Err = anyhow::Error;
 
     fn from_str(name: &str) -> Result<Self, Self::Err> {
-        AnyAudioBackendVariant::by_name(&name)
+        AnyAudioBackendVariant::by_name(name)
             .ok_or_else(|| anyhow::format_err!("audio backend {:?} is not available", name))
     }
 }

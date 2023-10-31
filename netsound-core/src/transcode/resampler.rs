@@ -73,7 +73,7 @@ where
                     let from_buf_size_before = from_buf.len() + first_frame_data.len();
                     let to_buf_size_before = to_buf.len();
 
-                    let iter = first_frame_data.iter().cloned();
+                    let iter = first_frame_data.iter().copied();
                     let iter = iter.chain(from_buf.drain(..));
                     let iter = iter.normalize_channels(this.from_channels, to_channels);
                     let mut from_signal = dasp_signal::from_interleaved_samples_iter::<_, F<S>>(iter);

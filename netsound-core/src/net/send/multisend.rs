@@ -20,7 +20,7 @@ where
     };
 
     for peer_addr in peer_addrs_iter {
-        let size = socket.send_to(&buf, peer_addr).await?;
+        let size = socket.send_to(buf, peer_addr).await?;
         sizes.push(size);
     }
 

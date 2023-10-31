@@ -176,8 +176,8 @@ where
                         },
                         move |err| {
                             block_on(async {
-                                error_tx_clone.send(("playback", err)).await.unwrap()
-                            })
+                                error_tx_clone.send(("playback", err)).await.unwrap();
+                            });
                         },
                     )
                     .unwrap();
@@ -193,7 +193,9 @@ where
                             trace!(logger_clone, "cpal: after capture");
                         },
                         move |err| {
-                            block_on(async { error_tx_clone.send(("capture", err)).await.unwrap() })
+                            block_on(async {
+                                error_tx_clone.send(("capture", err)).await.unwrap();
+                            });
                         },
                     )
                     .unwrap();

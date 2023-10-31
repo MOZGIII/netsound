@@ -26,12 +26,12 @@ macro_rules! deref_async_read_items {
     };
 }
 
-impl<T: Unpin, A: ?Sized + AsyncReadItems<T> + Unpin> AsyncReadItems<T> for Box<A> {
-    deref_async_read_items!(T);
+impl<I: Unpin, T: ?Sized + AsyncReadItems<I> + Unpin> AsyncReadItems<I> for Box<T> {
+    deref_async_read_items!(I);
 }
 
-impl<T: Unpin, A: ?Sized + AsyncReadItems<T> + Unpin> AsyncReadItems<T> for &mut A {
-    deref_async_read_items!(T);
+impl<I: Unpin, T: ?Sized + AsyncReadItems<I> + Unpin> AsyncReadItems<I> for &mut T {
+    deref_async_read_items!(I);
 }
 
 impl<T: Unpin, P> AsyncReadItems<T> for Pin<P>

@@ -63,7 +63,7 @@ fn test_read_non_pending_non_underflowing() {
 fn test_read_pending() {
     // Ensure VecDeque has expected capacity.
     let vd = VecDeque::from(vec![]);
-    assert_eq!(vd.capacity(), 1);
+    assert_eq!(vd.capacity(), 0);
 
     let (_writer, reader) = vec_deque_buffer(vd);
     pin_mut!(reader);
