@@ -15,6 +15,9 @@ impl<I> AddSilentChannels<I>
 where
     I: Iterator,
 {
+    /// # Panics
+    ///
+    /// Panics when the `source_channels` is greater than `target_channels`.
     pub fn new(source_iter: I, source_channels: usize, target_channels: usize) -> Self {
         assert!(source_channels <= target_channels);
         Self {

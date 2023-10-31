@@ -1,3 +1,4 @@
+#[allow(clippy::module_name_repetitions)]
 #[macro_export]
 macro_rules! match_channels_explicit {
     ($frame:ident => [$channels:ident] => [$($N:expr)*] => $body:expr) => {

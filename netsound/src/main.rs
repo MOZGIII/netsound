@@ -36,7 +36,7 @@ fn errmain() -> Result<(), Error> {
         cli::Command::Run(params) => params,
         cli::Command::ListAudioBackends => {
             for variant in audio_backend_config::AnyAudioBackendVariant::all() {
-                println!("{}", variant);
+                println!("{variant}");
             }
             return Ok(());
         }
@@ -258,7 +258,7 @@ fn errmain() -> Result<(), Error> {
 
 fn main() {
     if let Err(err) = errmain() {
-        eprintln!("Error: {} [{:?}]", err, err);
+        eprintln!("Error: {err} [{err:?}]");
         std::process::exit(1);
     }
 }
@@ -266,7 +266,7 @@ fn main() {
 fn run_audio_backend(audio_backend: Box<dyn Backend + 'static>) {
     std::thread::spawn(move || {
         let mut local = audio_backend;
-        futures::executor::block_on(local.run())
+        futures::executor::block_on(local.run());
     });
 }
 

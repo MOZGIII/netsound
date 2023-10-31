@@ -14,12 +14,18 @@ pub mod stream_config {
         panic!("sample formats do not match")
     }
 
+    /// # Panics
+    ///
+    /// Panics when the sample rate or channels don't fit in [`usize`].
     #[must_use]
     pub fn from_cpal<S: CompatibleSample>(config: &cpal::StreamConfig) -> StreamConfig<S> {
         let sample_rate: usize = config.sample_rate.0.try_into().unwrap();
         StreamConfig::<S>::new(sample_rate.into(), config.channels.try_into().unwrap())
     }
 
+    /// # Panics
+    ///
+    /// Panics when the sample rate does not fit in [`usize`].
     #[must_use]
     pub fn from_cpal_supported<S: CompatibleSample>(
         config: &cpal::SupportedStreamConfig,
@@ -31,6 +37,9 @@ pub mod stream_config {
         StreamConfig::<S>::new(sample_rate.into(), config.channels().into())
     }
 
+    /// # Panics
+    ///
+    /// Panics when the sample rate does not fit in [`u32`].
     #[must_use]
     pub fn to_cpal<S: CompatibleSample>(config: StreamConfig<S>) -> cpal::StreamConfig {
         cpal::StreamConfig {

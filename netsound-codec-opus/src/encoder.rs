@@ -56,8 +56,6 @@ where
         input: &mut T,
         output: &mut [u8],
     ) -> Result<usize, netsound_core::codec::error::Encoding> {
-        self.encode_float(input, output)
-            .await
-            .map_err(|err| err.into())
+        self.encode_float(input, output).await.map_err(Into::into)
     }
 }

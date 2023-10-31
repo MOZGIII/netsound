@@ -134,7 +134,7 @@ impl<T: Unpin + Copy> AsyncWriteItems<T> for VecDequeBufferWriter<T> {
         trace!("write: after lock");
         let vd = &mut inner.vd;
 
-        if is_full(&vd) {
+        if is_full(vd) {
             return match wait_mode {
                 WaitMode::WaitForReady => {
                     inner.write_waker.register(cx.waker());

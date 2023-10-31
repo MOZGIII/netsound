@@ -21,8 +21,8 @@ where
         .read_items(&mut samples, WaitMode::WaitForReady)
         .await?;
 
-    for (mut chunk, &sample) in output.chunks_exact_mut(4).zip(&samples[..samples_read]) {
-        E::write_f32(&mut chunk, sample);
+    for (chunk, &sample) in output.chunks_exact_mut(4).zip(&samples[..samples_read]) {
+        E::write_f32(chunk, sample);
     }
 
     Ok(samples_read * 4)
@@ -44,7 +44,7 @@ where
     samples.resize(samples_to_write, 0_f32);
 
     for (chunk, sample_slot) in input.chunks(4).zip(&mut samples) {
-        *sample_slot = E::read_f32(&chunk);
+        *sample_slot = E::read_f32(chunk);
     }
 
     output.write_items(&samples, WaitMode::WaitForReady).await

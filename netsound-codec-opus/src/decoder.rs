@@ -69,6 +69,6 @@ where
     ) -> Result<usize, netsound_core::codec::error::Decoding> {
         self.decode_float(input, output, self.fec)
             .await
-            .map_err(|err| err.into())
+            .map_err(Into::into)
     }
 }
