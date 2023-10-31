@@ -47,8 +47,8 @@ mod tests {
 
     #[test]
     fn ensure_same_sizes_test() {
-        assert_eq!(ensure_same_sizes(&[1, 1, 1]), Some(1));
-        assert_eq!(ensure_same_sizes(&[]), None);
-        assert_eq!(ensure_same_sizes(&[1, 2]), None);
+        assert_eq!(ensure_same_sizes([1, 1, 1]), Some(1));
+        assert_eq!(ensure_same_sizes([] as [usize; 0]), None);
+        assert_eq!(ensure_same_sizes([1, 2]), None);
     }
 }

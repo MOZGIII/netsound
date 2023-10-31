@@ -79,6 +79,6 @@ mod tests {
     #[test]
     fn display() {
         let stream_config = StreamConfig::<f32>::new(SampleRate::from_usize(48000), 2);
-        assert_eq!(format!("{}", stream_config), "[f32; 2] @ 48000");
+        assert_eq!(format!("{stream_config}"), "[f32; 2] @ 48000");
     }
 }
