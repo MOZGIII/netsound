@@ -1,8 +1,8 @@
 use netsound_core::pcm::Sample;
 
-pub trait CompatibleSample: Sample + cpal::Sample {}
+pub trait CompatibleSample: Sample + cpal::SizedSample {}
 
-impl<T> CompatibleSample for T where T: Sample + cpal::Sample {}
+impl<T> CompatibleSample for T where T: Sample + cpal::SizedSample {}
 
 pub mod stream_config {
     use std::convert::TryInto;
@@ -30,7 +30,7 @@ pub mod stream_config {
     pub fn from_cpal_supported<S: CompatibleSample>(
         config: &cpal::SupportedStreamConfig,
     ) -> StreamConfig<S> {
-        if <S as cpal::Sample>::FORMAT != config.sample_format() {
+        if <S as cpal::SizedSample>::FORMAT != config.sample_format() {
             sample_formats_do_not_match();
         }
         let sample_rate: usize = config.sample_rate().0.try_into().unwrap();

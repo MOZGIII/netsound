@@ -14,7 +14,7 @@ where
     I: Iterator<Item = cpal::SupportedStreamConfigRange>,
 {
     let supported_ranges: Vec<_> = iter.collect();
-    let cpal_sample_format = <S as cpal::Sample>::FORMAT;
+    let cpal_sample_format = <S as cpal::SizedSample>::FORMAT;
 
     // Try to use stream config from the preferred stream configs list.
     for requested_stream_config in requested_stream_configs {

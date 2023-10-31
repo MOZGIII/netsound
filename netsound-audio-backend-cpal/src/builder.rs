@@ -179,6 +179,7 @@ where
                                 error_tx_clone.send(("playback", err)).await.unwrap();
                             });
                         },
+                        None,
                     )
                     .unwrap();
 
@@ -197,6 +198,7 @@ where
                                 error_tx_clone.send(("capture", err)).await.unwrap();
                             });
                         },
+                        None,
                     )
                     .unwrap();
 
